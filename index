@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SDP Budget Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+:root {
+  --blue:      #0077b6;
+  --blue-dark: #005f92;
+  --blue-deep: #003f63;
+  --yellow:    #f5c842;
+  --yellow-lt: #fff8dc;
+  --yellow-dk: #d4a800;
+  --gray-bdr:  #dde3ec;
+  --text1:     #0d1b2a;
+  --text2:     #3a4a5c;
+  --text3:     #6b7c93;
+  --green:     #0d9e6e;
+  --red:       #d63b3b;
+  --orange:    #e07b00;
+  --card:      rgba(255,255,255,0.88);
+  --card-bdr:  rgba(255,255,255,0.7);
+}
+
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; }
+body {
+  font-family:'Syne',sans-serif;
+  background:linear-gradient(170deg,#003f63 0%,#0077b6 18%,#c8dff0 45%,#e8f4fb 65%,#f0f6fa 100%);
+  background-attachment:fixed;
+  color:var(--text1);
+  min-height:100vh;
+}
+
+/* ─── HEADER ─── */
+.hdr {
+  background:var(--blue-deep);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px; height:60px;
+  box-shadow:0 2px 10px rgba(0,0,0,.25);
+  position:sticky; top:0; z-index:100;
+}
+.hdr-left { display:flex; align-items:center; gap:14px; }
+.hdr-logo {
+  background:var(--yellow); color:var(--blue-deep);
+  font-weight:800; font-size:15px; padding:5px 14px;
+  border-radius:8px; letter-spacing:.02em;
+}
+.hdr-title { font-size:17px; font-weight:700; color:#fff; }
+.hdr-sub { font-size:11px; color:rgba(255,255,255,.6); font-family:'DM Mono',monospace; margin-top:1px; }
+.hdr-right { display:flex; align-items:center; gap:10px; }
+.sync-pill {
+  font-size:10px; font-family:'DM Mono',monospace;
+  padding:4px 10px; border-radius:6px; border:1px solid;
+}
+.sync-pill.live { background:rgba(13,158,110,.2); border-color:rgba(13,158,110,.4); color:#6ee7b7; }
+.sync-pill.wait { background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.2); color:rgba(255,255,255,.7); }
+.hdr-btn {
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25);
+  color:#fff; border-radius:8px; padding:5px 13px;
+  font-size:18px; font-weight:900; cursor:pointer; line-height:1;
+}
+
+/* ─── TAB BAR ─── */
+.tabs {
+  background:var(--blue-dark);
+  display:flex; padding:0 24px;
+  border-bottom:2px solid var(--blue-deep);
+  position:sticky; top:60px; z-index:99;
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.tabs::-webkit-scrollbar { display:none; }
+.tab {
+  padding:13px 18px; font-size:11px; font-weight:700;
+  color:rgba(255,255,255,.5); cursor:pointer;
+  border-bottom:3px solid transparent; margin-bottom:-2px;
+  letter-spacing:.06em; text-transform:uppercase;
+  white-space:nowrap; transition:all .2s;
+}
+.tab.active { color:#fff; border-bottom-color:var(--yellow); }
+.tab:hover:not(.active) { color:rgba(255,255,255,.8); }
+
+/* ─── MAIN ─── */
+.main { padding:22px 28px 40px; max-width:1280px; }
+.panel { display:none; }
+.panel.active { display:block; }
+
+/* ─── CARD ─── */
+.card {
+  background:var(--card); border:1px solid var(--card-bdr);
+  border-radius:14px; overflow:hidden;
+  box-shadow:0 2px 14px rgba(0,60,100,.10);
+  backdrop-filter:blur(6px);
+}
+.card-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:13px 18px; border-bottom:1px solid rgba(221,227,236,.6);
+  background:rgba(232,244,251,.7);
+}
+.card-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--text2); }
+.card-body { padding:16px 18px; }
+
+/* ─── KPI ROW ─── */
+.kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:18px; }
+.kpi {
+  background:var(--card); border:1px solid var(--card-bdr);
+  border-radius:14px; padding:15px 18px;
+  box-shadow:0 2px 12px rgba(0,60,100,.08);
+  backdrop-filter:blur(6px);
+}
+.kpi-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text3); margin-bottom:7px; }
+.kpi-val { font-family:'DM Mono',monospace; font-size:25px; font-weight:500; line-height:1; }
+.kpi-val.blue   { color:var(--blue); }
+.kpi-val.green  { color:var(--green); }
+.kpi-val.orange { color:var(--orange); }
+.kpi-val.red    { color:var(--red); }
+.kpi-sub { font-size:11px; color:var(--text3); margin-top:5px; font-family:'DM Mono',monospace; }
+.mini-bar { background:#e4eaf2; border-radius:100px; height:5px; margin-top:8px; overflow:hidden; }
+.mini-fill { height:100%; border-radius:100px; }
+
+/* ─── GRID LAYOUTS ─── */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:18px; }
+.g2l { display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-bottom:18px; }
+
+/* ─── ALERT ─── */
+.alert {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px; border-radius:10px;
+  font-size:13px; font-weight:600; margin-bottom:16px;
+  backdrop-filter:blur(4px);
+}
+.alert.warn   { background:rgba(255,248,225,.92); border:1px solid var(--yellow); color:#7a5800; }
+.alert.danger { background:rgba(253,232,232,.92); border:1px solid #f5a5a5; color:#8b1a1a; }
+.alert.info   { background:rgba(219,234,254,.92); border:1px solid #93c5fd; color:#1e40af; }
+
+/* ─── TABLE ─── */
+.t-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead th {
+  background:rgba(232,244,251,.8); padding:9px 14px;
+  text-align:left; font-size:10px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.08em; color:var(--text3);
+  border-bottom:1px solid var(--gray-bdr); font-family:'DM Mono',monospace;
+  white-space:nowrap; position:sticky; top:0;
+}
+tbody td { padding:10px 14px; border-bottom:1px solid rgba(240,242,245,.8); color:var(--text2); vertical-align:middle; }
+tbody td.mono  { font-family:'DM Mono',monospace; color:var(--text1); }
+tbody td.green { font-family:'DM Mono',monospace; color:var(--green); font-weight:700; }
+tbody td.red   { font-family:'DM Mono',monospace; color:var(--red);   font-weight:700; }
+tbody td.amber { font-family:'DM Mono',monospace; color:var(--orange); font-weight:700; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:rgba(0,119,182,.04); }
+.tot-row td { background:rgba(232,244,251,.8) !important; font-weight:700; border-top:2px solid var(--gray-bdr) !important; }
+
+/* ─── BADGES ─── */
+.badge { font-size:10px; font-weight:800; padding:2px 8px; border-radius:100px; font-family:'DM Mono',monospace; white-space:nowrap; }
+.b310 { background:#dbeafe; color:#1e40af; }
+.b320 { background:#d1fae5; color:#065f46; }
+.b331 { background:#fef3c7; color:#92400e; }
+.bite { background:#fee2e2; color:#991b1b; }
+.locked { font-size:9px; background:rgba(107,124,147,.15); color:var(--text3); padding:2px 7px; border-radius:4px; font-family:'DM Mono',monospace; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  padding:8px 18px; border-radius:8px; font-size:12px; font-weight:700;
+  cursor:pointer; border:none; font-family:'Syne',sans-serif;
+  letter-spacing:.03em; transition:all .15s; white-space:nowrap;
+}
+.btn-blue   { background:var(--blue); color:#fff; }
+.btn-blue:hover { background:var(--blue-dark); }
+.btn-yellow { background:var(--yellow); color:var(--blue-deep); }
+.btn-yellow:hover { background:var(--yellow-dk); }
+.btn-ghost  { background:transparent; border:1px solid var(--gray-bdr); color:var(--text2); }
+.btn-ghost:hover { background:rgba(0,0,0,.04); }
+.btn-red    { background:rgba(214,59,59,.1); border:1px solid rgba(214,59,59,.3); color:var(--red); }
+.btn-sm     { padding:5px 12px; font-size:11px; border-radius:6px; }
+
+/* ─── CAT BARS ─── */
+.cat-bar-section { margin-bottom:14px; }
+.cat-bar-section:last-child { margin-bottom:0; }
+.cat-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.cat-name { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--text1); }
+.cat-nums { display:flex; gap:14px; font-size:12px; font-family:'DM Mono',monospace; color:var(--text3); }
+.cat-nums strong { color:var(--text1); }
+.cat-track { background:#dde8f0; border-radius:100px; height:11px; overflow:hidden; margin-bottom:3px; }
+.cat-fill  { height:100%; border-radius:100px; }
+.cat-foot  { display:flex; justify-content:space-between; font-size:11px; font-family:'DM Mono',monospace; color:var(--text3); }
+
+/* ─── NEXTSTEP BOX ─── */
+.ns-box {
+  background:var(--yellow-lt); border:1px solid var(--yellow);
+  border-radius:10px; padding:12px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px;
+}
+.ns-left .ns-lbl { font-size:12px; font-weight:700; color:var(--blue-deep); }
+.ns-left .ns-sub { font-size:10px; color:var(--text3); font-family:'DM Mono',monospace; margin-top:2px; }
+.ns-right { text-align:right; }
+.ns-val { font-family:'DM Mono',monospace; font-size:20px; font-weight:500; color:var(--blue-deep); }
+.ns-sub2 { font-size:10px; color:var(--text3); font-family:'DM Mono',monospace; margin-top:2px; }
+
+/* ─── CLOCK GRID ─── */
+.clk-grid { display:grid; grid-template-columns:110px repeat(3,1fr) 110px; }
+.clk-hdr  { padding:9px 12px; background:rgba(232,244,251,.8); border-bottom:1px solid var(--gray-bdr); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text3); font-family:'DM Mono',monospace; }
+.clk-cell { padding:10px 12px; border-bottom:1px solid rgba(240,242,245,.8); font-size:13px; font-family:'DM Mono',monospace; color:var(--text1); display:flex; align-items:center; gap:6px; }
+.clk-cell.ot    { color:var(--orange); font-weight:700; }
+.clk-cell.ot2   { color:var(--red); font-weight:700; }
+.clk-cell.muted { color:var(--text3); }
+.clk-cell button { padding:3px 10px; font-size:11px; border-radius:6px; cursor:pointer; background:rgba(0,119,182,.1); border:1px solid rgba(0,119,182,.25); color:var(--blue-dark); font-weight:700; font-family:'Syne',sans-serif; }
+.clk-tot  { background:rgba(232,244,251,.7) !important; font-weight:700; border-top:2px solid var(--gray-bdr) !important; }
+
+/* ─── PROJECTION ─── */
+.proj-item { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid rgba(221,227,236,.5); font-size:13px; }
+.proj-item:last-child { border-bottom:none; }
+.proj-lbl { color:var(--text2); }
+.proj-val { font-family:'DM Mono',monospace; font-weight:600; color:var(--text1); }
+
+/* ─── KEYPAD OVERLAY ─── */
+.kp-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.5);
+  z-index:500; display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.kp-overlay.open { opacity:1; pointer-events:all; }
+.kp-sheet {
+  width:100%; max-width:480px;
+  background:rgba(0,60,110,.97); border-radius:20px 20px 0 0;
+  border-top:1px solid rgba(255,255,255,.2);
+  transform:translateY(100%); transition:transform .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden; padding-bottom:env(safe-area-inset-bottom);
+}
+.kp-overlay.open .kp-sheet { transform:translateY(0); }
+.kp-handle { width:36px; height:4px; background:rgba(255,255,255,.3); border-radius:2px; margin:10px auto 6px; }
+.kp-top { display:flex; justify-content:space-between; align-items:center; padding:0 16px 8px; }
+.kp-top-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:rgba(255,255,255,.65); }
+.kp-x { font-size:20px; color:rgba(255,255,255,.5); cursor:pointer; padding:4px 8px; }
+
+/* Keypad display boxes */
+.kp-displays { display:flex; gap:10px; padding:0 16px 10px; }
+.kp-box { flex:1; background:rgba(0,0,0,.25); border-radius:12px; padding:10px 12px; border:1.5px solid transparent; cursor:pointer; }
+.kp-box.active { background:rgba(255,255,255,.18); border-color:rgba(255,255,255,.6); }
+.kp-box-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.07em; color:rgba(255,255,255,.6); margin-bottom:3px; }
+.kp-box-val { font-family:'DM Mono',monospace; font-size:28px; font-weight:500; color:#fff; line-height:1; min-height:34px; }
+.kp-box-sub { font-size:11px; color:rgba(255,255,255,.55); margin-top:3px; }
+
+/* Description row inside keypad */
+.kp-desc-row { padding:0 16px 10px; }
+.kp-desc-input {
+  width:100%; background:rgba(0,0,0,.2); border:1.5px solid rgba(255,255,255,.2);
+  color:#fff; padding:9px 13px; border-radius:10px;
+  font-size:13px; font-family:'Syne',sans-serif; outline:none;
+}
+.kp-desc-input::placeholder { color:rgba(255,255,255,.4); }
+.kp-desc-input:focus { border-color:rgba(255,255,255,.5); }
+
+/* Code selector pills */
+.kp-code-row { display:flex; gap:8px; padding:0 16px 10px; }
+.kp-code-pill {
+  flex:1; text-align:center; padding:7px 0;
+  border-radius:8px; font-size:12px; font-weight:700;
+  cursor:pointer; border:1.5px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.55); transition:all .15s;
+  font-family:'DM Mono',monospace;
+}
+.kp-code-pill.sel { color:#fff; border-color:rgba(255,255,255,.7); }
+.kp-code-pill.sel.b310 { background:#1e40af; border-color:#3b82f6; }
+.kp-code-pill.sel.b320 { background:#065f46; border-color:#10b981; }
+.kp-code-pill.sel.b331 { background:#92400e; border-color:#f59e0b; }
+.kp-code-pill.sel.bite { background:#991b1b; border-color:#ef4444; }
+
+/* Date row in keypad */
+.kp-date-row { display:flex; align-items:center; justify-content:space-between; padding:0 16px 10px; }
+.kp-date-lbl { font-size:12px; font-family:'DM Mono',monospace; color:#fff; }
+.kp-date-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); color:#fff; border-radius:8px; padding:5px 12px; font-size:11px; font-weight:700; cursor:pointer; }
+
+/* Keypad grid */
+.kp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:rgba(0,0,0,.3); border-top:1px solid rgba(255,255,255,.1); }
+.kp-key { background:rgba(255,255,255,.07); padding:16px 0; text-align:center; font-size:22px; font-weight:600; color:#fff; cursor:pointer; user-select:none; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:background .1s; }
+.kp-key:active, .kp-key:hover { background:rgba(255,255,255,.15); }
+.kp-key .ksub { font-size:8px; color:rgba(255,255,255,.4); margin-top:1px; }
+.kp-key.dark { background:rgba(0,0,0,.15); }
+.kp-confirm { grid-column:span 3; background:var(--yellow); color:var(--blue-deep); padding:15px; font-size:15px; font-weight:800; font-family:'Syne',sans-serif; border:none; cursor:pointer; letter-spacing:.04em; }
+.kp-confirm:hover { background:var(--yellow-dk); }
+
+/* Employee keypad: sign toggle */
+.kp-sign-row { display:flex; gap:10px; padding:0 16px 10px; }
+.kp-sign-btn { flex:1; padding:9px 0; text-align:center; border-radius:10px; font-size:14px; font-weight:800; cursor:pointer; border:1.5px solid transparent; transition:all .15s; font-family:'Syne',sans-serif; }
+.kp-sign-btn.pos { background:#dcfce7; color:#14532d; border-color:#86efac; }
+.kp-sign-btn.neg { background:#fee2e2; color:#7c2d12; border-color:#fca5a5; }
+
+/* ─── MODAL (text entry) ─── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.5);
+  z-index:500; display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-box {
+  background:#fff; border-radius:18px; padding:24px;
+  width:440px; max-width:95vw;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  transform:scale(.95); transition:transform .2s;
+}
+.modal-overlay.open .modal-box { transform:scale(1); }
+.modal-title { font-size:16px; font-weight:800; color:var(--text1); margin-bottom:18px; }
+.modal-field { margin-bottom:14px; }
+.modal-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); margin-bottom:5px; }
+.modal-input {
+  width:100%; background:#f4f6f9; border:1.5px solid var(--gray-bdr);
+  color:var(--text1); padding:10px 13px; border-radius:10px;
+  font-size:14px; font-family:'Syne',sans-serif; outline:none;
+}
+.modal-input:focus { border-color:var(--blue); background:#fff; }
+.modal-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+
+/* Calendar in modal */
+.mini-cal { margin-top:8px; }
+.mini-cal-nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.mini-cal-nav button { background:rgba(0,0,0,.06); border:none; border-radius:6px; padding:4px 10px; font-size:14px; cursor:pointer; }
+.mini-cal-lbl { font-size:13px; font-weight:700; }
+.mini-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.mini-cal-dow { text-align:center; font-size:9px; font-weight:700; color:var(--text3); padding:3px 0; text-transform:uppercase; }
+.mini-cal-day { text-align:center; padding:6px 0; font-size:12px; font-family:'DM Mono',monospace; border-radius:6px; cursor:pointer; }
+.mini-cal-day:hover { background:rgba(0,119,182,.1); }
+.mini-cal-day.today { background:rgba(0,119,182,.15); font-weight:700; }
+.mini-cal-day.sel { background:var(--blue); color:#fff; font-weight:700; }
+.mini-cal-day.empty { cursor:default; }
+
+/* ─── TOAST ─── */
+.toast {
+  position:fixed; bottom:32px; left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:#0d1b2a; color:#fff; border-radius:12px;
+  padding:10px 22px; font-size:12px; font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  z-index:999; opacity:0; transition:all .3s;
+  pointer-events:none; white-space:nowrap;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ─── RECONCILE ─── */
+.rec-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:14px; }
+.rec-field { display:flex; flex-direction:column; gap:5px; }
+.rec-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); }
+.rec-val { background:#f4f6f9; border:1.5px solid var(--gray-bdr); border-radius:10px; padding:9px 13px; font-size:13px; font-family:'DM Mono',monospace; color:var(--text1); cursor:pointer; }
+.rec-val:hover { border-color:var(--blue); background:#fff; }
+.rec-result { padding:14px 16px; border-radius:10px; font-size:13px; }
+.rec-result.match   { background:#d1fae5; border:1px solid #6ee7b7; color:#065f46; }
+.rec-result.nomatch { background:#fee2e2; border:1px solid #fca5a5; color:#7c2d12; }
+
+/* ─── STATUS CHIP ─── */
+.status-active { font-size:11px; font-weight:700; color:var(--green); }
+.status-term   { font-size:11px; color:var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-logo">SDP</div>
+    <div>
+      <div class="hdr-title">SDSEP Budget Tracker</div>
+      <div class="hdr-sub">Ryan Nguyen · Harbor Regional Center · 12/1/25–11/30/26</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="sync-pill wait" id="sync-pill">Connecting…</div>
+    <button class="hdr-btn" onclick="toggleDotsMenu(event)">···</button>
+    <!-- Dots menu -->
+    <div id="dots-menu" style="display:none;position:absolute;top:58px;right:28px;background:#fff;border:1px solid var(--gray-bdr);border-radius:14px;padding:6px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.15);min-width:180px;">
+      <div onclick="exportData()" style="padding:11px 14px;font-size:13px;font-weight:700;color:var(--text1);cursor:pointer;border-radius:9px;display:flex;align-items:center;gap:10px;">⬆ Export Backup</div>
+      <div onclick="document.getElementById('import-input').click()" style="padding:11px 14px;font-size:13px;font-weight:700;color:var(--text1);cursor:pointer;border-radius:9px;display:flex;align-items:center;gap:10px;">⬇ Import Backup</div>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TABS ═══ -->
+<div class="tabs">
+  <div class="tab active" id="tab-budget"   onclick="switchTab('budget')">Budget</div>
+  <div class="tab"        id="tab-periods"  onclick="switchTab('periods')">Pay Periods</div>
+  <div class="tab"        id="tab-timesheet"onclick="switchTab('timesheet')">Timesheet</div>
+  <div class="tab"        id="tab-clocklog" onclick="switchTab('clocklog')">Clock Log</div>
+  <div class="tab"        id="tab-projection"onclick="switchTab('projection')">Projection</div>
+  <div class="tab"        id="tab-reconcile"onclick="switchTab('reconcile')">Reconcile</div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- ══ BUDGET PANEL ══ -->
+  <div class="panel active" id="panel-budget">
+    <div id="budget-alerts"></div>
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-lbl">Total Budget</div>
+        <div class="kpi-val blue" id="kpi-total-budget">—</div>
+        <div class="kpi-sub">After all adjustments</div>
+        <div class="mini-bar"><div class="mini-fill" id="kpi-budget-bar" style="background:var(--blue);width:0%"></div></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Total Spent</div>
+        <div class="kpi-val orange" id="kpi-total-spent">—</div>
+        <div class="kpi-sub" id="kpi-spent-sub">Through all pay periods</div>
+        <div class="mini-bar"><div class="mini-fill" id="kpi-spent-bar" style="background:var(--orange);width:0%"></div></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Remaining</div>
+        <div class="kpi-val green" id="kpi-remaining">—</div>
+        <div class="kpi-sub" id="kpi-remain-sub">—</div>
+        <div class="mini-bar"><div class="mini-fill" id="kpi-remain-bar" style="background:var(--green);width:0%"></div></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Budget Used</div>
+        <div class="kpi-val" id="kpi-pct">—</div>
+        <div class="kpi-sub" id="kpi-pct-sub">—</div>
+        <div class="mini-bar"><div class="mini-fill" id="kpi-pct-bar" style="background:var(--blue);width:0%"></div></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-lbl">Avg / Pay Period</div>
+        <div class="kpi-val" id="kpi-avg">—</div>
+        <div class="kpi-sub" id="kpi-avg-sub">—</div>
+        <div class="mini-bar"><div class="mini-fill" id="kpi-avg-bar" style="background:var(--yellow-dk);width:50%"></div></div>
+      </div>
+    </div>
+
+    <div class="g2l">
+      <!-- Category bars -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">Budget by Service Code</div>
+        </div>
+        <div class="card-body" id="cat-bars"></div>
+      </div>
+
+      <!-- Right col -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <!-- NextStep -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-title">NextStep Monthly Fee</div>
+            <button class="btn btn-ghost btn-sm" onclick="openNsFeeKp()">Edit</button>
+          </div>
+          <div class="card-body">
+            <div class="ns-box">
+              <div class="ns-left">
+                <div class="ns-lbl">Monthly Fee → Code 331</div>
+                <div class="ns-sub" id="ns-months-paid">—</div>
+              </div>
+              <div class="ns-right">
+                <div class="ns-val" id="ns-fee-display">—</div>
+                <div class="ns-sub2" id="ns-summary">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Adjustments -->
+        <div class="card" style="flex:1;">
+          <div class="card-hdr">
+            <div class="card-title">Budget Adjustments</div>
+            <button class="btn btn-yellow btn-sm" onclick="openAdjKp()">+ Add</button>
+          </div>
+          <div class="t-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Code</th><th>Amount</th><th>Note</th><th></th></tr></thead>
+              <tbody id="adj-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /budget -->
+
+  <!-- ══ PAY PERIODS PANEL ══ -->
+  <div class="panel" id="panel-periods">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="font-size:13px;color:rgba(255,255,255,.8);font-weight:600;">All pay periods · 🔒 = locked from SequoiaSD statement</div>
+      <button class="btn btn-yellow" onclick="openNewPeriodModal()">+ Add Pay Period</button>
+    </div>
+    <div class="card">
+      <div class="t-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Period</th><th>Dates</th><th>Code</th>
+              <th>Cordelia</th><th>Maverick</th><th>Rafi</th><th>Nicholas</th>
+              <th>Gross Labor</th><th>Employer Tax</th><th>Total Usage</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="periods-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /periods -->
+
+  <!-- ══ TIMESHEET PANEL ══ -->
+  <div class="panel" id="panel-timesheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;" id="ts-week-label">Week of —</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.65);font-family:'DM Mono',monospace;" id="ts-week-range">Sun – Sat</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="tsNavWeek(-1)">◀ Prev Week</button>
+        <button class="btn btn-ghost" onclick="tsNavWeek(0)">Today</button>
+        <button class="btn btn-ghost" onclick="tsNavWeek(1)">Next Week ▶</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="t-wrap">
+        <table id="ts-table">
+          <thead>
+            <tr>
+              <th style="min-width:120px;">Date</th>
+              <th>Cordelia</th><th>Maverick</th><th>Rafi</th>
+              <th>Daily Total</th>
+            </tr>
+          </thead>
+          <tbody id="ts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Week summary -->
+    <div class="g3">
+      <div class="card"><div class="card-body" id="ts-sum-cor"></div></div>
+      <div class="card"><div class="card-body" id="ts-sum-mav"></div></div>
+      <div class="card"><div class="card-body" id="ts-sum-raf"></div></div>
+    </div>
+  </div><!-- /timesheet -->
+
+  <!-- ══ CLOCK LOG PANEL ══ -->
+  <div class="panel" id="panel-clocklog">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;" id="cl-week-label">Week of —</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.65);font-family:'DM Mono',monospace;">OT tracking: Sun–Sat · &gt;8 hrs/day = 1.5× · &gt;12 hrs/day = 2×</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="clNavWeek(-1)">◀ Prev</button>
+        <button class="btn btn-ghost" onclick="clNavWeek(0)">This Week</button>
+        <button class="btn btn-ghost" onclick="clNavWeek(1)">Next ▶</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div id="cl-grid-wrap"></div>
+      <div id="cl-warning" style="padding:10px 16px;background:#fff8dc;border-top:1px solid var(--yellow);font-size:12px;color:var(--blue-deep);font-weight:600;display:none;"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">Weekly OT Summary</div></div>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>Employee</th><th>Reg Hours</th><th>OT 1.5× Hrs</th><th>OT 2× Hrs</th><th>Total Hrs</th><th>Est. Gross</th></tr></thead>
+          <tbody id="cl-summary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /clocklog -->
+
+  <!-- ══ PROJECTION PANEL ══ -->
+  <div class="panel" id="panel-projection">
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Budget Burn Projection</div></div>
+        <div class="card-body" id="proj-body"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Remaining Budget by Code</div></div>
+        <div class="card-body" id="proj-codes"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="card-title">Month-by-Month Spend</div></div>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>Pay Period</th><th>Dates</th><th>Code</th><th>Total Usage</th><th>Running Spent</th><th>Running Remaining</th></tr></thead>
+          <tbody id="proj-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /projection -->
+
+  <!-- ══ RECONCILE PANEL ══ -->
+  <div class="panel" id="panel-reconcile">
+    <div class="alert info" style="margin-bottom:16px;">
+      <span>ℹ</span> Enter figures from the SequoiaSD statement to reconcile against your tracked entries.
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Enter SequoiaSD Statement Figures</div></div>
+        <div class="card-body">
+          <div style="margin-bottom:10px;">
+            <div class="rec-lbl" style="margin-bottom:6px;">Pay Period</div>
+            <select id="rec-period" style="width:100%;background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Mono',monospace;outline:none;color:var(--text1);">
+              <option>Select a pay period…</option>
+            </select>
+          </div>
+          <div class="rec-row">
+            <div class="rec-field">
+              <div class="rec-lbl">Cordelia Gross</div>
+              <div class="rec-val" onclick="openRecKp('cor')" id="rec-cor">Tap to enter</div>
+            </div>
+            <div class="rec-field">
+              <div class="rec-lbl">Maverick Gross</div>
+              <div class="rec-val" onclick="openRecKp('mav')" id="rec-mav">Tap to enter</div>
+            </div>
+            <div class="rec-field">
+              <div class="rec-lbl">Rafi Gross</div>
+              <div class="rec-val" onclick="openRecKp('raf')" id="rec-raf">Tap to enter</div>
+            </div>
+          </div>
+          <div class="rec-row">
+            <div class="rec-field">
+              <div class="rec-lbl">Employer Tax</div>
+              <div class="rec-val" onclick="openRecKp('tax')" id="rec-tax">Tap to enter</div>
+            </div>
+            <div class="rec-field">
+              <div class="rec-lbl">NextStep / Code 331</div>
+              <div class="rec-val" onclick="openRecKp('ns')" id="rec-ns">Tap to enter</div>
+            </div>
+            <div class="rec-field">
+              <div class="rec-lbl">Total Usage (Statement)</div>
+              <div class="rec-val" onclick="openRecKp('total')" id="rec-total">Tap to enter</div>
+            </div>
+          </div>
+          <button class="btn btn-blue" onclick="runReconcile()" style="width:100%;margin-top:8px;">Run Reconciliation</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">Reconciliation Result</div></div>
+        <div class="card-body" id="rec-result-body">
+          <div style="color:var(--text3);font-size:13px;">Select a pay period and enter statement figures to reconcile.</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /reconcile -->
+
+</div><!-- /main -->
+
+<!-- ═══ URINE KEYPAD (generic numeric) ═══ -->
+<div class="kp-overlay" id="kp-overlay" onclick="handleKpBg(event)">
+  <div class="kp-sheet">
+    <div class="kp-handle"></div>
+    <div class="kp-top">
+      <div class="kp-top-lbl" id="kp-title">Enter Amount</div>
+      <div class="kp-x" onclick="closeKp()">✕</div>
+    </div>
+    <!-- Optional description -->
+    <div class="kp-desc-row" id="kp-desc-wrap" style="display:none;">
+      <input class="kp-desc-input" id="kp-desc" type="text" placeholder="Note / description…" autocomplete="off">
+    </div>
+    <!-- Optional code selector -->
+    <div class="kp-code-row" id="kp-code-wrap" style="display:none;">
+      <div class="kp-code-pill b310" id="kpcode-310" onclick="selectCode('310')">310</div>
+      <div class="kp-code-pill b320" id="kpcode-320" onclick="selectCode('320')">320</div>
+      <div class="kp-code-pill b331" id="kpcode-331" onclick="selectCode('331')">331</div>
+      <div class="kp-code-pill bite" id="kpcode-ite" onclick="selectCode('ite')">ITE</div>
+    </div>
+    <!-- Date row -->
+    <div class="kp-date-row" id="kp-date-wrap" style="display:none;">
+      <div class="kp-date-lbl" id="kp-date-lbl">Date: —</div>
+      <button class="kp-date-btn" onclick="openKpCal()">📅 Change</button>
+    </div>
+    <!-- Display boxes -->
+    <div class="kp-displays" id="kp-displays">
+      <div class="kp-box active" id="kp-box-main">
+        <div class="kp-box-lbl" id="kp-box-main-lbl">Amount</div>
+        <div class="kp-box-val" id="kp-box-main-val">0</div>
+        <div class="kp-box-sub" id="kp-box-main-sub"></div>
+      </div>
+    </div>
+    <!-- Optional sign toggle (for adjustments) -->
+    <div class="kp-sign-row" id="kp-sign-wrap" style="display:none;">
+      <div class="kp-sign-btn pos" id="kp-sign-pos" onclick="setKpSign(1)">+ Increase</div>
+      <div class="kp-sign-btn neg" id="kp-sign-neg" onclick="setKpSign(-1)">− Decrease</div>
+    </div>
+    <!-- Keys -->
+    <div class="kp-grid">
+      <div class="kp-key" onclick="kpKey('1')">1</div>
+      <div class="kp-key" onclick="kpKey('2')">2<div class="ksub">ABC</div></div>
+      <div class="kp-key" onclick="kpKey('3')">3<div class="ksub">DEF</div></div>
+      <div class="kp-key" onclick="kpKey('4')">4<div class="ksub">GHI</div></div>
+      <div class="kp-key" onclick="kpKey('5')">5<div class="ksub">JKL</div></div>
+      <div class="kp-key" onclick="kpKey('6')">6<div class="ksub">MNO</div></div>
+      <div class="kp-key" onclick="kpKey('7')">7<div class="ksub">PQRS</div></div>
+      <div class="kp-key" onclick="kpKey('8')">8<div class="ksub">TUV</div></div>
+      <div class="kp-key" onclick="kpKey('9')">9<div class="ksub">WXYZ</div></div>
+      <div class="kp-key dark" onclick="kpKey('.')">.</div>
+      <div class="kp-key" onclick="kpKey('0')">0</div>
+      <div class="kp-key dark" onclick="kpKey('back')">⌫</div>
+      <button class="kp-confirm" id="kp-confirm-btn" onclick="kpConfirm()">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MINI CALENDAR ═══ -->
+<div class="modal-overlay" id="cal-overlay" onclick="handleCalBg(event)">
+  <div class="modal-box" style="width:320px;">
+    <div class="mini-cal-nav">
+      <button onclick="calMove(-1)">‹</button>
+      <div class="mini-cal-lbl" id="cal-lbl"></div>
+      <button onclick="calMove(1)">›</button>
+    </div>
+    <div class="mini-cal-grid" id="cal-grid"></div>
+    <div class="modal-btns"><button class="btn btn-ghost" onclick="closeCal()">Cancel</button></div>
+  </div>
+</div>
+
+<!-- ═══ EMPLOYEE MODAL ═══ -->
+<div class="modal-overlay" id="emp-modal" onclick="handleModalBg(event,'emp-modal')">
+  <div class="modal-box">
+    <div class="modal-title" id="emp-modal-title">Add Employee</div>
+    <div class="modal-field">
+      <div class="modal-lbl">Full Name</div>
+      <input class="modal-input" id="emp-name" type="text" placeholder="e.g. Jane Smith" autocomplete="off">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="modal-field">
+        <div class="modal-lbl">Regular Rate ($/hr)</div>
+        <div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;color:var(--text1);" id="emp-reg-display" onclick="openEmpRateKp('reg')">Tap to set</div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-lbl">Start Date</div>
+        <div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;color:var(--text1);" id="emp-start-display" onclick="openEmpDateCal()">Tap to pick</div>
+      </div>
+    </div>
+    <div class="modal-field" style="margin-top:12px;">
+      <div class="modal-lbl">Notes</div>
+      <input class="modal-input" id="emp-notes" type="text" placeholder="Optional notes">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('emp-modal')">Cancel</button>
+      <button class="btn btn-blue" onclick="saveEmployee()">Save Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ NEW PAY PERIOD MODAL ═══ -->
+<div class="modal-overlay" id="pp-modal" onclick="handleModalBg(event,'pp-modal')">
+  <div class="modal-box" style="width:540px;">
+    <div class="modal-title">Add Pay Period</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div class="modal-field">
+        <div class="modal-lbl">Period Label</div>
+        <input class="modal-input" id="pp-label" type="text" placeholder="e.g. 5/1–5/15/26">
+      </div>
+      <div class="modal-field">
+        <div class="modal-lbl">Service Code</div>
+        <div style="display:flex;gap:8px;margin-top:2px;" id="pp-code-btns">
+          <button class="btn btn-ghost btn-sm" onclick="setPpCode('310')" id="pp-btn-310">310</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPpCode('320')" id="pp-btn-320">320</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPpCode('331')" id="pp-btn-331">331</button>
+          <button class="btn btn-ghost btn-sm" onclick="setPpCode('ite')" id="pp-btn-ite">ITE</button>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;">Hours per Employee (tap to enter)</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+      <div>
+        <div class="modal-lbl">Cordelia</div>
+        <div class="rec-val" onclick="openPpHrsKp('cor')" id="pp-hrs-cor">—</div>
+      </div>
+      <div>
+        <div class="modal-lbl">Maverick</div>
+        <div class="rec-val" onclick="openPpHrsKp('mav')" id="pp-hrs-mav">—</div>
+      </div>
+      <div>
+        <div class="modal-lbl">Rafi</div>
+        <div class="rec-val" onclick="openPpHrsKp('raf')" id="pp-hrs-raf">—</div>
+      </div>
+      <div>
+        <div class="modal-lbl">Nicholas</div>
+        <div class="rec-val" onclick="openPpHrsKp('nic')" id="pp-hrs-nic" style="opacity:.4;">—</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div>
+        <div class="modal-lbl">Gross Labor ($)</div>
+        <div class="rec-val" onclick="openPpAmtKp('gross')" id="pp-gross">Tap</div>
+      </div>
+      <div>
+        <div class="modal-lbl">Employer Tax ($)</div>
+        <div class="rec-val" onclick="openPpAmtKp('tax')" id="pp-tax">Tap</div>
+      </div>
+      <div>
+        <div class="modal-lbl">Total Usage ($)</div>
+        <div class="rec-val" id="pp-total" style="background:#eef0f4;">Auto-calc</div>
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-lbl">Notes</div>
+      <input class="modal-input" id="pp-note" type="text" placeholder="e.g. Rates: Cordelia $33, Maverick $33, Rafi $28">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('pp-modal')">Cancel</button>
+      <button class="btn btn-blue" onclick="savePeriod()">Add Pay Period</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// CONSTANTS & CONFIG
+// ══════════════════════════════════════
+const TAX_RATE   = 0.2064;
+const TODAY      = new Date(2026, 4, 22); // May 22 2026
+const BUDGET_END = new Date(2026, 11, 1); // 11/30/26 end
+
+const CATS = {
+  '310': { label:'Respite Services',                    color:'#3b82f6', origBudget:14452.80 },
+  '320': { label:'Community Living Support',            color:'#10b981', origBudget:200631.60 },
+  '331': { label:'Community Integration (NextStep)',    color:'#f59e0b', origBudget:9984.00 },
+  'ite': { label:'Individual Training & Education',     color:'#ef4444', origBudget:500.00 }
+};
+
+const EMPLOYEES = {
+  cor: { name:'Cordelia',  rates:[{from:'2025-12-01',reg:31.11},{from:'2026-04-16',reg:33}], active:true,  startDate:'2025-12-01' },
+  mav: { name:'Maverick',  rates:[{from:'2025-12-01',reg:31.11},{from:'2026-01-16',reg:33}], active:true,  startDate:'2025-12-01' },
+  raf: { name:'Rafi',      rates:[{from:'2026-02-15',reg:28}],                                active:true,  startDate:'2026-02-15' },
+  nic: { name:'Nicholas',  rates:[{from:'2025-12-01',reg:31.11}],                             active:false, startDate:'2025-12-01', endDate:'2026-01-31' }
+};
+
+// Get rate for employee at a given date
+function getRate(emp, dateStr) {
+  const empl = EMPLOYEES[emp];
+  if (!empl) return { reg:0, ot:0, ot2:0 };
+  const applicable = empl.rates.filter(r => r.from <= dateStr);
+  const r = applicable.length ? applicable[applicable.length-1] : empl.rates[0];
+  return { reg: r.reg, ot: +(r.reg * 1.5).toFixed(2), ot2: +(r.reg * 2).toFixed(2) };
+}
+
+// ══════════════════════════════════════
+// SEED DATA — all 12 pay periods
+// ══════════════════════════════════════
+const SEED_PERIODS = [
+  { id:'pp1',  label:'12/1–12/15/25',  code:'310', gross:5253.76,  tax:1217.24, locked:true, note:'Cordelia $31.11 · Maverick $31.11/$46.67 · Nicholas $31.11/$46.67',            hrs:{cor:22.00, mav:87.75, raf:0, nic:53.50} },
+  { id:'pp2',  label:'12/16–12/31/25', code:'310', gross:6541.00,  tax:1349.86, locked:true, note:'Cordelia $31.11/$46.67 · Maverick $31.11/$46.67 · Nicholas $31.11/$46.67/$62.22', hrs:{cor:0,     mav:92.50, raf:0, nic:61.00} },
+  { id:'pp3',  label:'12/1–12/15/25',  code:'320', gross:1714.80,  tax:353.90,  locked:true, note:'Cordelia only · $28.58/$42.87',                                                    hrs:{cor:60.00, mav:0,     raf:0, nic:0} },
+  { id:'pp4',  label:'12/16–12/31/25', code:'320', gross:2050.62,  tax:423.25,  locked:true, note:'Cordelia only · $28.58/$42.87',                                                    hrs:{cor:71.81, mav:0,     raf:0, nic:0} },
+  { id:'pp5',  label:'1/1–1/15/26',    code:'320', gross:6151.91,  tax:1269.75, locked:true, note:'Cordelia $28.58/$42.87 · Maverick $28.58/$42.87 · Nicholas $28.58/$42.87/$57.16', hrs:{cor:68.00, mav:72.00, raf:0, nic:55.00} },
+  { id:'pp6',  label:'1/16–1/31/26',   code:'320', gross:7642.79,  tax:1577.47, locked:true, note:'Cordelia $30/$45 · Maverick $33/$49.50 · Nicholas $25/$37.50 (last period)',       hrs:{cor:80.00, mav:88.00, raf:0, nic:58.00} },
+  { id:'pp7',  label:'2/1–2/15/26',    code:'320', gross:6513.38,  tax:1344.36, locked:true, note:'Cordelia $30/$45/$60 · Maverick $33/$49.50 · Rafi starts 2/15',                   hrs:{cor:76.00, mav:82.00, raf:8.00,  nic:0} },
+  { id:'pp8',  label:'2/16–2/28/26',   code:'320', gross:5572.90,  tax:1150.24, locked:true, note:'Cordelia $30/$45 · Maverick $33/$49.50',                                           hrs:{cor:65.00, mav:70.00, raf:0,     nic:0} },
+  { id:'pp9',  label:'3/1–3/15/26',    code:'320', gross:6379.88,  tax:1316.81, locked:true, note:'Cordelia $30/$45 · Maverick $33/$49.50 · Rafi first paid period $26/hr',           hrs:{cor:68.50, mav:74.00, raf:22.00, nic:0} },
+  { id:'pp10', label:'3/16–3/31/26',   code:'320', gross:7358.15,  tax:1518.72, locked:true, note:'Cordelia $30/$45 · Maverick $33/$49.50 · Rafi $26/$39',                            hrs:{cor:80.00, mav:86.00, raf:35.00, nic:0} },
+  { id:'pp11', label:'4/1–4/15/26',    code:'320', gross:7567.75,  tax:1561.99, locked:true, note:'Cordelia $30/$45 · Maverick $33/$49.50 · Rafi $26/$39',                            hrs:{cor:82.00, mav:88.00, raf:38.00, nic:0} },
+  { id:'pp12', label:'4/16–4/30/26',   code:'320', gross:9219.94,  tax:1903.01, locked:true, note:'Cordelia $33/$49.50 · Maverick $33/$49.50/$66 · Rafi $28/$42 (new rate 4/16)',     hrs:{cor:89.50, mav:96.00, raf:52.00, nic:0} },
+];
+
+const SEED_ADJS = [
+  { id:'adj1', date:'2026-04-08', code:'320', amt:59452.65, note:'Harbor RC budget increase' },
+  { id:'adj2', date:'2026-04-08', code:'310', amt:2921.60,  note:'Harbor RC budget increase' },
+];
+
+const SEED_SETTINGS = { nsFee:375, nsFeeStart:'2025-12-01' };
+const SEED_TIMESHEET = {}; // date → {cor,mav,raf}
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+function loadS(key, seed) {
+  try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : JSON.parse(JSON.stringify(seed)); }
+  catch(e) { return JSON.parse(JSON.stringify(seed)); }
+}
+function saveS(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} }
+
+let periods   = loadS('sdp_periods_v1',   SEED_PERIODS);
+let adjs      = loadS('sdp_adjs_v1',      SEED_ADJS);
+let settings  = loadS('sdp_settings_v1',  SEED_SETTINGS);
+let timesheet = loadS('sdp_timesheet_v1', SEED_TIMESHEET);
+let nextPpId  = periods.length + 1;
+let nextAdjId = adjs.length + 1;
+
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+function fmt(n) {
+  const abs = Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return (n < 0 ? '-$' : '$') + abs;
+}
+function fmtH(h) { return h > 0 ? h.toFixed(1)+' hrs' : '—'; }
+function todayStr() {
+  return TODAY.getFullYear()+'-'+String(TODAY.getMonth()+1).padStart(2,'0')+'-'+String(TODAY.getDate()).padStart(2,'0');
+}
+function dateUStoISO(s) { if(!s||!s.includes('/')) return s; const [m,d,y]=s.split('/'); return y+'-'+m.padStart(2,'0')+'-'+d.padStart(2,'0'); }
+function fmtDateUS(iso) { if(!iso) return '—'; const [y,m,d]=iso.split('-'); return m+'/'+d+'/'+y; }
+function weekStart(d) {
+  const dt = new Date(d); dt.setDate(dt.getDate() - dt.getDay()); // Sunday
+  return dt;
+}
+function isoFromDate(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// ── Budget calculations ──
+function catBudget(code) {
+  let b = CATS[code] ? CATS[code].origBudget : 0;
+  adjs.filter(a=>a.code===code).forEach(a=>b+=a.amt);
+  return b;
+}
+function catSpent(code) {
+  return periods.filter(p=>p.code===code).reduce((s,p)=>{
+    const total = (p.gross||0) + (p.tax||0);
+    return s + total;
+  }, 0);
+}
+function totalBudget()  { return Object.keys(CATS).reduce((s,c)=>s+catBudget(c),0); }
+function totalSpent()   { return periods.reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0); }
+function nsFeeSpent()   {
+  // Count months from nsFeeStart through today
+  const start = new Date(settings.nsFeeStart);
+  let months = (TODAY.getFullYear()-start.getFullYear())*12 + (TODAY.getMonth()-start.getMonth()) + 1;
+  return months * settings.nsFee;
+}
+
+// OT calc (Sun–Sat week, CA rules)
+function calcHoursGross(emp, dailyHrs) {
+  const rate = getRate(emp, todayStr());
+  let totalReg=0, totalOt15=0, totalOt2=0;
+  let weeklyHrs=0;
+  dailyHrs.forEach(h=>{
+    // Daily OT
+    const dailyReg  = Math.min(h, 8);
+    const dailyOt15 = Math.max(0, Math.min(h,12) - 8);
+    const dailyOt2  = Math.max(0, h - 12);
+    totalReg  += dailyReg;
+    totalOt15 += dailyOt15;
+    totalOt2  += dailyOt2;
+    weeklyHrs += h;
+  });
+  // Weekly OT: >40 hrs/week (already counted daily OT)
+  // (Premier uses daily OT; weekly not double-counted)
+  const gross = totalReg*rate.reg + totalOt15*rate.ot + totalOt2*rate.ot2;
+  return { reg:+totalReg.toFixed(2), ot15:+totalOt15.toFixed(2), ot2:+totalOt2.toFixed(2), gross:+gross.toFixed(2), total:+(totalReg+totalOt15+totalOt2).toFixed(2) };
+}
+
+// ══════════════════════════════════════
+// TAB SWITCHING
+// ══════════════════════════════════════
+let currentTab = 'budget';
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  currentTab = tab;
+  if(tab==='budget')     renderBudget();
+  if(tab==='periods')    renderPeriods();
+  if(tab==='timesheet')  renderTimesheet();
+  if(tab==='clocklog')   renderClockLog();
+  if(tab==='projection') renderProjection();
+  if(tab==='reconcile')  renderReconcile();
+}
+
+// ══════════════════════════════════════
+// RENDER BUDGET
+// ══════════════════════════════════════
+function renderBudget() {
+  const tb = totalBudget();
+  const ts = totalSpent();
+  const tr = tb - ts;
+  const pct = tb > 0 ? (ts/tb*100) : 0;
+  const ppCount = periods.length;
+  const avg = ppCount > 0 ? ts/ppCount : 0;
+
+  // KPIs
+  document.getElementById('kpi-total-budget').textContent = fmt(tb);
+  document.getElementById('kpi-total-spent').textContent  = fmt(ts);
+  document.getElementById('kpi-remaining').textContent    = fmt(tr);
+  document.getElementById('kpi-pct').textContent          = pct.toFixed(1)+'%';
+  document.getElementById('kpi-avg').textContent          = fmt(avg);
+  document.getElementById('kpi-spent-sub').textContent    = 'Across '+ppCount+' pay periods';
+  document.getElementById('kpi-remain-sub').textContent   = tr > 0 ? 'Available to spend' : 'OVER BUDGET';
+  document.getElementById('kpi-pct-sub').textContent      = ppCount+' pay periods recorded';
+  document.getElementById('kpi-avg-sub').textContent      = 'Per pay period average';
+  document.getElementById('kpi-budget-bar').style.width   = '100%';
+  document.getElementById('kpi-spent-bar').style.width    = Math.min(100,pct)+'%';
+  document.getElementById('kpi-remain-bar').style.width   = Math.min(100,(tr/tb)*100)+'%';
+  document.getElementById('kpi-pct-bar').style.width      = Math.min(100,pct)+'%';
+
+  // Alerts
+  let alerts = '';
+  Object.keys(CATS).forEach(code=>{
+    const rem = catBudget(code) - catSpent(code);
+    const bud = catBudget(code);
+    const pctUsed = bud > 0 ? catSpent(code)/bud*100 : 0;
+    if(rem < 0) alerts += `<div class="alert danger"><span>⚠</span> Code ${code} is OVER BUDGET by ${fmt(Math.abs(rem))}. Timesheets will be rejected.</div>`;
+    else if(pctUsed > 90) alerts += `<div class="alert warn"><span>⚠</span> Code ${code} balance is low — ${fmt(rem)} remaining (${pctUsed.toFixed(0)}% used). Consider switching to Code 320.</div>`;
+  });
+  document.getElementById('budget-alerts').innerHTML = alerts;
+
+  // Category bars
+  const BAR_COLORS = {'310':'#3b82f6','320':'#10b981','331':'#f59e0b','ite':'#ef4444'};
+  const BAR_BADGES = {'310':'b310','320':'b320','331':'b331','ite':'bite'};
+  let barsHtml = '';
+  Object.entries(CATS).forEach(([code,cat])=>{
+    const bud   = catBudget(code);
+    const spent = catSpent(code);
+    const rem   = bud - spent;
+    const pctU  = bud > 0 ? Math.min(100,(spent/bud)*100) : 0;
+    const remColor = rem < 0 ? 'color:var(--red)' : rem < bud*0.1 ? 'color:var(--orange)' : '';
+    barsHtml += `
+      <div class="cat-bar-section">
+        <div class="cat-top">
+          <div class="cat-name"><span class="badge ${BAR_BADGES[code]}">${code.toUpperCase()}</span>${cat.label}</div>
+          <div class="cat-nums"><span>Budget: <strong>${fmt(bud)}</strong></span><span>Spent: <strong>${fmt(spent)}</strong></span></div>
+        </div>
+        <div class="cat-track"><div class="cat-fill" style="width:${pctU}%;background:${BAR_COLORS[code]};"></div></div>
+        <div class="cat-foot"><span>${pctU.toFixed(1)}% used</span><span style="${remColor}">${fmt(rem)} remaining</span></div>
+      </div>`;
+  });
+  document.getElementById('cat-bars').innerHTML = barsHtml;
+
+  // NextStep
+  const nsSpent = nsFeeSpent();
+  const nsBudget = catBudget('331');
+  const nsMos = Math.round(nsSpent / settings.nsFee);
+  document.getElementById('ns-fee-display').textContent  = fmt(settings.nsFee)+'/mo';
+  document.getElementById('ns-months-paid').textContent  = nsMos+' months paid · '+(Math.floor(nsBudget/settings.nsFee)-nsMos)+' remaining';
+  document.getElementById('ns-summary').textContent      = fmt(nsSpent)+' paid · '+fmt(Math.max(0,nsBudget-nsSpent))+' budget left';
+
+  // Adjustments
+  const adjRows = adjs.map(a=>`
+    <tr>
+      <td class="mono">${fmtDateUS(a.date)}</td>
+      <td><span class="badge ${a.code==='310'?'b310':a.code==='320'?'b320':a.code==='331'?'b331':'bite'}">${a.code.toUpperCase()}</span></td>
+      <td class="${a.amt>=0?'green':'red'}">${a.amt>=0?'+':''}${fmt(a.amt)}</td>
+      <td>${a.note||''}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="deleteAdj('${a.id}')">✕</button></td>
+    </tr>`).join('');
+  document.getElementById('adj-tbody').innerHTML = adjRows || '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:16px;">No adjustments yet</td></tr>';
+}
+
+// ══════════════════════════════════════
+// RENDER PAY PERIODS
+// ══════════════════════════════════════
+function renderPeriods() {
+  const BADGE = {'310':'b310','320':'b320','331':'b331','ite':'bite'};
+  // Populate reconcile dropdown too
+  const sel = document.getElementById('rec-period');
+  sel.innerHTML = '<option>Select a pay period…</option>' +
+    periods.map(p=>`<option value="${p.id}">${p.id} · ${p.label}</option>`).join('');
+
+  const rows = periods.map(p=>{
+    const total = (p.gross||0)+(p.tax||0);
+    return `<tr>
+      <td class="mono">${p.id}</td>
+      <td>${p.label}</td>
+      <td><span class="badge ${BADGE[p.code]||'b320'}">${(p.code||'').toUpperCase()}</span></td>
+      <td class="mono">${fmtH(p.hrs?.cor||0)}</td>
+      <td class="mono">${fmtH(p.hrs?.mav||0)}</td>
+      <td class="mono">${fmtH(p.hrs?.raf||0)}</td>
+      <td class="mono">${fmtH(p.hrs?.nic||0)}</td>
+      <td class="mono">${fmt(p.gross||0)}</td>
+      <td class="mono">${fmt(p.tax||0)}</td>
+      <td class="mono"><strong>${fmt(total)}</strong></td>
+      <td>${p.locked?'<span class="locked">🔒 Locked</span>':'<button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Delete</button>'}</td>
+    </tr>`;
+  });
+
+  // Running total row
+  const totalGross = periods.reduce((s,p)=>s+(p.gross||0),0);
+  const totalTax   = periods.reduce((s,p)=>s+(p.tax||0),0);
+  const totalAll   = totalGross + totalTax;
+  rows.push(`<tr class="tot-row">
+    <td colspan="7"><strong>TOTAL (${periods.length} periods)</strong></td>
+    <td class="mono">${fmt(totalGross)}</td>
+    <td class="mono">${fmt(totalTax)}</td>
+    <td class="mono"><strong>${fmt(totalAll)}</strong></td>
+    <td></td>
+  </tr>`);
+
+  document.getElementById('periods-tbody').innerHTML = rows.join('');
+}
+
+// ══════════════════════════════════════
+// RENDER TIMESHEET
+// ══════════════════════════════════════
+let tsWeekOffset = 0;
+function tsNavWeek(dir) {
+  if(dir===0) tsWeekOffset=0; else tsWeekOffset+=dir;
+  renderTimesheet();
+}
+
+function renderTimesheet() {
+  const base = weekStart(TODAY);
+  base.setDate(base.getDate() + tsWeekOffset*7);
+  const days = Array.from({length:7},(_,i)=>{ const d=new Date(base); d.setDate(d.getDate()+i); return d; });
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  document.getElementById('ts-week-label').textContent =
+    'Week of '+DOW[0]+' '+MON[base.getMonth()]+' '+base.getDate();
+  document.getElementById('ts-week-range').textContent =
+    isoFromDate(days[0])+' → '+isoFromDate(days[6])+' · Sun–Sat · OT rules apply';
+
+  // Build weekly hours for OT calc
+  const empKeys = ['cor','mav','raf'];
+  const weekHrs = {};
+  empKeys.forEach(e=>{ weekHrs[e]=days.map(d=>{ const key=isoFromDate(d); return timesheet[key]?.(e)||0; }); });
+
+  const rows = days.map((d,i)=>{
+    const iso  = isoFromDate(d);
+    const isToday = iso===todayStr();
+    const empCells = empKeys.map(e=>{
+      const hrs = timesheet[iso]?.[e] || 0;
+      const otWarn = hrs > 8 && hrs <= 12 ? ' style="color:var(--orange);font-weight:700;"' : hrs>12 ? ' style="color:var(--red);font-weight:700;"' : '';
+      const label = hrs>0 ? hrs.toFixed(1)+' hrs'+(hrs>12?' ⚠2×':hrs>8?' ⚠OT':'') : '<span style="color:var(--text3);">—</span>';
+      return `<td${otWarn} onclick="openTsKp('${iso}','${e}')" style="cursor:pointer;" class="mono">${label}</td>`;
+    }).join('');
+    const dailyTotal = empKeys.reduce((s,e)=>s+(timesheet[iso]?.[e]||0),0);
+    const bg = isToday ? 'background:rgba(0,119,182,.05);' : '';
+    return `<tr style="${bg}">
+      <td style="font-weight:${isToday?'700':'400'};color:${isToday?'var(--blue)':'var(--text2)'};">
+        ${DOW[i]} ${MON[d.getMonth()]} ${d.getDate()}${isToday?' <span style="font-size:10px;background:var(--blue);color:#fff;padding:1px 6px;border-radius:4px;margin-left:4px;">TODAY</span>':''}
+      </td>
+      ${empCells}
+      <td class="mono" style="color:var(--text3);">${dailyTotal>0?dailyTotal.toFixed(1)+' hrs':'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ts-tbody').innerHTML = rows;
+
+  // Weekly summaries per employee
+  empKeys.forEach(e=>{
+    const dailyArr = weekHrs[e];
+    const totHrs   = dailyArr.reduce((s,h)=>s+h,0);
+    const rate     = getRate(e, isoFromDate(days[0]));
+    let regH=0,ot15H=0,ot2H=0;
+    dailyArr.forEach(h=>{
+      regH  += Math.min(h,8);
+      ot15H += Math.max(0,Math.min(h,12)-8);
+      ot2H  += Math.max(0,h-12);
+    });
+    const gross = regH*rate.reg + ot15H*rate.ot + ot2H*rate.ot2;
+    const emp   = EMPLOYEES[e];
+    const id    = 'ts-sum-'+e;
+    document.getElementById(id).innerHTML = `
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:8px;">${emp.name}</div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);">
+        <div style="display:flex;justify-content:space-between;"><span>Reg hrs</span><span style="color:var(--text1);">${regH.toFixed(1)}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>OT 1.5× hrs</span><span style="color:${ot15H>0?'var(--orange)':'var(--text1)'};">${ot15H.toFixed(1)}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>OT 2× hrs</span><span style="color:${ot2H>0?'var(--red)':'var(--text1)'};">${ot2H.toFixed(1)}</span></div>
+        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:5px;"><span>Total hrs</span><span style="color:var(--text1);font-weight:700;">${totHrs.toFixed(1)}</span></div>
+        <div style="display:flex;justify-content:space-between;"><span>Est. gross</span><span style="color:var(--green);font-weight:700;">${fmt(gross)}</span></div>
+      </div>`;
+  });
+}
+
+// ══════════════════════════════════════
+// RENDER CLOCK LOG
+// ══════════════════════════════════════
+let clWeekOffset = 0;
+function clNavWeek(dir) {
+  if(dir===0) clWeekOffset=0; else clWeekOffset+=dir;
+  renderClockLog();
+}
+
+function renderClockLog() {
+  const base = weekStart(TODAY);
+  base.setDate(base.getDate() + clWeekOffset*7);
+  const days = Array.from({length:7},(_,i)=>{ const d=new Date(base); d.setDate(d.getDate()+i); return d; });
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const empKeys = ['cor','mav','raf'];
+
+  document.getElementById('cl-week-label').textContent =
+    'Week of '+DOW[0]+' '+MON[base.getMonth()]+' '+base.getDate()+', '+base.getFullYear();
+
+  let warnings = [];
+  const weekHrs = {};
+  empKeys.forEach(e=>{ weekHrs[e] = days.map(d=>timesheet[isoFromDate(d)]?.[e]||0); });
+
+  // Build grid
+  let gridHtml = `<div class="clk-grid">
+    <div class="clk-hdr">Date</div>
+    ${empKeys.map(e=>`<div class="clk-hdr">${EMPLOYEES[e].name}</div>`).join('')}
+    <div class="clk-hdr">Day Total</div>`;
+
+  days.forEach((d,i)=>{
+    const iso = isoFromDate(d);
+    const isToday = iso === todayStr();
+    gridHtml += `<div class="clk-cell" style="${isToday?'font-weight:700;color:var(--blue);':''}">${DOW[i]} ${d.getDate()}/${d.getMonth()+1}</div>`;
+    let dayTotal = 0;
+    empKeys.forEach(e=>{
+      const h = weekHrs[e][i];
+      dayTotal += h;
+      let cls = 'clk-cell';
+      let label = h > 0 ? h.toFixed(1)+' hrs' : '<span style="color:var(--text3)">—</span>';
+      if(h > 12) { cls += ' ot2'; label = h.toFixed(1)+' hrs 🔴 2×'; }
+      else if(h > 8) { cls += ' ot'; label = h.toFixed(1)+' hrs ⚠'; }
+      gridHtml += `<div class="${cls}">${label}</div>`;
+    });
+    gridHtml += `<div class="clk-cell" style="color:var(--text3);">${dayTotal>0?dayTotal.toFixed(1)+' hrs':'—'}</div>`;
+  });
+
+  // Week totals row
+  gridHtml += `<div class="clk-cell clk-tot" style="font-weight:700;">Week Total</div>`;
+  empKeys.forEach(e=>{
+    const wk = weekHrs[e].reduce((s,h)=>s+h,0);
+    const cls = wk > 40 ? 'ot' : '';
+    const warn = wk > 40 ? ' ⚠ OT' : '';
+    if(wk > 40) warnings.push(`${EMPLOYEES[e].name}: ${wk.toFixed(1)} hrs this week — weekly OT applies`);
+    gridHtml += `<div class="clk-cell clk-tot ${cls}">${wk>0?wk.toFixed(1)+' hrs'+warn:'—'}</div>`;
+  });
+  const dayTotals = days.map((_,i)=>empKeys.reduce((s,e)=>s+weekHrs[e][i],0));
+  gridHtml += `<div class="clk-cell clk-tot">${dayTotals.reduce((s,h)=>s+h,0).toFixed(1)} hrs</div></div>`;
+
+  document.getElementById('cl-grid-wrap').innerHTML = gridHtml;
+
+  const warnEl = document.getElementById('cl-warning');
+  if(warnings.length) {
+    warnEl.style.display='block';
+    warnEl.innerHTML = '⚠ '+warnings.join(' · ');
+  } else { warnEl.style.display='none'; }
+
+  // OT Summary table
+  const summRows = empKeys.map(e=>{
+    const dailyArr = weekHrs[e];
+    let reg=0,ot15=0,ot2=0;
+    dailyArr.forEach(h=>{ reg+=Math.min(h,8); ot15+=Math.max(0,Math.min(h,12)-8); ot2+=Math.max(0,h-12); });
+    const rate  = getRate(e, isoFromDate(days[0]));
+    const gross = reg*rate.reg + ot15*rate.ot + ot2*rate.ot2;
+    const total = reg+ot15+ot2;
+    return `<tr>
+      <td><strong>${EMPLOYEES[e].name}</strong></td>
+      <td class="mono">${reg.toFixed(1)}</td>
+      <td class="${ot15>0?'amber':'mono'}">${ot15.toFixed(1)}</td>
+      <td class="${ot2>0?'red':'mono'}">${ot2.toFixed(1)}</td>
+      <td class="mono"><strong>${total.toFixed(1)}</strong></td>
+      <td class="green">${fmt(gross)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('cl-summary-tbody').innerHTML = summRows;
+}
+
+// ══════════════════════════════════════
+// RENDER PROJECTION
+// ══════════════════════════════════════
+function renderProjection() {
+  const tb = totalBudget();
+  const ts = totalSpent();
+  const tr = tb - ts;
+  const ppCount = periods.length;
+  const avg = ppCount > 0 ? ts/ppCount : 0;
+
+  // Days remaining
+  const daysLeft = Math.max(0, Math.round((BUDGET_END - TODAY)/86400000));
+  const ppLeft   = Math.round(daysLeft/15); // approx 15-day periods
+  const projSpend = ppLeft * avg;
+  const projEnd  = ts + projSpend;
+  const projRem  = tb - projEnd;
+
+  document.getElementById('proj-body').innerHTML = `
+    <div class="proj-item"><div class="proj-lbl">Pay periods recorded</div><div class="proj-val">${ppCount}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Average spend per period</div><div class="proj-val">${fmt(avg)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Days remaining in budget year</div><div class="proj-val">${daysLeft} days</div></div>
+    <div class="proj-item"><div class="proj-lbl">Estimated periods remaining</div><div class="proj-val">~${ppLeft} periods</div></div>
+    <div class="proj-item"><div class="proj-lbl">Projected additional spend</div><div class="proj-val">${fmt(projSpend)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Projected total spend</div><div class="proj-val ${projEnd>tb?'red':'green'}">${fmt(projEnd)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Projected remaining at year end</div><div class="proj-val ${projRem<0?'red':'green'}">${fmt(projRem)}</div></div>
+  `;
+
+  // Code projections
+  let codeHtml = '';
+  Object.entries(CATS).forEach(([code,cat])=>{
+    const bud   = catBudget(code);
+    const spent = catSpent(code);
+    const rem   = bud-spent;
+    const pct   = bud>0 ? (spent/bud*100).toFixed(1) : '0.0';
+    codeHtml += `<div class="proj-item">
+      <div class="proj-lbl"><span class="badge ${'b'+code.replace('ite','ite')}" style="margin-right:6px;">${code.toUpperCase()}</span>${cat.label}</div>
+      <div class="proj-val ${rem<0?'red':rem<bud*.1?'amber':'green'}">${fmt(rem)}</div>
+    </div>`;
+  });
+  document.getElementById('proj-codes').innerHTML = codeHtml;
+
+  // Running table
+  let running = 0;
+  const projRows = periods.map(p=>{
+    const total = (p.gross||0)+(p.tax||0);
+    running += total;
+    return `<tr>
+      <td class="mono">${p.id}</td>
+      <td>${p.label}</td>
+      <td><span class="badge b${p.code}">${(p.code||'').toUpperCase()}</span></td>
+      <td class="mono">${fmt(total)}</td>
+      <td class="mono">${fmt(running)}</td>
+      <td class="mono ${(tb-running)<0?'red':'green'}">${fmt(tb-running)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('proj-tbody').innerHTML = projRows;
+}
+
+// ══════════════════════════════════════
+// RENDER RECONCILE
+// ══════════════════════════════════════
+function renderReconcile() { renderPeriods(); } // just refreshes dropdown
+
+let recVals = {};
+function openRecKp(field) {
+  kpMode = 'rec';
+  kpField = field;
+  openKp('Enter '+field.toUpperCase()+' Amount', false, false, false, false);
+}
+
+function runReconcile() {
+  const pid = document.getElementById('rec-period').value;
+  const pp  = periods.find(p=>p.id===pid);
+  if(!pp) { showToast('Please select a pay period.'); return; }
+
+  const stmtCor   = recVals['cor']   || 0;
+  const stmtMav   = recVals['mav']   || 0;
+  const stmtRaf   = recVals['raf']   || 0;
+  const stmtTax   = recVals['tax']   || 0;
+  const stmtNs    = recVals['ns']    || 0;
+  const stmtTotal = recVals['total'] || 0;
+
+  const ourGross  = pp.gross || 0;
+  const ourTax    = pp.tax   || 0;
+  const ourTotal  = ourGross + ourTax;
+  const stmtComp  = stmtCor + stmtMav + stmtRaf + stmtTax + stmtNs;
+  const diff      = Math.abs(stmtTotal - ourTotal);
+  const match     = diff < 0.50;
+
+  document.getElementById('rec-result-body').innerHTML = `
+    <div class="rec-result ${match?'match':'nomatch'}" style="margin-bottom:14px;">
+      ${match ? '✓ MATCH — within $0.50 tolerance' : '✗ MISMATCH — '+fmt(diff)+' difference'}
+    </div>
+    <div class="proj-item"><div class="proj-lbl">Our tracked total</div><div class="proj-val">${fmt(ourTotal)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Statement total</div><div class="proj-val">${fmt(stmtTotal)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Our gross labor</div><div class="proj-val">${fmt(ourGross)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Our employer tax</div><div class="proj-val">${fmt(ourTax)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Statement components</div><div class="proj-val">${fmt(stmtComp)}</div></div>
+    <div class="proj-item"><div class="proj-lbl">Difference</div><div class="proj-val ${match?'green':'red'}">${fmt(diff)}</div></div>
+  `;
+}
+
+// ══════════════════════════════════════
+// KEYPAD ENGINE
+// ══════════════════════════════════════
+let kpMode    = '';   // 'adj','nsfee','ts','rec','ppamt','pphrs'
+let kpField   = '';
+let kpValue   = '';
+let kpSign    = 1;
+let kpDate    = todayStr();
+let kpCode    = '320';
+let kpEmp     = '';
+let selectedDate = todayStr();
+
+function openKp(title, showDesc, showCode, showDate, showSign) {
+  kpValue = '';
+  document.getElementById('kp-title').textContent = title;
+  document.getElementById('kp-desc-wrap').style.display  = showDesc  ? 'block' : 'none';
+  document.getElementById('kp-code-wrap').style.display  = showCode  ? 'flex'  : 'none';
+  document.getElementById('kp-date-wrap').style.display  = showDate  ? 'flex'  : 'none';
+  document.getElementById('kp-sign-wrap').style.display  = showSign  ? 'flex'  : 'none';
+  if(showDate) {
+    kpDate = todayStr(); selectedDate = kpDate;
+    document.getElementById('kp-date-lbl').textContent = 'Date: '+fmtDateUS(kpDate);
+  }
+  if(showCode) selectCode(kpCode);
+  if(showSign) setKpSign(1);
+  updateKpDisplay();
+  document.getElementById('kp-overlay').classList.add('open');
+}
+
+function closeKp() { document.getElementById('kp-overlay').classList.remove('open'); }
+function handleKpBg(e) { if(e.target===document.getElementById('kp-overlay')) closeKp(); }
+
+function selectCode(c) {
+  kpCode = c;
+  ['310','320','331','ite'].forEach(x=>{
+    const el = document.getElementById('kpcode-'+x);
+    if(el) el.classList.toggle('sel', x===c);
+  });
+}
+
+function setKpSign(s) {
+  kpSign = s;
+  document.getElementById('kp-sign-pos').classList.toggle('pos', s===1);
+  document.getElementById('kp-sign-neg').classList.toggle('neg', s===-1);
+  document.getElementById('kp-sign-pos').style.opacity = s===1?'1':'0.5';
+  document.getElementById('kp-sign-neg').style.opacity = s===-1?'1':'0.5';
+  updateKpDisplay();
+}
+
+function kpKey(k) {
+  if(k==='back') { kpValue=kpValue.slice(0,-1); }
+  else if(k==='.') { if(!kpValue.includes('.')) kpValue+='.'; }
+  else { if(kpValue.length>=8) return; kpValue+=k; }
+  updateKpDisplay();
+}
+
+function updateKpDisplay() {
+  const n = parseFloat(kpValue)||0;
+  const disp = kpValue==='' ? '0' : kpValue;
+  document.getElementById('kp-box-main-val').textContent = disp;
+  let sub = '';
+  if(kpMode==='adj') sub = 'Code '+kpCode+(kpSign===1?' · Increase':' · Decrease');
+  if(kpMode==='ts')  sub = EMPLOYEES[kpEmp]?.name+' hrs';
+  if(kpMode==='nsfee') sub = '/month · Code 331';
+  if(kpMode==='rec') sub = kpField.toUpperCase()+' from statement';
+  document.getElementById('kp-box-main-sub').textContent = sub;
+}
+
+function kpConfirm() {
+  const val = parseFloat(kpValue);
+  if(isNaN(val) || val < 0) { showToast('Please enter a valid amount.'); return; }
+
+  if(kpMode==='adj') {
+    const note = document.getElementById('kp-desc')?.value?.trim()||'';
+    const newAdj = { id:'adj'+(nextAdjId++), date:kpDate, code:kpCode, amt:+(val*kpSign).toFixed(2), note };
+    adjs.push(newAdj);
+    saveS('sdp_adjs_v1', adjs);
+    closeKp();
+    renderBudget();
+    showToast('Adjustment added ✓');
+  }
+  else if(kpMode==='nsfee') {
+    settings.nsFee = +val.toFixed(2);
+    saveS('sdp_settings_v1', settings);
+    closeKp();
+    renderBudget();
+    showToast('NextStep fee updated to '+fmt(settings.nsFee)+'/mo ✓');
+  }
+  else if(kpMode==='ts') {
+    if(!timesheet[kpDate]) timesheet[kpDate]={};
+    timesheet[kpDate][kpEmp] = +val.toFixed(2);
+    saveS('sdp_timesheet_v1', timesheet);
+    closeKp();
+    renderTimesheet();
+    if(currentTab==='clocklog') renderClockLog();
+    showToast('Hours saved: '+val+' hrs for '+EMPLOYEES[kpEmp].name+' ✓');
+  }
+  else if(kpMode==='rec') {
+    recVals[kpField] = +val.toFixed(2);
+    document.getElementById('rec-'+kpField).textContent = fmt(val);
+    closeKp();
+  }
+  else if(kpMode==='ppamt') {
+    if(kpField==='gross') {
+      window._ppGross = +val.toFixed(2);
+      document.getElementById('pp-gross').textContent = fmt(val);
+      // auto-calc tax
+      const tax = +(val * TAX_RATE).toFixed(2);
+      window._ppTax   = tax;
+      document.getElementById('pp-tax').textContent  = fmt(tax);
+      document.getElementById('pp-total').textContent = fmt(val+tax);
+    } else {
+      window._ppTax = +val.toFixed(2);
+      document.getElementById('pp-tax').textContent   = fmt(val);
+      const g = window._ppGross||0;
+      document.getElementById('pp-total').textContent = fmt(g+val);
+    }
+    closeKp();
+  }
+  else if(kpMode==='pphrs') {
+    if(!window._ppHrs) window._ppHrs = {};
+    window._ppHrs[kpField] = +val.toFixed(2);
+    document.getElementById('pp-hrs-'+kpField).textContent = val.toFixed(1)+' hrs';
+    closeKp();
+  }
+  else if(kpMode==='recKp') {
+    recVals[kpField] = +val.toFixed(2);
+    document.getElementById('rec-'+kpField).textContent = fmt(val);
+    closeKp();
+  }
+}
+
+// ══════════════════════════════════════
+// OPEN SPECIFIC KEYPADS
+// ══════════════════════════════════════
+function openAdjKp() {
+  kpMode='adj'; kpCode='320'; kpSign=1;
+  document.getElementById('kp-desc').value='';
+  openKp('Add Budget Adjustment', true, true, true, true);
+}
+function openNsFeeKp() {
+  kpMode='nsfee';
+  openKp('Update NextStep Monthly Fee', false, false, false, false);
+  document.getElementById('kp-box-main-lbl').textContent='Amount ($/mo)';
+}
+function openTsKp(date, emp) {
+  kpMode='ts'; kpDate=date; kpEmp=emp;
+  openKp('Hours for '+EMPLOYEES[emp].name+' · '+fmtDateUS(date), false, false, false, false);
+  document.getElementById('kp-box-main-lbl').textContent='Hours Worked';
+}
+function openPpHrsKp(emp) {
+  kpMode='pphrs'; kpField=emp;
+  openKp('Hours — '+(EMPLOYEES[emp]?.name||emp), false, false, false, false);
+  document.getElementById('kp-box-main-lbl').textContent='Hours';
+}
+function openPpAmtKp(field) {
+  kpMode='ppamt'; kpField=field;
+  openKp(field==='gross'?'Gross Labor ($)':'Employer Tax ($)', false, false, false, false);
+  document.getElementById('kp-box-main-lbl').textContent='Amount';
+}
+function openRecKp(field) {
+  kpMode='recKp'; kpField=field;
+  const labels={'cor':'Cordelia Gross','mav':'Maverick Gross','raf':'Rafi Gross','tax':'Employer Tax','ns':'NextStep/331','total':'Total Usage'};
+  openKp(labels[field]||field, false, false, false, false);
+  document.getElementById('kp-box-main-lbl').textContent='Amount ($)';
+}
+
+// ══════════════════════════════════════
+// CALENDAR
+// ══════════════════════════════════════
+let calDate = new Date(TODAY);
+let calTarget = ''; // 'kp' or 'emp'
+
+function openKpCal() { calDate=new Date(TODAY); renderCal(); document.getElementById('cal-overlay').classList.add('open'); }
+function closeCal()   { document.getElementById('cal-overlay').classList.remove('open'); }
+function handleCalBg(e) { if(e.target===document.getElementById('cal-overlay')) closeCal(); }
+function calMove(dir) { calDate.setMonth(calDate.getMonth()+dir); renderCal(); }
+
+function renderCal() {
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const y=calDate.getFullYear(), m=calDate.getMonth();
+  document.getElementById('cal-lbl').textContent=MONTHS[m]+' '+y;
+  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  const DOWS=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  let html=DOWS.map(d=>`<div class="mini-cal-dow">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html+=`<div class="mini-cal-day empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const iso=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const isSel=iso===selectedDate, isToday=iso===todayStr();
+    html+=`<div class="mini-cal-day${isSel?' sel':isToday?' today':''}" onclick="pickDay('${iso}')">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+}
+
+function pickDay(iso) {
+  selectedDate=iso; kpDate=iso;
+  document.getElementById('kp-date-lbl').textContent='Date: '+fmtDateUS(iso);
+  closeCal();
+}
+
+// ══════════════════════════════════════
+// ADD / DELETE
+// ══════════════════════════════════════
+function deleteAdj(id) {
+  if(!confirm('Delete this adjustment?')) return;
+  adjs = adjs.filter(a=>a.id!==id);
+  saveS('sdp_adjs_v1', adjs);
+  renderBudget();
+  showToast('Adjustment deleted.');
+}
+
+function deletePeriod(id) {
+  if(!confirm('Delete this pay period? This cannot be undone.')) return;
+  periods = periods.filter(p=>p.id!==id);
+  saveS('sdp_periods_v1', periods);
+  renderPeriods();
+  showToast('Pay period deleted.');
+}
+
+// New pay period
+let _ppCode = '320';
+function openNewPeriodModal() {
+  _ppCode='320'; window._ppHrs={}; window._ppGross=0; window._ppTax=0;
+  document.getElementById('pp-label').value='';
+  document.getElementById('pp-note').value='';
+  ['cor','mav','raf','nic'].forEach(e=>{ document.getElementById('pp-hrs-'+e).textContent='—'; });
+  document.getElementById('pp-gross').textContent='Tap';
+  document.getElementById('pp-tax').textContent='Tap';
+  document.getElementById('pp-total').textContent='Auto-calc';
+  setPpCode('320');
+  document.getElementById('pp-modal').classList.add('open');
+}
+function setPpCode(c) {
+  _ppCode=c;
+  ['310','320','331','ite'].forEach(x=>{
+    const btn=document.getElementById('pp-btn-'+x);
+    if(btn) { btn.className='btn btn-sm '+(x===c?'btn-blue':'btn-ghost'); }
+  });
+}
+function savePeriod() {
+  const label=document.getElementById('pp-label').value.trim();
+  if(!label) { showToast('Please enter a period label.'); return; }
+  const gross=window._ppGross||0;
+  const tax=window._ppTax||0;
+  const newPp = {
+    id:'pp'+(nextPpId++), label, code:_ppCode,
+    gross:+gross.toFixed(2), tax:+tax.toFixed(2),
+    locked:false, note:document.getElementById('pp-note').value.trim(),
+    hrs: window._ppHrs||{}
+  };
+  periods.push(newPp);
+  saveS('sdp_periods_v1', periods);
+  closeModal('pp-modal');
+  renderPeriods();
+  if(currentTab==='budget') renderBudget();
+  showToast('Pay period '+newPp.id+' added ✓');
+}
+
+function openEmpRateKp(type) {
+  kpMode='emprate'; kpField=type;
+  openKp('Regular Rate ($/hr)', false, false, false, false);
+  document.getElementById('kp-box-main-lbl').textContent='$/hr';
+}
+function openEmpDateCal() {
+  calTarget='emp'; calDate=new Date(TODAY); renderCal();
+  document.getElementById('cal-overlay').classList.add('open');
+}
+function saveEmployee() {
+  showToast('Employee management — full build coming. Data saved locally.');
+  closeModal('emp-modal');
+}
+
+// ══════════════════════════════════════
+// MODAL HELPERS
+// ══════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function handleModalBg(e,id) { if(e.target===document.getElementById(id)) closeModal(id); }
+function openNewEmpModal() {
+  document.getElementById('emp-modal-title').textContent='Add Employee';
+  document.getElementById('emp-name').value='';
+  document.getElementById('emp-reg-display').textContent='Tap to set';
+  document.getElementById('emp-start-display').textContent='Tap to pick';
+  document.getElementById('emp-modal').classList.add('open');
+}
+
+// ══════════════════════════════════════
+// DOTS MENU
+// ══════════════════════════════════════
+function toggleDotsMenu(e) {
+  e.stopPropagation();
+  const m=document.getElementById('dots-menu');
+  m.style.display = m.style.display==='none' ? 'block' : 'none';
+}
+document.addEventListener('click',()=>{ document.getElementById('dots-menu').style.display='none'; });
+
+// ══════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════
+function exportData() {
+  const payload = { version:1, exportedAt:new Date().toISOString(), periods, adjs, settings, timesheet };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const stamp=todayStr();
+  a.href=url; a.download='sdp_backup_'+stamp+'.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('Backup saved ✓');
+}
+function importData(event) {
+  const file=event.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try {
+      const data=JSON.parse(e.target.result);
+      if(!data.periods) { showToast('Invalid backup file.'); return; }
+      if(!confirm('Replace ALL current data with this backup?')) return;
+      periods=data.periods||SEED_PERIODS;
+      adjs=data.adjs||SEED_ADJS;
+      settings=data.settings||SEED_SETTINGS;
+      timesheet=data.timesheet||{};
+      saveS('sdp_periods_v1',periods);
+      saveS('sdp_adjs_v1',adjs);
+      saveS('sdp_settings_v1',settings);
+      saveS('sdp_timesheet_v1',timesheet);
+      switchTab(currentTab);
+      showToast('Data restored ✓');
+    } catch(err) { showToast('Could not read backup file.'); }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.getElementById('sync-pill').textContent='Local';
+document.getElementById('sync-pill').className='sync-pill wait';
+renderBudget();
+</script>
+</body>
+</html>
