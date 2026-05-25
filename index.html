@@ -1188,12 +1188,14 @@ let clWeekOffset=0;
 function clNavWeek(dir){if(dir===0)clWeekOffset=0;else clWeekOffset+=dir;renderClockLog();}
 
 function renderClockLog() {
+  const gridEl=document.getElementById('cl-grid-wrap');
+  if(!gridEl)return; // panel not in DOM yet
   const base=weekStart(TODAY);
   base.setDate(base.getDate()+clWeekOffset*7);
   const days=Array.from({length:7},(_,i)=>{const d=new Date(base);d.setDate(d.getDate()+i);return d;});
   const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('cl-week-label').textContent='Week of '+DOW[0]+' '+MON[base.getMonth()]+' '+base.getDate()+', '+base.getFullYear();
+  const weekLabelEl=document.getElementById('cl-week-label');if(weekLabelEl)weekLabelEl.textContent='Week of '+DOW[0]+' '+MON[base.getMonth()]+' '+base.getDate()+', '+base.getFullYear();
 
   // Build weekly hours per employee
   const weekHrs={};
@@ -1221,12 +1223,11 @@ function renderClockLog() {
     ACTIVE_EMPS.forEach(e=>{
       const h=weekHrs[e][i].total;
       dayTotal+=h;
-      const premierH=weekHrs[e][i].s1>0?premierRound(String(Math.floor(weekHrs[e][i].s1)).padStart(2,'0')+String(Math.round((weekHrs[e][i].s1%1)*60)).padStart(2,'0')):0;
       let cls='clk-cell';
       let label='<span style="color:var(--text3);">—</span>';
       if(h>0){
         const s1=weekHrs[e][i].s1, s2=weekHrs[e][i].s2;
-        label=s1.toFixed(2)+(s2>0?'+'+s2.toFixed(2):'')+' hrs';
+        label=s1.toFixed(2)+(s2>0?' + '+s2.toFixed(2):'')+' hrs';
         if(h>12){cls+=' ot2';label+=' ⚠2×';}
         else if(h>8){cls+=' ot';label+=' ⚠OT';}
       }
@@ -1248,8 +1249,10 @@ function renderClockLog() {
   document.getElementById('cl-grid-wrap').innerHTML=gridHtml;
 
   const warnEl=document.getElementById('cl-ot-warning');
-  if(warnings.length){warnEl.style.display='block';warnEl.innerHTML='⚠ '+warnings.join(' · ');}
-  else warnEl.style.display='none';
+  if(warnEl){
+    if(warnings.length){warnEl.style.display='block';warnEl.innerHTML='⚠ '+warnings.join(' · ');}
+    else warnEl.style.display='none';
+  }
 
   // Per-employee summaries
   ACTIVE_EMPS.forEach(e=>{
@@ -1260,7 +1263,8 @@ function renderClockLog() {
     const gross=+(reg*rate.reg+ot15*rate.ot+ot2*rate.ot2).toFixed(2);
     const total=+(reg+ot15+ot2).toFixed(2);
     const el=document.getElementById('cl-sum-'+e);
-    if(el) el.innerHTML=`
+    if(!el) return;
+    el.innerHTML=`
       <div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:8px;">${emp.name}</div>
       <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);">
         <div style="display:flex;justify-content:space-between;"><span>Reg hrs</span><span style="color:var(--text1);">${reg.toFixed(1)}</span></div>
@@ -1276,6 +1280,8 @@ function renderClockLog() {
 // RENDER TIMESHEET
 // ══════════════════════════════════════
 function renderTimesheet() {
+  const tsEl=document.getElementById('ts-tbody');
+  if(!tsEl)return;
   const cyclPeriods=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle&&p.reconciled);
   const rows=cyclPeriods.map(p=>{
     const totalHrs=ACTIVE_EMPS.reduce((s,e)=>s+(p.hrs?.[e]||0),0);
