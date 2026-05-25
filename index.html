@@ -774,48 +774,56 @@ function bgSaveSettings() {
 }
 
 async function initDB() {
-  setSyncLabel('Connecting…',false);
+  setSyncLabel('Connecting…', false);
   try {
-    const ppRows = await supaGet('pay_periods','cycle_id=eq.'+currentCycle+'&order=id.asc');
-    if(!ppRows||ppRows.length===0) {
-      setSyncLabel('Seeding…',false);
+    const ppRows = await supaGet('pay_periods', 'cycle_id=eq.' + currentCycle + '&order=id.asc');
+    if (!ppRows || ppRows.length === 0) {
+      // Seed
+      setSyncLabel('Seeding…', false);
       const ppDbRows = SEED_PERIODS.map(periodToDb);
-      await supaPost('pay_periods',ppDbRows);
-      const adjDbRows = SEED_ADJS.map(a=>({...a,cycle_id:currentCycle}));
-      await supaPost('adjustments',adjDbRows);
-      await supaSetSetting('settings',settings);
-      await supaSetSetting('taxRates',taxRates);
+      await supaPost('pay_periods', ppDbRows);
+      const adjDbRows = SEED_ADJS.map(function(a){ return Object.assign({}, a, {cycle_id: currentCycle}); });
+      await supaPost('adjustments', adjDbRows);
+      await supaSetSetting('settings', settings);
+      await supaSetSetting('taxRates', taxRates);
     } else {
-      periods = ppRows.map(dbToPeriod);
-      const adjRows = await supaGet('adjustments','cycle_id=eq.'+currentCycle+'&order=date.asc');
-      adjs = adjRows.map(r=>({id:r.id,date:r.date,code:r.code,amt:r.amt,note:r.note||''}));
-      const tsRows = await supaGet('timesheet','cycle_id=eq.'+currentCycle+'&order=date.asc');
-      timesheet = {};
-      tsRows.forEach(r=>{
-        if(!timesheet[r.date])timesheet[r.date]={};
-        timesheet[r.date][r.emp]={s1:r.shift1||0,s2:r.shift2||0};
+      // Load data silently into memory only - NO UI updates
+      var loadedPeriods = ppRows.map(dbToPeriod);
+      var adjRows = await supaGet('adjustments', 'cycle_id=eq.' + currentCycle + '&order=date.asc');
+      var loadedAdjs = adjRows.map(function(r){ return {id:r.id,date:r.date,code:r.code,amt:r.amt,note:r.note||''}; });
+      var tsRows = await supaGet('timesheet', 'cycle_id=eq.' + currentCycle + '&order=date.asc');
+      var loadedTs = {};
+      tsRows.forEach(function(r){
+        if (!loadedTs[r.date]) loadedTs[r.date] = {};
+        loadedTs[r.date][r.emp] = {s1: r.shift1||0, s2: r.shift2||0};
       });
-      const sv = await supaGetSetting('settings');
-      const tv = await supaGetSetting('taxRates');
-      if(sv)settings=sv; if(tv)taxRates=tv;
-      nextPpId  = periods.length  ? Math.max(...periods.map(p=>parseInt(p.id.replace(/\D/g,''))||0))+1 : 1;
-      nextAdjId = adjs.length     ? Math.max(...adjs.map(a=>parseInt(a.id.replace(/\D/g,''))||0))+1 : 1;
+      var sv = await supaGetSetting('settings');
+      var tv = await supaGetSetting('taxRates');
+      // Only update memory - never touch the DOM here
+      periods   = loadedPeriods;
+      adjs      = loadedAdjs;
+      timesheet = loadedTs;
+      if (sv) settings  = sv;
+      if (tv) taxRates  = tv;
+      nextPpId  = periods.length  ? Math.max.apply(null, periods.map(function(p){ return parseInt(p.id.replace(/\D/g,''))||0; }))+1 : 13;
+      nextAdjId = adjs.length     ? Math.max.apply(null, adjs.map(function(a){ return parseInt(a.id.replace(/\D/g,''))||0; }))+1 : 3;
       saveAll();
     }
     syncReady = true;
-    setSyncLabel('✓ Live',true);
-    // Only re-render if keypad is not open
+    setSyncLabel('✓ Live', true);
+    // ONLY re-render if keypad is closed AND we are on a data tab
     var ov = document.getElementById('kp-overlay');
-    if (!ov || !ov.classList.contains('open')) {
-      switchTab(currentTab);
-    } else {
-      // Just refresh data silently without disturbing UI
-      saveAll();
+    var kpOpen = ov && ov.classList.contains('open');
+    if (!kpOpen) {
+      // Silent refresh of current tab data only
+      if (currentTab === 'budget')     renderBudget();
+      else if (currentTab === 'periods')    renderPeriods();
+      else if (currentTab === 'projection') renderProjection();
     }
   } catch(e) {
-    console.error('DB:',e);
-    setSyncLabel('Offline — local data only',false);
-    // Do NOT re-render on error - leave page as-is
+    console.warn('Supabase sync failed:', e.message);
+    setSyncLabel('Offline', false);
+    // Never touch the DOM on error
   }
 }
 
