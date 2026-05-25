@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>SDP Budget Tracker</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap');
 :root {
   --blue:#0077b6;--blue-dark:#005f92;--blue-deep:#003f63;
   --yellow:#f5c842;--yellow-dk:#d4a800;--yellow-lt:#fff8dc;
@@ -25,10 +25,10 @@ body{font-family:'Syne',sans-serif;background:linear-gradient(170deg,#003f63 0%,
 .hdr{background:var(--blue-deep);display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;box-shadow:0 2px 10px rgba(0,0,0,.25);position:sticky;top:0;z-index:100;}
 .hdr-logo{background:var(--yellow);color:var(--blue-deep);font-weight:800;font-size:15px;padding:5px 14px;border-radius:8px;letter-spacing:.02em;}
 .hdr-title{font-size:17px;font-weight:700;color:#fff;}
-.hdr-sub{font-size:11px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;margin-top:1px;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:1px;}
 .hdr-right{display:flex;align-items:center;gap:10px;position:relative;}
 .cycle-btn{font-size:11px;font-weight:700;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 12px;border-radius:8px;cursor:pointer;}
-.sync-pill{font-size:10px;font-family:'DM Mono',monospace;padding:4px 10px;border-radius:6px;border:1px solid;}
+.sync-pill{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:4px 10px;border-radius:6px;border:1px solid;}
 .sync-pill.live{background:rgba(13,158,110,.2);border-color:rgba(13,158,110,.4);color:#6ee7b7;}
 .sync-pill.wait{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.7);}
 .hdr-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:5px 13px;font-size:18px;font-weight:900;cursor:pointer;line-height:1;}
@@ -59,9 +59,9 @@ body{font-family:'Syne',sans-serif;background:linear-gradient(170deg,#003f63 0%,
 .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px;}
 .kpi{background:var(--card);border:1px solid var(--card-bdr);border-radius:14px;padding:15px 18px;box-shadow:0 2px 12px rgba(0,60,100,.08);backdrop-filter:blur(6px);}
 .kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:7px;}
-.kpi-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;line-height:1;}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:500;line-height:1;}
 .kpi-val.blue{color:var(--blue);}.kpi-val.green{color:var(--green);}.kpi-val.orange{color:var(--orange);}.kpi-val.red{color:var(--red);}
-.kpi-sub{font-size:11px;color:var(--text3);margin-top:5px;font-family:'DM Mono',monospace;}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:5px;font-family:'IBM Plex Mono',monospace;}
 .mini-bar{background:#e4eaf2;border-radius:100px;height:5px;margin-top:8px;overflow:hidden;}
 .mini-fill{height:100%;border-radius:100px;}
 /* ALERT */
@@ -73,23 +73,23 @@ body{font-family:'Syne',sans-serif;background:linear-gradient(170deg,#003f63 0%,
 /* TABLE */
 .t-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{background:rgba(232,244,251,.85);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid var(--gray-bdr);font-family:'DM Mono',monospace;white-space:nowrap;position:sticky;top:0;}
+thead th{background:rgba(232,244,251,.85);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid var(--gray-bdr);font-family:'IBM Plex Mono',monospace;white-space:nowrap;position:sticky;top:0;}
 tbody td{padding:10px 14px;border-bottom:1px solid rgba(240,242,245,.9);color:var(--text2);vertical-align:middle;}
-tbody td.mono{font-family:'DM Mono',monospace;color:var(--text1);}
-tbody td.green{font-family:'DM Mono',monospace;color:var(--green);font-weight:700;}
-tbody td.red{font-family:'DM Mono',monospace;color:var(--red);font-weight:700;}
-tbody td.amber{font-family:'DM Mono',monospace;color:var(--orange);font-weight:700;}
+tbody td.mono{font-family:'IBM Plex Mono',monospace;color:var(--text1);}
+tbody td.green{font-family:'IBM Plex Mono',monospace;color:var(--green);font-weight:700;}
+tbody td.red{font-family:'IBM Plex Mono',monospace;color:var(--red);font-weight:700;}
+tbody td.amber{font-family:'IBM Plex Mono',monospace;color:var(--orange);font-weight:700;}
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover td{background:rgba(0,119,182,.04);}
 tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .tot-row td{background:rgba(232,244,251,.8)!important;font-weight:700;border-top:2px solid var(--gray-bdr)!important;}
 .tbl-section td{background:rgba(0,119,182,.06)!important;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--blue-dark);padding:7px 14px;border-bottom:1px solid rgba(0,119,182,.15)!important;}
 /* BADGES */
-.badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'DM Mono',monospace;white-space:nowrap;}
+.badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:100px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
 .b310{background:#dbeafe;color:#1e40af;}.b320{background:#d1fae5;color:#065f46;}.b331{background:#fef3c7;color:#92400e;}.bite{background:#fee2e2;color:#991b1b;}
-.locked{font-size:9px;background:rgba(107,124,147,.15);color:var(--text3);padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;}
-.rec-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-lt);border:1px solid #6ee7b7;color:var(--green-dk);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;}
-.flag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;white-space:nowrap;}
+.locked{font-size:9px;background:rgba(107,124,147,.15);color:var(--text3);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;}
+.rec-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-lt);border:1px solid #6ee7b7;color:var(--green-dk);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.flag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
 .flag-ok{background:var(--green-lt);color:var(--green-dk);}
 .flag-err{background:var(--red-lt);color:var(--red-dk);}
 .flag-warn{background:#fff3e0;color:var(--orange);}
@@ -106,11 +106,11 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .cat-bar-section{margin-bottom:14px;}.cat-bar-section:last-child{margin-bottom:0;}
 .cat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
 .cat-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text1);}
-.cat-nums{display:flex;gap:14px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);}
+.cat-nums{display:flex;gap:14px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
 .cat-nums strong{color:var(--text1);}
 .cat-track{background:#dde8f0;border-radius:100px;height:11px;overflow:hidden;margin-bottom:3px;}
 .cat-fill{height:100%;border-radius:100px;}
-.cat-foot{display:flex;justify-content:space-between;font-size:11px;font-family:'DM Mono',monospace;color:var(--text3);}
+.cat-foot{display:flex;justify-content:space-between;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);}
 /* NS BOX */
 .ns-box{background:var(--yellow-lt);border:1px solid var(--yellow);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 /* SIDE PANEL */
@@ -134,14 +134,14 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .emp-row-item.total-line{border-top:1px solid var(--gray-bdr);margin-top:5px;padding-top:9px;font-weight:700;}
 .emp-row-item.total-line .erv{color:var(--blue);font-size:14px;}
 .erl{color:var(--text3);display:flex;align-items:center;gap:6px;}
-.erv{font-family:'DM Mono',monospace;color:var(--text1);font-weight:500;}
-.rate-chip{font-size:9px;background:#e8f4fb;color:var(--blue-dark);padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:700;}
-.ot-chip{font-size:9px;background:#fff3e0;color:var(--orange);padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:700;}
-.ot2-chip{font-size:9px;background:var(--red-lt);color:var(--red-dk);padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:700;}
+.erv{font-family:'IBM Plex Mono',monospace;color:var(--text1);font-weight:500;}
+.rate-chip{font-size:9px;background:#e8f4fb;color:var(--blue-dark);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:700;}
+.ot-chip{font-size:9px;background:#fff3e0;color:var(--orange);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:700;}
+.ot2-chip{font-size:9px;background:var(--red-lt);color:var(--red-dk);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:700;}
 /* CLOCK LOG GRID */
 .clk-grid{display:grid;grid-template-columns:120px repeat(3,1fr) 110px;}
-.clk-hdr{padding:9px 12px;background:rgba(232,244,251,.8);border-bottom:1px solid var(--gray-bdr);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-family:'DM Mono',monospace;}
-.clk-cell{padding:10px 12px;border-bottom:1px solid rgba(240,242,245,.8);font-size:13px;font-family:'DM Mono',monospace;color:var(--text1);cursor:pointer;}
+.clk-hdr{padding:9px 14px;background:rgba(232,244,251,.8);border-bottom:1px solid var(--gray-bdr);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.clk-cell{padding:11px 14px;border-bottom:1px solid rgba(240,242,245,.8);font-size:15px;font-family:'IBM Plex Mono',monospace;color:var(--text1);cursor:pointer;}
 .clk-cell:hover{background:rgba(0,119,182,.06);}
 .clk-cell.ot{color:var(--orange);font-weight:700;}
 .clk-cell.ot2{color:var(--red);font-weight:700;}
@@ -149,19 +149,19 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .clk-cell.today-row{background:rgba(0,119,182,.04);}
 .clk-tot{background:rgba(232,244,251,.7)!important;font-weight:700;border-top:2px solid var(--gray-bdr)!important;}
 /* PROJECTION */
-.tap-box{background:var(--gray-bg);border:1.5px solid var(--gray-bdr);border-radius:10px;padding:8px 14px;font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--text1);cursor:pointer;min-width:80px;text-align:center;transition:border-color .15s;}
+.tap-box{background:var(--gray-bg);border:1.5px solid var(--gray-bdr);border-radius:10px;padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;color:var(--text1);cursor:pointer;min-width:80px;text-align:center;transition:border-color .15s;}
 .tap-box:hover{border-color:var(--blue);background:#fff;}
-.est-chip{font-size:11px;font-family:'DM Mono',monospace;color:var(--green);background:var(--green-lt);padding:3px 10px;border-radius:6px;white-space:nowrap;}
+.est-chip{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--green);background:var(--green-lt);padding:3px 10px;border-radius:6px;white-space:nowrap;}
 .day-pill{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--gray-bdr);color:var(--text3);background:var(--gray-bg);transition:all .15s;}
 .day-pill.active{background:var(--blue);color:#fff;border-color:var(--blue);}
-.split-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid;font-family:'DM Mono',monospace;transition:all .15s;}
+.split-pill{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
 .split-pill.active-310{background:#dbeafe;color:#1e40af;border-color:#93c5fd;}
 .split-pill.active-320{background:#d1fae5;color:#065f46;border-color:#6ee7b7;}
 .split-pill.inactive{background:var(--gray-bg);color:var(--text3);border-color:var(--gray-bdr);}
 .result-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(221,227,236,.5);font-size:13px;}
 .result-item:last-child{border-bottom:none;}
 .result-lbl{color:var(--text2);display:flex;align-items:center;gap:8px;}
-.result-val{font-family:'DM Mono',monospace;font-weight:600;color:var(--text1);}
+.result-val{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--text1);}
 .result-val.blue{color:var(--blue);}.result-val.green{color:var(--green);}.result-val.orange{color:var(--orange);}.result-val.big{font-size:18px;}
 .bal-card{background:var(--card);border:1px solid var(--card-bdr);border-radius:14px;padding:16px 18px;box-shadow:0 2px 12px rgba(0,60,100,.08);backdrop-filter:blur(6px);}
 /* RECONCILE */
@@ -174,7 +174,7 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .step.todo .step-num{background:var(--gray-bdr);color:var(--text3);}
 .step-lbl{font-size:12px;font-weight:700;}
 .step.done .step-lbl{color:var(--green);}.step.active .step-lbl{color:var(--blue);}.step.todo .step-lbl{color:var(--text3);}
-.step-sub{font-size:10px;color:var(--text3);margin-top:1px;font-family:'DM Mono',monospace;}
+.step-sub{font-size:10px;color:var(--text3);margin-top:1px;font-family:'IBM Plex Mono',monospace;}
 .upload-zone{border:2px dashed rgba(0,119,182,.35);border-radius:14px;padding:40px;text-align:center;background:rgba(0,119,182,.04);cursor:pointer;transition:all .2s;margin-bottom:16px;}
 .upload-zone:hover{border-color:var(--blue);background:rgba(0,119,182,.08);}
 .mismatch-item{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border-radius:10px;background:var(--red-lt);border:1px solid #fca5a5;margin-bottom:8px;}
@@ -185,7 +185,7 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .settings-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(221,227,236,.5);font-size:13px;}
 .settings-row:last-child{border-bottom:none;}
 .settings-lbl{color:var(--text2);}
-.settings-val{font-family:'DM Mono',monospace;color:var(--text1);font-weight:500;}
+.settings-val{font-family:'IBM Plex Mono',monospace;color:var(--text1);font-weight:500;}
 .emp-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
 /* KEYPAD */
 .kp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
@@ -200,13 +200,13 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .kp-box{flex:1;background:rgba(0,0,0,.25);border-radius:12px;padding:10px 12px;border:1.5px solid transparent;cursor:pointer;}
 .kp-box.active{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.6);}
 .kp-box-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.6);margin-bottom:3px;}
-.kp-box-val{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:#fff;line-height:1;min-height:34px;}
+.kp-box-val{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;color:#fff;line-height:1;min-height:34px;}
 .kp-box-sub{font-size:11px;color:rgba(255,255,255,.55);margin-top:3px;}
 .kp-box-sub.highlight{color:var(--yellow);font-weight:700;}
 .kp-stats-row{display:flex;gap:6px;padding:0 16px 10px;}
 .kp-stat{flex:1;background:rgba(0,0,0,.2);border-radius:8px;padding:7px 10px;text-align:center;}
 .kp-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.5);margin-bottom:2px;}
-.kp-stat-val{font-family:'DM Mono',monospace;font-size:13px;color:#fff;font-weight:500;}
+.kp-stat-val{font-family:'IBM Plex Mono',monospace;font-size:13px;color:#fff;font-weight:500;}
 .kp-stat-val.green{color:#6ee7b7;}.kp-stat-val.amber{color:var(--yellow);}.kp-stat-val.red{color:#fca5a5;}.kp-stat-val.muted{color:rgba(255,255,255,.3);}
 .kp-add-shift-btn{margin:0 16px 10px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;width:calc(100% - 32px);text-align:center;}
 .kp-shift-confirmed{margin:0 16px 10px;background:rgba(13,158,110,.15);border:1.5px solid rgba(13,158,110,.35);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
@@ -215,19 +215,19 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .kp-desc-input:focus{border-color:rgba(255,255,255,.5);}
 .kp-desc-input::placeholder{color:rgba(255,255,255,.4);}
 .kp-code-row{display:flex;gap:8px;padding:0 16px 10px;}
-.kp-code-pill{flex:1;text-align:center;padding:7px 0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);transition:all .15s;font-family:'DM Mono',monospace;}
+.kp-code-pill{flex:1;text-align:center;padding:7px 0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);transition:all .15s;font-family:'IBM Plex Mono',monospace;}
 .kp-code-pill.sel.c310{background:#1e40af;border-color:#3b82f6;color:#fff;}
 .kp-code-pill.sel.c320{background:#065f46;border-color:#10b981;color:#fff;}
 .kp-code-pill.sel.c331{background:#92400e;border-color:#f59e0b;color:#fff;}
 .kp-date-row{display:flex;align-items:center;justify-content:space-between;padding:0 16px 10px;}
-.kp-date-lbl{font-size:12px;font-family:'DM Mono',monospace;color:#fff;}
+.kp-date-lbl{font-size:12px;font-family:'IBM Plex Mono',monospace;color:#fff;}
 .kp-date-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;}
 .kp-sign-row{display:flex;gap:10px;padding:0 16px 10px;}
 .kp-sign-btn{flex:1;padding:9px 0;text-align:center;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;border:1.5px solid transparent;transition:all .15s;font-family:'Syne',sans-serif;}
 .kp-sign-btn.pos{background:#dcfce7;color:#14532d;border-color:#86efac;}
 .kp-sign-btn.neg{background:#fee2e2;color:#7c2d12;border-color:#fca5a5;}
 .kp-weekly-bar{margin:0 16px 10px;background:rgba(0,0,0,.2);border-radius:10px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center;}
-.kp-format-hint{margin:0 16px 10px;background:rgba(255,255,255,.08);border-radius:8px;padding:6px 12px;font-size:11px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;}
+.kp-format-hint{margin:0 16px 10px;background:rgba(255,255,255,.08);border-radius:8px;padding:6px 12px;font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;}
 .kp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.1);}
 .kp-key{background:rgba(255,255,255,.07);padding:16px 0;text-align:center;font-size:22px;font-weight:600;color:#fff;cursor:pointer;user-select:none;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .1s;}
 .kp-key:active,.kp-key:hover{background:rgba(255,255,255,.15);}
@@ -252,7 +252,7 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .mini-cal-nav button{background:rgba(0,0,0,.06);border:none;border-radius:6px;padding:4px 10px;font-size:14px;cursor:pointer;}
 .mini-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
 .mini-cal-dow{text-align:center;font-size:9px;font-weight:700;color:var(--text3);padding:3px 0;text-transform:uppercase;}
-.mini-cal-day{text-align:center;padding:6px 0;font-size:12px;font-family:'DM Mono',monospace;border-radius:6px;cursor:pointer;}
+.mini-cal-day{text-align:center;padding:6px 0;font-size:12px;font-family:'IBM Plex Mono',monospace;border-radius:6px;cursor:pointer;}
 .mini-cal-day:hover{background:rgba(0,119,182,.1);}
 .mini-cal-day.today{background:rgba(0,119,182,.15);font-weight:700;}
 .mini-cal-day.sel{background:var(--blue);color:#fff;font-weight:700;}
@@ -262,8 +262,12 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .bar-group{flex:1;display:flex;flex-direction:column;align-items:center;}
 .bar-stack{width:100%;display:flex;flex-direction:column;justify-content:flex-end;border-radius:6px 6px 0 0;overflow:hidden;}
 .bar-seg{width:100%;}
-.bar-month{font-size:10px;color:var(--text3);margin-top:5px;font-family:'DM Mono',monospace;}
-.bar-amt{font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:3px;}
+.bar-month{font-size:10px;color:var(--text3);margin-top:5px;font-family:'IBM Plex Mono',monospace;}
+.bar-amt{font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:3px;}
+/* TIMESHEET + CLOCKLOG larger text */
+#panel-timesheet table td, #panel-timesheet table th { font-size:14px !important; padding:11px 16px !important; }
+#panel-clocklog .clk-sum-text { font-size:14px; }
+#panel-clocklog .card-body { font-size:14px; }
 /* TOAST */
 .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:#0d1b2a;color:#fff;border-radius:12px;padding:10px 22px;font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -330,8 +334,8 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
           <div class="card-hdr"><div class="card-title">NextStep Monthly Fee (Code 331)</div><button class="btn btn-ghost btn-sm" onclick="openNsFeeKp()">Edit</button></div>
           <div class="card-body">
             <div class="ns-box">
-              <div><div style="font-size:12px;font-weight:700;color:var(--blue-deep);">Monthly Fee → Code 331</div><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;" id="ns-months-paid">—</div></div>
-              <div style="text-align:right;"><div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--blue-deep);" id="ns-fee-display">—</div><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px;" id="ns-summary">—</div></div>
+              <div><div style="font-size:12px;font-weight:700;color:var(--blue-deep);">Monthly Fee → Code 331</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px;" id="ns-months-paid">—</div></div>
+              <div style="text-align:right;"><div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500;color:var(--blue-deep);" id="ns-fee-display">—</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:2px;" id="ns-summary">—</div></div>
             </div>
           </div>
         </div>
@@ -354,7 +358,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div>
           <div style="font-size:13px;color:rgba(255,255,255,.9);font-weight:700;">Click any row for employee breakdown →</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;margin-top:2px;">Pay periods are added automatically from the Reconcile tab · Use "Add Manually" for corrections only</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:2px;">Pay periods are added automatically from the Reconcile tab · Use "Add Manually" for corrections only</div>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-ghost" onclick="switchTab('reconcile')" style="color:#fff;border-color:rgba(255,255,255,.3);">⬆ Upload Statement</button>
@@ -374,7 +378,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
         <div>
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.6);margin-bottom:4px;" id="sp-period-id">—</div>
           <div style="font-size:18px;font-weight:800;color:#fff;" id="sp-period-dates">—</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;margin-top:3px;">Employee cost breakdown</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:3px;">Employee cost breakdown</div>
         </div>
         <div class="panel-close" onclick="closeSidePanel()">✕</div>
       </div>
@@ -394,7 +398,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <div>
         <div style="font-size:15px;font-weight:700;color:#fff;" id="cl-week-label">—</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.65);font-family:'DM Mono',monospace;">Sun–Sat · &gt;8hrs/day=1.5× · &gt;12hrs/day=2× · Tap cell to enter hours</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.65);font-family:'IBM Plex Mono',monospace;">Sun–Sat · &gt;8hrs/day=1.5× · &gt;12hrs/day=2× · Tap cell to enter hours</div>
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-ghost" onclick="clNavWeek(-1)">◀ Prev</button>
@@ -435,7 +439,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
     <div class="g2r" style="align-items:start;">
       <!-- Inputs -->
       <div class="card">
-        <div class="card-hdr"><div class="card-title">Projection Inputs</div><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">Tap values to adjust</div></div>
+        <div class="card-hdr"><div class="card-title">Projection Inputs</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">Tap values to adjust</div></div>
         <div class="card-body">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;">Average Daily Hours per Employee</div>
           <div id="proj-emp-inputs"></div>
@@ -446,12 +450,12 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;">Future Code Split (Wages Only)</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="split-pills-wrap"></div>
           <div id="split-bar-wrap" style="margin-bottom:8px;"></div>
-          <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;padding:7px 12px;background:rgba(0,0,0,.03);border-radius:8px;">NextStep ($375/mo) → Code 331 always. ITE billed separately.</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:7px 12px;background:rgba(0,0,0,.03);border-radius:8px;">NextStep ($375/mo) → Code 331 always. ITE billed separately.</div>
         </div>
       </div>
       <!-- Results -->
       <div class="card">
-        <div class="card-hdr"><div class="card-title">Projected Results</div><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;" id="proj-days-label">—</div></div>
+        <div class="card-hdr"><div class="card-title">Projected Results</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;" id="proj-days-label">—</div></div>
         <div class="card-body" id="proj-results"></div>
       </div>
     </div>
@@ -465,7 +469,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
           <div style="display:flex;flex-direction:column;justify-content:space-between;padding-bottom:22px;padding-right:8px;" id="chart-y-axis"></div>
           <div class="chart-area" style="flex:1;" id="proj-chart"></div>
         </div>
-        <div style="display:flex;gap:16px;padding:4px 0 8px;font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;align-items:center;">
+        <div style="display:flex;gap:16px;padding:4px 0 8px;font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;align-items:center;">
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c310);margin-right:4px;"></span>Code 310</span>
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c320);margin-right:4px;"></span>Code 320</span>
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c331);margin-right:4px;"></span>Code 331</span>
@@ -480,7 +484,24 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 <div class="panel" id="panel-reconcile">
   <div class="main">
     <div class="steps" id="rec-steps"></div>
-    <div class="g2l" id="rec-content">
+    <div class="g2l" id="rec-content" style="grid-template-columns:1fr 1.2fr;">
+      <!-- LEFT: Result panel -->
+      <div id="rec-right-panel">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-hdr"><div class="card-title">Reconciliation Result</div></div>
+          <div class="card-body" id="rec-result-body"><div style="color:var(--text3);font-size:13px;">Upload a statement or select a period to begin.</div></div>
+        </div>
+        <div class="card" id="rec-approve-card" style="display:none;">
+          <div class="card-hdr"><div class="card-title">Approve Reconciliation</div></div>
+          <div class="card-body">
+            <div id="rec-approve-summary" style="background:var(--gray-bg);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;"></div>
+            <button class="btn btn-green" style="width:100%;font-size:15px;padding:13px;" onclick="approveReconcile()">✓ Mark Reconciled</button>
+            <div style="text-align:center;margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="resetReconcile()">Re-upload Statement</button></div>
+          </div>
+        </div>
+      </div>
+      <!-- RIGHT: Upload + Select PP + Comparison -->
+      <div>
       <!-- Step 1: Upload -->
       <div id="rec-step1">
         <!-- Upload button - compact -->
@@ -496,19 +517,19 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
             <span style="font-size:22px;">⬆</span>
             Upload Premier Statement (PDF)
           </div>
-          <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;line-height:1.5;">
+          <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;line-height:1.5;">
             Digital PDF only<br>Extracted &amp; discarded after processing
           </div>
           <input type="file" id="pdf-upload" accept=".pdf" style="display:none" onchange="handlePdfUpload(event)">
         </div>
         <div style="font-size:13px;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:10px;">Or select a period to reconcile manually:</div>
-        <div class="card"><div class="t-wrap"><table><thead><tr><th>Period</th><th>Dates</th><th>Status</th><th></th></tr></thead><tbody id="rec-history-tbody"></tbody></table></div></div>
+        <div class="card"><div class="t-wrap"><table><thead><tr><th>Period</th><th>Dates</th><th>Action / Status</th></tr></thead><tbody id="rec-history-tbody"></tbody></table></div></div>
       </div>
       <!-- Step 2+: Comparison (hidden initially) -->
       <div id="rec-step2plus" style="display:none;">
         <div id="rec-period-bar" style="display:flex;align-items:center;gap:12px;background:var(--yellow-lt);border:1px solid var(--yellow);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
           <div style="font-size:12px;font-weight:700;color:var(--blue-deep);">Reconciling:</div>
-          <div style="background:var(--blue);color:#fff;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;font-family:'DM Mono',monospace;" id="rec-period-badge">—</div>
+          <div style="background:var(--blue);color:#fff;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;" id="rec-period-badge">—</div>
           <div style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer;margin-left:auto;" onclick="resetReconcile()">Change period</div>
         </div>
         <div id="rec-extracted-banner" style="display:none;" class="alert good"><span>✓</span> Premier statement extracted · PDF discarded</div>
@@ -567,11 +588,11 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
     <div class="kp-top"><div class="kp-top-lbl" id="kp-title">Enter Value</div><div class="kp-x" onclick="closeKp()">✕</div></div>
     <div class="kp-format-hint" id="kp-format-hint" style="display:none;">⌨ 4-digit: <strong>0830</strong> = 8:30 · <strong>1015</strong> = 10:15</div>
     <div class="kp-weekly-bar" id="kp-weekly-bar" style="display:none;">
-      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.5);">Week total so far</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:#fff;" id="kp-week-so-far">—</div></div>
-      <div style="text-align:right;"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.5);">OT threshold</div><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--yellow);">8 hrs/day · 40 hrs/wk</div></div>
+      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.5);">Week total so far</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#fff;" id="kp-week-so-far">—</div></div>
+      <div style="text-align:right;"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.5);">OT threshold</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--yellow);">8 hrs/day · 40 hrs/wk</div></div>
     </div>
     <div id="kp-shift1-confirmed" style="display:none;" class="kp-shift-confirmed">
-      <div><div style="font-size:10px;color:rgba(13,158,110,.8);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Shift 1 Confirmed ✓</div><div style="font-family:'DM Mono',monospace;font-size:14px;color:#6ee7b7;" id="kp-s1-display">—</div></div>
+      <div><div style="font-size:10px;color:rgba(13,158,110,.8);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Shift 1 Confirmed ✓</div><div style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#6ee7b7;" id="kp-s1-display">—</div></div>
       <button onclick="editShift1()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:7px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;">Edit</button>
     </div>
     <div class="kp-displays" id="kp-displays">
@@ -675,9 +696,9 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
     <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:8px;">Hours per Employee (tap to enter)</div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;" id="pp-hrs-grid"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div><div class="modal-lbl">Gross Labor ($)</div><div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;color:var(--text1);" id="pp-gross" onclick="openPpAmtKp('gross')">Tap</div></div>
-      <div><div class="modal-lbl">Employer Tax ($)</div><div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;color:var(--text1);" id="pp-tax" onclick="openPpAmtKp('tax')">Tap</div></div>
-      <div><div class="modal-lbl">Total (auto)</div><div style="background:#eef0f4;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Mono',monospace;color:var(--text3);" id="pp-total">—</div></div>
+      <div><div class="modal-lbl">Gross Labor ($)</div><div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer;color:var(--text1);" id="pp-gross" onclick="openPpAmtKp('gross')">Tap</div></div>
+      <div><div class="modal-lbl">Employer Tax ($)</div><div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer;color:var(--text1);" id="pp-tax" onclick="openPpAmtKp('tax')">Tap</div></div>
+      <div><div class="modal-lbl">Total (auto)</div><div style="background:#eef0f4;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'IBM Plex Mono',monospace;color:var(--text3);" id="pp-total">—</div></div>
     </div>
     <div class="modal-field"><div class="modal-lbl">Notes</div><input class="modal-input" id="pp-note" type="text" placeholder="e.g. Rates used this period"></div>
     <div class="modal-btns"><button class="btn btn-ghost" onclick="closeModal('pp-modal')">Cancel</button><button class="btn btn-blue" onclick="savePeriod()">Add Pay Period</button></div>
@@ -1151,7 +1172,7 @@ function renderSidePanel(id) {
     bodyHtml+=`<div class="emp-section">
       <div class="emp-hdr">
         <div><div class="emp-name">${emp.name||e}</div></div>
-        <div style="text-align:right;"><div style="font-size:13px;font-family:'DM Mono',monospace;font-weight:700;color:var(--blue);">${fmt(empTotalCost)}</div><div style="font-size:10px;color:var(--text3);">wages + employer tax</div></div>
+        <div style="text-align:right;"><div style="font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);">${fmt(empTotalCost)}</div><div style="font-size:10px;color:var(--text3);">wages + employer tax</div></div>
       </div>
       <div class="emp-rows">
         <div class="emp-row-item"><div class="erl"><span class="rate-chip">$${rate.reg}/hr</span> Hours worked</div><div class="erv">${hrs.toFixed(2)} hrs</div></div>
@@ -1166,12 +1187,12 @@ function renderSidePanel(id) {
 
   const total=(p.gross||0)+(p.tax||0);
   document.getElementById('sp-footer').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:rgba(255,255,255,.7);"><span>Total gross wages</span><strong style="font-family:'DM Mono',monospace;">${fmt(p.gross||0)}</strong></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:rgba(255,255,255,.7);"><span>Total employer tax</span><strong style="font-family:'DM Mono',monospace;">${fmt(p.tax||0)}</strong></div>
-    ${p.premierTax!==null&&p.premierTax!==undefined?`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;color:rgba(255,255,255,.5);"><span>Premier actual tax</span><span style="font-family:'DM Mono',monospace;">${fmt(p.premierTax)}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:rgba(255,255,255,.7);"><span>Total gross wages</span><strong style="font-family:'IBM Plex Mono',monospace;">${fmt(p.gross||0)}</strong></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:rgba(255,255,255,.7);"><span>Total employer tax</span><strong style="font-family:'IBM Plex Mono',monospace;">${fmt(p.tax||0)}</strong></div>
+    ${p.premierTax!==null&&p.premierTax!==undefined?`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;color:rgba(255,255,255,.5);"><span>Premier actual tax</span><span style="font-family:'IBM Plex Mono',monospace;">${fmt(p.premierTax)}</span></div>`:''}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.2);">
       <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,.8);">Period Total Cost</span>
-      <strong style="font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--yellow);">${fmt(total)}</strong>
+      <strong style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;color:var(--yellow);">${fmt(total)}</strong>
     </div>`;
 }
 
@@ -1255,8 +1276,8 @@ function renderClockLog() {
     const total=+(reg+ot15+ot2).toFixed(2);
     const el=document.getElementById('cl-sum-'+e);
     if(el) el.innerHTML=`
-      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:8px;">${emp.name}</div>
-      <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text3);">
+      <div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:8px;">${emp.name}</div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);">
         <div style="display:flex;justify-content:space-between;"><span>Reg hrs</span><span style="color:var(--text1);">${reg.toFixed(1)}</span></div>
         <div style="display:flex;justify-content:space-between;"><span>OT 1.5× hrs</span><span style="color:${ot15>0?'var(--orange)':'var(--text1)'};">${ot15.toFixed(2)}</span></div>
         <div style="display:flex;justify-content:space-between;"><span>OT 2× hrs</span><span style="color:${ot2>0?'var(--red)':'var(--text1)'};">${ot2.toFixed(2)}</span></div>
@@ -1314,8 +1335,8 @@ function renderProjection() {
     return `<div style="border-bottom:1px solid rgba(221,227,236,.5);padding-bottom:12px;margin-bottom:4px;">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 0 6px;">
         <div class="emp-avatar" style="background:${emp.color||'#888'};">${emp.name?.[0]||'?'}</div>
-        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">${emp.name}</div><div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2×</div></div>
-        <div><div class="tap-box" onclick="openProjHrsKp('${e}')">${hrs.toFixed(1)}</div><div style="font-size:9px;color:var(--text3);text-align:center;margin-top:3px;font-family:'DM Mono',monospace;">hrs/day</div></div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">${emp.name}</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2×</div></div>
+        <div><div class="tap-box" onclick="openProjHrsKp('${e}')">${hrs.toFixed(1)}</div><div style="font-size:9px;color:var(--text3);text-align:center;margin-top:3px;font-family:'IBM Plex Mono',monospace;">hrs/day</div></div>
         <div><span class="est-chip">~${fmt(dailyCost)}/day</span></div>
       </div>
       <div style="margin-left:46px;display:flex;flex-direction:column;gap:6px;">
@@ -1331,7 +1352,7 @@ function renderProjection() {
               <div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:90px;${useAdj?'border-color:var(--blue);background:#eff6ff;':''}" onclick="openProjDateKp('${e}')">${adjDate||'Pick date'}</div>
               <span style="font-size:12px;color:var(--text3);">new base rate:</span>
               <div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:70px;${useAdj?'border-color:var(--blue);background:#eff6ff;':''}" onclick="openProjRateKp('${e}')">${adjRate?'$'+adjRate:' Tap'}</div>
-              ${adjRate?`<span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--green);font-weight:700;">OT: $${+(adjRate*1.5).toFixed(2)} · 2×: $${+(adjRate*2).toFixed(2)} ✓</span>`:''}
+              ${adjRate?`<span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);font-weight:700;">OT: $${+(adjRate*1.5).toFixed(2)} · 2×: $${+(adjRate*2).toFixed(2)} ✓</span>`:''}
             </div>
           </div>
         </label>
@@ -1356,7 +1377,7 @@ function renderProjection() {
       <div style="width:${pct310bar}%;background:#3b82f6;transition:width .3s;"></div>
       <div style="width:${pct320bar}%;background:#16a34a;transition:width .3s;"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:3px;">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:3px;">
       <span style="color:#1e40af;">310: ${pct310bar}%</span>
       <span style="color:#065f46;">320: ${pct320bar}%</span>
     </div>`;
@@ -1397,19 +1418,19 @@ function renderProjection() {
   document.getElementById('proj-results').innerHTML=`
     <div class="result-item"><div class="result-lbl">Daily labor cost (incl. tax)</div><div class="result-val big blue">${fmt(dailyCostTotal)}</div></div>
     <div class="result-item"><div class="result-lbl">Weekly cost (${projInputs.daysPerWeek} days)</div><div class="result-val big">${fmt(weeklyCost)}</div></div>
-    <div class="result-item"><div class="result-lbl">NextStep <span style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);">${nsMonths} mo × $${settings.nsFee}</span></div><div class="result-val orange">${fmt(nsProj)}</div></div>
+    <div class="result-item"><div class="result-lbl">NextStep <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text3);">${nsMonths} mo × $${settings.nsFee}</span></div><div class="result-val orange">${fmt(nsProj)}</div></div>
     <div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:3px;"></span> To Code 310 (${projInputs.splitPct310}%)</div><div class="result-val" style="color:${to310>0?'#1e40af':'var(--text3)'};">${fmt(to310)}</div></div>
     <div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:3px;"></span> To Code 320 (${100-projInputs.splitPct310}%)</div><div class="result-val green">${fmt(to320)}</div></div>
     <div class="result-item"><div class="result-lbl">Days remaining to Nov 30</div><div class="result-val">${daysLeft} days</div></div>
     <div style="margin-top:14px;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:'DM Mono',monospace;"><span>Confirmed spent</span><span style="color:var(--blue);font-weight:700;">${fmt(confirmedSpent)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;"><span>Confirmed spent</span><span style="color:var(--blue);font-weight:700;">${fmt(confirmedSpent)}</span></div>
       <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;"><div style="height:100%;border-radius:100px;background:var(--blue);width:${Math.min(100,(confirmedSpent/totalBudget()*100)).toFixed(1)}%;"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin:6px 0 4px;font-family:'DM Mono',monospace;"><span>Confirmed + projected</span><span style="color:var(--green);font-weight:700;">${fmt(projGrandTotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin:6px 0 4px;font-family:'IBM Plex Mono',monospace;"><span>Confirmed + projected</span><span style="color:var(--green);font-weight:700;">${fmt(projGrandTotal)}</span></div>
       <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;display:flex;">
         <div style="height:100%;background:var(--blue);width:${Math.min(100,(confirmedSpent/totalBudget()*100)).toFixed(1)}%;border-radius:100px 0 0 100px;"></div>
         <div style="height:100%;background:var(--green);opacity:.65;width:${Math.min(100,(projTotal/totalBudget()*100)).toFixed(1)}%;border-radius:0 100px 100px 0;"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace;">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace;">
         <span>■ Confirmed &nbsp; ■ Projected</span>
         <span>Balance at Nov 30: <strong style="color:${projBalance>=0?'var(--green)':'var(--red)'};">${fmt(projBalance)}</strong></span>
       </div>
@@ -1425,10 +1446,10 @@ function renderProjection() {
     const colors={'310':'#3b82f6','320':'#16a34a','331':'#f59e0b','ite':'#ef4444'};
     return `<div class="bal-card">
       <span class="badge b${code}" style="margin-bottom:8px;display:inline-block;">${code.toUpperCase()}</span>
-      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;">Projected balance at Nov 30, 2026</div>
-      <div style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:${projBal>=0?'var(--green)':'var(--red)'};margin-bottom:10px;">${fmt(projBal)}</div>
+      <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:6px;">Projected balance at Nov 30, 2026</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;color:${projBal>=0?'var(--green)':'var(--red)'};margin-bottom:10px;">${fmt(projBal)}</div>
       <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;"><div style="width:${pu.toFixed(1)}%;height:100%;border-radius:100px;background:${colors[code]||'#888'};"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;font-family:'DM Mono',monospace;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;font-family:'IBM Plex Mono',monospace;">
         <span>Budget: ${fmt(bud)}</span><span>${pu.toFixed(1)}% used (proj.)</span>
       </div>
     </div>`;
@@ -1473,7 +1494,7 @@ function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsTotal
   const maxY=ySteps[ySteps.length-1]||16000;
 
   document.getElementById('chart-y-axis').innerHTML=ySteps.slice().reverse().map(v=>
-    `<div style="font-size:9px;color:var(--text3);font-family:'DM Mono',monospace;text-align:right;">${v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v}</div>`).join('');
+    `<div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;text-align:right;">${v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v}</div>`).join('');
 
   const barsHtml=barData.map(b=>{
     const h310=b.isPast?0:Math.round((b.wage310/maxY)*180);
@@ -1540,9 +1561,14 @@ function renderReconcile() {
 function renderRecHistory(){
   const cyclPeriods=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle);
   document.getElementById('rec-history-tbody').innerHTML=[...cyclPeriods].reverse().map(p=>`<tr>
-    <td class="mono">${p.id}</td><td>${p.label}</td>
-    <td>${p.reconciled?'<span class="rec-badge">✓ Reconciled</span>':'<span style="color:var(--text3);font-size:11px;">Pending</span>'}</td>
-    <td><button class="btn btn-blue btn-sm" onclick="startManualRec('${p.id}')">Reconcile</button></td>
+    <td class="mono" style="font-weight:700;">${p.id}</td>
+    <td style="font-size:12px;">${p.label}</td>
+    <td>
+      ${p.reconciled
+        ? `<div style="display:flex;align-items:center;gap:8px;"><span class="rec-badge">✓ Reconciled</span><button class="btn btn-ghost btn-sm" onclick="startManualRec('${p.id}')">Re-run</button></div>`
+        : `<button class="btn btn-blue btn-sm" onclick="startManualRec('${p.id}')">▶ Reconcile</button>`
+      }
+    </td>
   </tr>`).join('');
 }
 
@@ -1654,7 +1680,7 @@ function renderReconcileComparison(){
   // Result panel
   let resultHtml=`<div style="border-radius:14px;padding:16px 18px;margin-bottom:14px;border:2px solid;${hasErr?'background:var(--red-lt);border-color:#fca5a5;':'background:var(--green-lt);border-color:#6ee7b7;'}">
     <div style="font-size:18px;font-weight:800;color:${hasErr?'var(--red-dk)':'var(--green-dk)'};">${hasErr?'✗ Issues Found':'✓ Looks Good'}</div>
-    <div style="font-size:12px;font-family:'DM Mono',monospace;color:${hasErr?'var(--red)':'var(--green)'};">Period ${recState.periodId}</div>
+    <div style="font-size:12px;font-family:'IBM Plex Mono',monospace;color:${hasErr?'var(--red)':'var(--green)'};">Period ${recState.periodId}</div>
   </div>`;
 
   if(flags.length){
@@ -1662,23 +1688,23 @@ function renderReconcileComparison(){
       resultHtml+=`<div class="mismatch-item">
         <div style="font-size:16px;">✗</div>
         <div><div style="font-size:13px;font-weight:700;color:var(--red-dk);">${f.emp} — Hours Mismatch</div>
-        <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--red);">Hour diff: ${f.diff>0?'+':''}${f.diff.toFixed(2)} · Gross diff: ${f.diffGross>0?'+':''}${fmt(f.diffGross)}</div></div>
+        <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--red);">Hour diff: ${f.diff>0?'+':''}${f.diff.toFixed(2)} · Gross diff: ${f.diffGross>0?'+':''}${fmt(f.diffGross)}</div></div>
       </div>`;
     });
   }
   if(Math.abs(taxDiff)>1){
     resultHtml+=`<div class="warn-item"><div style="font-size:16px;">⚠</div>
       <div><div style="font-size:13px;font-weight:700;color:var(--orange);">Employer Tax — Review</div>
-      <div style="font-size:11px;font-family:'DM Mono',monospace;color:#9a3412;">Diff: ${fmt(taxDiff)} · Premier applies rate differently per employee.</div></div>
+      <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:#9a3412;">Diff: ${fmt(taxDiff)} · Premier applies rate differently per employee.</div></div>
     </div>`;
   }
   document.getElementById('rec-result-body').innerHTML=resultHtml;
 
   // Approve summary
   document.getElementById('rec-approve-summary').innerHTML=`
-    <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>Our tracked total</span><span style="font-family:'DM Mono',monospace;">${fmt(ourTotal)}</span></div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>Premier statement total</span><span style="font-family:'DM Mono',monospace;">${fmt(premTotal)}</span></div>
-    <div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:8px;"><span>Variance</span><span style="font-family:'DM Mono',monospace;color:${Math.abs(totalDiff)<=0.50?'var(--green)':'var(--orange)'};">${fmt(totalDiff)}</span></div>`;
+    <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>Our tracked total</span><span style="font-family:'IBM Plex Mono',monospace;">${fmt(ourTotal)}</span></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>Premier statement total</span><span style="font-family:'IBM Plex Mono',monospace;">${fmt(premTotal)}</span></div>
+    <div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:8px;"><span>Variance</span><span style="font-family:'IBM Plex Mono',monospace;color:${Math.abs(totalDiff)<=0.50?'var(--green)':'var(--orange)'};">${fmt(totalDiff)}</span></div>`;
 }
 
 function approveReconcile(){
@@ -1709,8 +1735,8 @@ function renderSettings(){
       <div class="emp-avatar" style="background:${emp.color||'#888'};opacity:${emp.active?1:0.4};">${emp.name?.[0]||'?'}</div>
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:700;color:var(--text1);${!emp.active?'text-decoration:line-through;color:var(--text3);':''}">${emp.name}</div>
-        <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2× · Since ${fmtDateUS(emp.startDate||'')}</div>
-        ${emp.endDate?`<div style="font-size:10px;color:var(--orange);font-family:'DM Mono',monospace;">Ended ${fmtDateUS(emp.endDate)}</div>`:''}
+        <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2× · Since ${fmtDateUS(emp.startDate||'')}</div>
+        ${emp.endDate?`<div style="font-size:10px;color:var(--orange);font-family:'IBM Plex Mono',monospace;">Ended ${fmtDateUS(emp.endDate)}</div>`:''}
       </div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-ghost btn-sm" onclick="openEditEmpModal('${key}')">Edit Rate</button>
@@ -2107,7 +2133,7 @@ function openNewCycleModal(){
     <div style="display:flex;align-items:center;gap:12px;">
       <span class="badge b${code}" style="min-width:36px;text-align:center;">${code.toUpperCase()}</span>
       <span style="flex:1;font-size:12px;color:var(--text2);">${cat.label}</span>
-      <input type="number" id="cyc-bud-${code}" step="0.01" value="${cat.origBudget.toFixed(2)}" style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:8px;padding:6px 10px;font-size:13px;font-family:'DM Mono',monospace;width:130px;outline:none;" placeholder="Budget $">
+      <input type="number" id="cyc-bud-${code}" step="0.01" value="${cat.origBudget.toFixed(2)}" style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:8px;padding:6px 10px;font-size:13px;font-family:'IBM Plex Mono',monospace;width:130px;outline:none;" placeholder="Budget $">
     </div>`).join('');
   document.getElementById('cycle-modal').classList.add('open');
 }
@@ -2161,7 +2187,7 @@ function openNewPeriodModal(){
   const allEmps=ACTIVE_EMPS.concat(employees.nic?.active===false?['nic']:[]);
   document.getElementById('pp-hrs-grid').innerHTML=allEmps.map(e=>`
     <div><div class="modal-lbl">${(employees[e]||EMP_DEFS[e]).name}</div>
-    <div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Mono',monospace;cursor:pointer;color:var(--text1);" id="pp-hrs-${e}" onclick="openPpHrsKp('${e}')">—</div></div>`).join('');
+    <div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer;color:var(--text1);" id="pp-hrs-${e}" onclick="openPpHrsKp('${e}')">—</div></div>`).join('');
   setPpCode('320');
   document.getElementById('pp-modal').classList.add('open');
 }
