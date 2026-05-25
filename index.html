@@ -1287,12 +1287,23 @@ function renderClockLog() {
 
   // Attach click handlers via event delegation (no inline onclick)
   document.getElementById('cl-grid-wrap').onclick = function(ev) {
+    ev.stopPropagation(); // prevent document click from interfering
     var cell = ev.target.closest('.clk-clickable');
     if (!cell) return;
     var iso = cell.getAttribute('data-iso');
     var emp = cell.getAttribute('data-emp');
     if (iso && emp) openClockKp(iso, emp);
   };
+  // iPad touch support
+  document.getElementById('cl-grid-wrap').addEventListener('touchend', function(ev) {
+    ev.stopPropagation();
+    var cell = ev.target.closest('.clk-clickable');
+    if (!cell) return;
+    ev.preventDefault();
+    var iso = cell.getAttribute('data-iso');
+    var emp = cell.getAttribute('data-emp');
+    if (iso && emp) openClockKp(iso, emp);
+  }, { passive: false });
 
   // OT warning
   var warnEl = document.getElementById('cl-ot-warning');
@@ -1905,11 +1916,17 @@ function openKp(title, opts) {
     selectedDate = kpDate;
     _text('kp-date-lbl', 'Date: ' + fmtDateUS(kpDate));
   }
-  _kpEl('kp-overlay').classList.add('open');
+  var ov = _kpEl('kp-overlay');
+  ov.classList.add('open');
+  ov.style.opacity = '1';
+  ov.style.pointerEvents = 'all';
 }
 
 function closeKp() {
-  _kpEl('kp-overlay').classList.remove('open');
+  var ov = _kpEl('kp-overlay');
+  ov.classList.remove('open');
+  ov.style.opacity = '';
+  ov.style.pointerEvents = '';
 }
 function handleKpBg(e) {
   if (e.target === _kpEl('kp-overlay')) closeKp();
@@ -1935,7 +1952,7 @@ function openClockKp(date, emp) {
   _hide('kp-add-shift-wrap');
   _show('kp-stats-row');
   _showB('kp-format-hint');
-  _showB('kp-weekly-bar');
+  _show('kp-weekly-bar');
 
   _text('kp-title', empObj.name + ' · ' + fmtDateUS(date));
   _text('kp-box-main-lbl', 'Shift 1 (HHMM)');
@@ -1975,7 +1992,10 @@ function openClockKp(date, emp) {
   // Weekly context
   updateWeeklyBar();
   updateClockStats();
-  _kpEl('kp-overlay').classList.add('open');
+  var ov = _kpEl('kp-overlay');
+  ov.classList.add('open');
+  ov.style.opacity = '1';
+  ov.style.pointerEvents = 'all';
 }
 
 function updateWeeklyBar() {
