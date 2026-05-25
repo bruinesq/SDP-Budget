@@ -400,7 +400,6 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <div>
         <div style="font-size:15px;font-weight:700;color:#fff;" id="cl-week-label">—</div>
-        <button onclick="alert('header button works')" style="padding:8px 16px;background:red;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;margin-top:8px;">TEST ALERT</button>
         <div style="font-size:11px;color:rgba(255,255,255,.65);font-family:'IBM Plex Mono',monospace;">Sun–Sat · &gt;8hrs/day=1.5× · &gt;12hrs/day=2× · Tap cell to enter hours</div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -805,10 +804,18 @@ async function initDB() {
     }
     syncReady = true;
     setSyncLabel('✓ Live',true);
-    switchTab(currentTab);
+    // Only re-render if keypad is not open
+    var ov = document.getElementById('kp-overlay');
+    if (!ov || !ov.classList.contains('open')) {
+      switchTab(currentTab);
+    } else {
+      // Just refresh data silently without disturbing UI
+      saveAll();
+    }
   } catch(e) {
     console.error('DB:',e);
-    setSyncLabel('Offline',false);
+    setSyncLabel('Offline — local data only',false);
+    // Do NOT re-render on error - leave page as-is
   }
 }
 
@@ -1874,7 +1881,6 @@ function _cls(id,v) { var el=_kpEl(id); if(el) el.className=v; }
 
 // ── Open generic keypad ──
 function openKp(title, opts) {
-  alert('openKp reached: ' + title);
   // opts: { desc, code, date, sign, secondBox }
   opts = opts || {};
   kpValue = '';
@@ -1923,7 +1929,6 @@ function handleKpBg(e) {
 
 // ── Clock keypad (dedicated) ──
 function openClockKp(date, emp) {
-  alert('openClockKp reached: ' + date + ' / ' + emp);
   console.log('openClockKp called:', date, emp);
   kpMode  = 'clock';
   kpShift = 1;
@@ -2510,16 +2515,8 @@ function showToast(msg){
 // INIT
 // ══════════════════════════════════════
 renderCycleMenu();
-try {
-  renderBudget();
-} catch(e) {
-  alert('renderBudget CRASHED: ' + e.message + ' line:' + (e.lineNumber||e.line||'?'));
-}
-try {
-  initDB();
-} catch(e) {
-  alert('initDB CRASHED: ' + e.message);
-}
+renderBudget();
+initDB();
 
 </script>
 </body>
