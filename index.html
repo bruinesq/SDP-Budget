@@ -406,7 +406,6 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
         <button class="btn btn-ghost" onclick="clNavWeek(-1)">◀ Prev</button>
         <button class="btn btn-ghost" onclick="clNavWeek(0)">This Week</button>
         <button class="btn btn-ghost" onclick="clNavWeek(1)">Next ▶</button>
-        <button class="btn btn-yellow" onclick="openClockKp('2026-05-22','mav')">🧪 Test Keypad</button>
       </div>
     </div>
     <div class="card" style="margin-bottom:16px;">
@@ -618,18 +617,18 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
       <div class="kp-sign-btn neg" id="kp-sign-neg" onclick="setKpSign(-1)">− Decrease</div>
     </div>
     <div class="kp-grid">
-      <div class="kp-key" onclick="kpKey('1')">1</div>
-      <div class="kp-key" onclick="kpKey('2')">2<div class="ksub">ABC</div></div>
-      <div class="kp-key" onclick="kpKey('3')">3<div class="ksub">DEF</div></div>
-      <div class="kp-key" onclick="kpKey('4')">4<div class="ksub">GHI</div></div>
-      <div class="kp-key" onclick="kpKey('5')">5<div class="ksub">JKL</div></div>
-      <div class="kp-key" onclick="kpKey('6')">6<div class="ksub">MNO</div></div>
-      <div class="kp-key" onclick="kpKey('7')">7<div class="ksub">PQRS</div></div>
-      <div class="kp-key" onclick="kpKey('8')">8<div class="ksub">TUV</div></div>
-      <div class="kp-key" onclick="kpKey('9')">9<div class="ksub">WXYZ</div></div>
-      <div class="kp-key dark" onclick="kpKey('C')">C</div>
-      <div class="kp-key" onclick="kpKey('0')">0</div>
-      <div class="kp-key dark" onclick="kpKey('back')">⌫</div>
+      <button type="button" class="kp-key" onclick="kpKey('1')">1</button>
+      <button type="button" class="kp-key" onclick="kpKey('2')">2<div class="ksub">ABC</button></div>
+      <button type="button" class="kp-key" onclick="kpKey('3')">3<div class="ksub">DEF</button></div>
+      <button type="button" class="kp-key" onclick="kpKey('4')">4<div class="ksub">GHI</button></div>
+      <button type="button" class="kp-key" onclick="kpKey('5')">5<div class="ksub">JKL</button></div>
+      <button type="button" class="kp-key" onclick="kpKey('6')">6<div class="ksub">MNO</button></div>
+      <button type="button" class="kp-key" onclick="kpKey('7')">7<div class="ksub">PQRS</button></div>
+      <button type="button" class="kp-key" onclick="kpKey('8')">8<div class="ksub">TUV</button></div>
+      <button type="button" class="kp-key" onclick="kpKey('9')">9<div class="ksub">WXYZ</button></div>
+      <button type="button" class="kp-key dark" onclick="kpKey('C')">C</button>
+      <button type="button" class="kp-key" onclick="kpKey('0')">0</button>
+      <button type="button" class="kp-key dark" onclick="kpKey('back')">⌫</button>
       <button class="kp-confirm" id="kp-confirm-btn" onclick="kpConfirm()">CONFIRM</button>
     </div>
   </div>
@@ -706,6 +705,10 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 <div class="toast" id="toast"></div>
 
 <script>
+// GLOBAL ERROR CATCHER
+window.onerror = function(msg, src, line, col, err) { console.error('JS ERROR:', msg, 'line:', line, err); return false; };
+
+
 // ══════════════════════════════════════
 // SUPABASE
 // ══════════════════════════════════════
@@ -1557,10 +1560,10 @@ function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsTotal
 function setProjRate(e,useAdj){projInputs[e+'UseAdj']=useAdj;renderProjection();}
 function setProjDays(n){projInputs.daysPerWeek=n;renderProjection();}
 function setProjSplit(pct){projInputs.splitPct310=pct;renderProjection();}
-function openProjHrsKp(e){kpMode='projhrs';kpField=e;openKp('Daily Hours — '+(employees[e]||EMP_DEFS[e]).name,false,false,false,false);document.getElementById('kp-box-main-lbl').textContent='Hours/day';}
-function openProjRateKp(e){kpMode='projrate';kpField=e;openKp('Adjusted Rate — '+(employees[e]||EMP_DEFS[e]).name,false,false,false,false);document.getElementById('kp-box-main-lbl').textContent='$/hr';}
+function openProjHrsKp(e){kpMode='projhrs';kpField=e;openKp('Daily Hours — '+((employees[e]||EMP_DEFS[e]).name), { mainLbl: 'Hrs/day', confirmLabel: 'SET HOURS' });}
+function openProjRateKp(e){kpMode='projrate';kpField=e;openKp('Adjusted Rate — '+((employees[e]||EMP_DEFS[e]).name), { mainLbl: '$/hr', confirmLabel: 'SET RATE' });}
 function openProjDateKp(e){kpMode='projdate';kpField=e;selectedDate=projInputs[e+'AdjDate']||todayStr();calDate=new Date(TODAY);renderCal();document.getElementById('cal-overlay').classList.add('open');}
-function openCustomSplitKp(){kpMode='split';openKp('Code 310 Split %',false,false,false,false);document.getElementById('kp-box-main-lbl').textContent='% to Code 310 (0–100)';}
+function openCustomSplitKp(){kpMode='split';openKp('Code 310 Split %', { mainLbl: '% to Code 310 (0-100)', confirmLabel: 'SET SPLIT' });}
 
 // ══════════════════════════════════════
 // RENDER RECONCILE
@@ -1918,6 +1921,7 @@ function handleKpBg(e) {
 
 // ── Clock keypad (dedicated) ──
 function openClockKp(date, emp) {
+  console.log('openClockKp called:', date, emp);
   kpMode  = 'clock';
   kpShift = 1;
   kpEmp   = emp;
@@ -1980,6 +1984,8 @@ function openClockKp(date, emp) {
   ov.classList.add('open');
   ov.style.opacity = '1';
   ov.style.pointerEvents = 'all';
+
+
 }
 
 function updateWeeklyBar() {
