@@ -12,11 +12,11 @@
   --blue:#0077b6;--blue-dark:#005f92;--blue-deep:#003f63;
   --yellow:#f5c842;--yellow-dk:#d4a800;--yellow-lt:#fff8dc;
   --gray-bg:#f4f6f9;--gray-bdr:#dde3ec;
-  --text1:#0d1b2a;--text2:#3a4a5c;--text3:#6b7c93;
+  --text1:#09131d;--text2:#1e2d3d;--text3:#4a5c70;
   --green:#0d9e6e;--green-lt:#d1fae5;--green-dk:#065f46;
   --red:#d63b3b;--red-lt:#fee2e2;--red-dk:#7c2d12;
   --orange:#e07b00;--c310:#3b82f6;--c320:#16a34a;--c331:#f59e0b;
-  --card:rgba(255,255,255,0.92);--card-bdr:rgba(255,255,255,0.7);
+  --card:rgba(255,255,255,0.97);--card-bdr:rgba(200,220,235,0.9);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
@@ -73,8 +73,8 @@ body{font-family:'Syne',sans-serif;background:linear-gradient(170deg,#003f63 0%,
 /* TABLE */
 .t-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{background:rgba(232,244,251,.85);padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid var(--gray-bdr);font-family:'IBM Plex Mono',monospace;white-space:nowrap;position:sticky;top:0;}
-tbody td{padding:10px 14px;border-bottom:1px solid rgba(240,242,245,.9);color:var(--text2);vertical-align:middle;}
+thead th{background:rgba(210,230,245,.95);padding:9px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid var(--gray-bdr);font-family:'IBM Plex Mono',monospace;white-space:nowrap;position:sticky;top:0;}
+tbody td{padding:11px 14px;border-bottom:1px solid rgba(220,230,240,.9);color:var(--text2);vertical-align:middle;font-size:14px;}
 tbody td.mono{font-family:'IBM Plex Mono',monospace;color:var(--text1);}
 tbody td.green{font-family:'IBM Plex Mono',monospace;color:var(--green);font-weight:700;}
 tbody td.red{font-family:'IBM Plex Mono',monospace;color:var(--red);font-weight:700;}
@@ -146,6 +146,8 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .clk-cell.ot{color:var(--orange);font-weight:700;}
 .clk-cell.ot2{color:var(--red);font-weight:700;}
 .clk-cell.muted{color:var(--text3);cursor:default;}
+.clk-cell.clk-clickable{cursor:pointer;}
+.clk-cell.clk-clickable:hover{background:rgba(0,119,182,.08);}
 .clk-cell.today-row{background:rgba(0,119,182,.04);}
 .clk-tot{background:rgba(232,244,251,.7)!important;font-weight:700;border-top:2px solid var(--gray-bdr)!important;}
 /* PROJECTION */
@@ -1184,97 +1186,148 @@ function renderSidePanel(id) {
 // ══════════════════════════════════════
 // RENDER CLOCK LOG
 // ══════════════════════════════════════
-let clWeekOffset=0;
-function clNavWeek(dir){if(dir===0)clWeekOffset=0;else clWeekOffset+=dir;renderClockLog();}
+let clWeekOffset = 0;
+function clNavWeek(dir) {
+  if (dir === 0) clWeekOffset = 0; else clWeekOffset += dir;
+  renderClockLog();
+}
 
 function renderClockLog() {
-  const gridEl=document.getElementById('cl-grid-wrap');
-  if(!gridEl)return; // panel not in DOM yet
-  const base=weekStart(TODAY);
-  base.setDate(base.getDate()+clWeekOffset*7);
-  const days=Array.from({length:7},(_,i)=>{const d=new Date(base);d.setDate(d.getDate()+i);return d;});
-  const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const weekLabelEl=document.getElementById('cl-week-label');if(weekLabelEl)weekLabelEl.textContent='Week of '+DOW[0]+' '+MON[base.getMonth()]+' '+base.getDate()+', '+base.getFullYear();
+  // Guard: elements must exist
+  if (!document.getElementById('cl-grid-wrap')) return;
 
-  // Build weekly hours per employee
-  const weekHrs={};
-  ACTIVE_EMPS.forEach(e=>{
-    weekHrs[e]=days.map(d=>{
-      const iso=isoFromDate(d);
-      const entry=timesheet[iso]?.[e];
-      return entry?{s1:entry.s1||0,s2:entry.s2||0,total:+(+(entry.s1||0)+ +(entry.s2||0)).toFixed(4)}:{s1:0,s2:0,total:0};
-    });
-  });
+  const base = weekStart(new Date(TODAY.getTime()));
+  base.setDate(base.getDate() + clWeekOffset * 7);
 
-  // Grid
-  let gridHtml=`<div class="clk-grid">
-    <div class="clk-hdr">Date</div>
-    ${ACTIVE_EMPS.map(e=>`<div class="clk-hdr">${(employees[e]||EMP_DEFS[e]).name}</div>`).join('')}
-    <div class="clk-hdr">Day Total</div>`;
-
-  let warnings=[];
-  days.forEach((d,i)=>{
-    const iso=isoFromDate(d);
-    const isToday=iso===todayStr();
-    const rowClass='clk-cell'+(isToday?' today-row':'');
-    gridHtml+=`<div class="${rowClass}" style="font-weight:${isToday?700:400};color:${isToday?'var(--blue)':'var(--text2)'};">${DOW[i]} ${MON[d.getMonth()]} ${d.getDate()}${isToday?' <span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 5px;border-radius:4px;margin-left:3px;">TODAY</span>':''}</div>`;
-    let dayTotal=0;
-    ACTIVE_EMPS.forEach(e=>{
-      const h=weekHrs[e][i].total;
-      dayTotal+=h;
-      let cls='clk-cell';
-      let label='<span style="color:var(--text3);">—</span>';
-      if(h>0){
-        const s1=weekHrs[e][i].s1, s2=weekHrs[e][i].s2;
-        label=s1.toFixed(2)+(s2>0?' + '+s2.toFixed(2):'')+' hrs';
-        if(h>12){cls+=' ot2';label+=' ⚠2×';}
-        else if(h>8){cls+=' ot';label+=' ⚠OT';}
-      }
-      gridHtml+=`<div class="${cls}" onclick="openClockKp('${iso}','${e}')">${label}</div>`;
-    });
-    gridHtml+=`<div class="clk-cell muted">${dayTotal>0?dayTotal.toFixed(2)+' hrs':'—'}</div>`;
-  });
-
-  // Week totals
-  gridHtml+=`<div class="clk-cell clk-tot">Week Total</div>`;
-  ACTIVE_EMPS.forEach(e=>{
-    const wk=weekHrs[e].reduce((s,h)=>+(s+h.total).toFixed(4),0);
-    const isOT=wk>40;
-    if(isOT) warnings.push(`${(employees[e]||EMP_DEFS[e]).name}: ${wk.toFixed(1)} hrs — weekly OT applies`);
-    gridHtml+=`<div class="clk-cell clk-tot${isOT?' ot':''}">${wk>0?wk.toFixed(1)+' hrs'+(isOT?' ⚠':''):'—'}</div>`;
-  });
-  const weekTotal=ACTIVE_EMPS.reduce((s,e)=>s+weekHrs[e].reduce((ss,h)=>+(ss+h.total).toFixed(4),0),0);
-  gridHtml+=`<div class="clk-cell clk-tot">${weekTotal>0?weekTotal.toFixed(1)+' hrs':'—'}</div></div>`;
-  document.getElementById('cl-grid-wrap').innerHTML=gridHtml;
-
-  const warnEl=document.getElementById('cl-ot-warning');
-  if(warnEl){
-    if(warnings.length){warnEl.style.display='block';warnEl.innerHTML='⚠ '+warnings.join(' · ');}
-    else warnEl.style.display='none';
+  const days = [];
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(base.getTime());
+    d.setDate(d.getDate() + i);
+    days.push(d);
   }
 
-  // Per-employee summaries
-  ACTIVE_EMPS.forEach(e=>{
-    const emp=employees[e]||EMP_DEFS[e];
-    const dailyArr=weekHrs[e].map(h=>h.total);
-    const {reg,ot15,ot2}=calcOT(dailyArr);
-    const rate=getRate(e,todayStr());
-    const gross=+(reg*rate.reg+ot15*rate.ot+ot2*rate.ot2).toFixed(2);
-    const total=+(reg+ot15+ot2).toFixed(2);
-    const el=document.getElementById('cl-sum-'+e);
-    if(!el) return;
-    el.innerHTML=`
-      <div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:8px;">${emp.name}</div>
-      <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text3);">
-        <div style="display:flex;justify-content:space-between;"><span>Reg hrs</span><span style="color:var(--text1);">${reg.toFixed(1)}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span>OT 1.5× hrs</span><span style="color:${ot15>0?'var(--orange)':'var(--text1)'};">${ot15.toFixed(2)}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span>OT 2× hrs</span><span style="color:${ot2>0?'var(--red)':'var(--text1)'};">${ot2.toFixed(2)}</span></div>
-        <div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:5px;"><span>Total hrs</span><span style="font-weight:700;color:var(--text1);">${total.toFixed(1)}</span></div>
-        <div style="display:flex;justify-content:space-between;"><span>Est. gross</span><span style="color:var(--green);font-weight:700;">${fmt(gross)}</span></div>
-      </div>`;
+  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  var lbl = document.getElementById('cl-week-label');
+  if (lbl) lbl.textContent = 'Week of ' + DOW[0] + ' ' + MON[base.getMonth()] + ' ' + base.getDate() + ', ' + base.getFullYear();
+
+  // Collect weekly hours per employee
+  var weekHrs = {};
+  ACTIVE_EMPS.forEach(function(e) {
+    weekHrs[e] = days.map(function(d) {
+      var iso   = isoFromDate(d);
+      var entry = timesheet[iso] && timesheet[iso][e];
+      var s1    = entry ? (entry.s1 || 0) : 0;
+      var s2    = entry ? (entry.s2 || 0) : 0;
+      return { s1: s1, s2: s2, total: +((s1 + s2).toFixed(4)) };
+    });
+  });
+
+  // Build grid HTML using string concat (no nested template literals)
+  var grid = '<div class="clk-grid">';
+  grid += '<div class="clk-hdr">Date</div>';
+  ACTIVE_EMPS.forEach(function(e) {
+    grid += '<div class="clk-hdr">' + ((employees[e] || EMP_DEFS[e]).name) + '</div>';
+  });
+  grid += '<div class="clk-hdr">Day Total</div>';
+
+  var warnings = [];
+  days.forEach(function(d, i) {
+    var iso     = isoFromDate(d);
+    var isToday = (iso === todayStr());
+    var dateCls = 'clk-cell' + (isToday ? ' today-row' : '');
+    var dateStyle = isToday
+      ? 'font-weight:700;color:var(--blue);'
+      : 'color:var(--text2);';
+    var dateLabel = DOW[i] + ' ' + MON[d.getMonth()] + ' ' + d.getDate();
+    if (isToday) dateLabel += ' <span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 5px;border-radius:4px;margin-left:3px;">TODAY</span>';
+    grid += '<div class="' + dateCls + '" style="' + dateStyle + '">' + dateLabel + '</div>';
+
+    var dayTotal = 0;
+    ACTIVE_EMPS.forEach(function(e) {
+      var h   = weekHrs[e][i].total;
+      var s1  = weekHrs[e][i].s1;
+      var s2  = weekHrs[e][i].s2;
+      dayTotal += h;
+
+      var cls   = 'clk-cell clk-clickable';
+      var label = '<span style="color:var(--text3);">tap to enter</span>';
+
+      if (h > 0) {
+        label = s1.toFixed(2) + (s2 > 0 ? ' + ' + s2.toFixed(2) : '') + ' hrs';
+        if (h > 12) { cls += ' ot2'; label += ' ⚠2×'; }
+        else if (h > 8) { cls += ' ot'; label += ' ⚠OT'; }
+      }
+
+      // Use data attributes instead of inline onclick to avoid escaping issues
+      grid += '<div class="' + cls + '" data-iso="' + iso + '" data-emp="' + e + '">' + label + '</div>';
+    });
+
+    grid += '<div class="clk-cell muted">' + (dayTotal > 0 ? dayTotal.toFixed(2) + ' hrs' : '—') + '</div>';
+  });
+
+  // Week totals row
+  grid += '<div class="clk-cell clk-tot" style="font-weight:700;color:var(--text2);">Week Total</div>';
+  ACTIVE_EMPS.forEach(function(e) {
+    var wk   = weekHrs[e].reduce(function(s,h){ return +(s + h.total).toFixed(4); }, 0);
+    var isOT = wk > 40;
+    var cls  = 'clk-cell clk-tot' + (isOT ? ' ot' : '');
+    var txt  = wk > 0 ? wk.toFixed(1) + ' hrs' + (isOT ? ' ⚠' : '') : '—';
+    if (isOT) warnings.push((employees[e] || EMP_DEFS[e]).name + ': ' + wk.toFixed(1) + ' hrs — weekly OT applies');
+    grid += '<div class="' + cls + '">' + txt + '</div>';
+  });
+  var wkTotal = ACTIVE_EMPS.reduce(function(s,e) {
+    return +(s + weekHrs[e].reduce(function(ss,h){ return +(ss+h.total).toFixed(4); }, 0)).toFixed(4);
+  }, 0);
+  grid += '<div class="clk-cell clk-tot">' + (wkTotal > 0 ? wkTotal.toFixed(1) + ' hrs' : '—') + '</div>';
+  grid += '</div>'; // close clk-grid
+
+  document.getElementById('cl-grid-wrap').innerHTML = grid;
+
+  // Attach click handlers via event delegation (no inline onclick)
+  document.getElementById('cl-grid-wrap').onclick = function(ev) {
+    var cell = ev.target.closest('.clk-clickable');
+    if (!cell) return;
+    var iso = cell.getAttribute('data-iso');
+    var emp = cell.getAttribute('data-emp');
+    if (iso && emp) openClockKp(iso, emp);
+  };
+
+  // OT warning
+  var warnEl = document.getElementById('cl-ot-warning');
+  if (warnEl) {
+    if (warnings.length) {
+      warnEl.style.display = 'block';
+      warnEl.innerHTML = '⚠ ' + warnings.join(' · ');
+    } else {
+      warnEl.style.display = 'none';
+    }
+  }
+
+  // Per-employee summary cards
+  ACTIVE_EMPS.forEach(function(e) {
+    var el = document.getElementById('cl-sum-' + e);
+    if (!el) return;
+    var emp      = employees[e] || EMP_DEFS[e];
+    var dailyArr = weekHrs[e].map(function(h){ return h.total; });
+    var ot       = calcOT(dailyArr);
+    var rate     = getRate(e, todayStr());
+    var gross    = +(ot.reg * rate.reg + ot.ot15 * rate.ot + ot.ot2 * rate.ot2).toFixed(2);
+    var total    = +(ot.reg + ot.ot15 + ot.ot2).toFixed(2);
+
+    el.innerHTML =
+      '<div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:10px;">' + emp.name + '</div>' +
+      '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;color:var(--text2);display:flex;flex-direction:column;gap:7px;">' +
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Reg hrs</span><span>' + ot.reg.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 1.5× hrs</span><span style="color:' + (ot.ot15 > 0 ? 'var(--orange)' : 'var(--text1)') + ';">' + ot.ot15.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 2× hrs</span><span style="color:' + (ot.ot2 > 0 ? 'var(--red)' : 'var(--text1)') + ';">' + ot.ot2.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:6px;"><span style="color:var(--text3);">Total hrs</span><strong>' + total.toFixed(1) + '</strong></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Est. gross</span><strong style="color:var(--green);">' + fmt(gross) + '</strong></div>' +
+      '</div>';
   });
 }
+
 
 // ══════════════════════════════════════
 // RENDER TIMESHEET
@@ -1802,255 +1855,421 @@ function openTaxRateModal(){
 // ══════════════════════════════════════
 // KEYPAD ENGINE
 // ══════════════════════════════════════
-let kpMode='', kpField='', kpValue='', kpSign=1, kpDate=todayStr(), kpCode='320';
-let kpEmp='', kpShift=1, kpS1=0; // clock log specific
-let selectedDate=todayStr();
-let calDate=new Date(TODAY);
+var kpMode   = '';
+var kpField  = '';
+var kpValue  = '';
+var kpSign   = 1;
+var kpDate   = '';
+var kpCode   = '320';
+var kpEmp    = '';
+var kpShift  = 1;   // 1 or 2
+var kpS1     = 0;   // shift 1 stored value
 
-function openKp(title, showDesc, showCode, showDate, showSign) {
-  kpValue='';
-  document.getElementById('kp-title').textContent=title;
-  document.getElementById('kp-desc-wrap').style.display  = showDesc ?'block':'none';
-  document.getElementById('kp-code-wrap').style.display  = showCode ?'flex':'none';
-  document.getElementById('kp-date-wrap').style.display  = showDate ?'flex':'none';
-  document.getElementById('kp-sign-wrap').style.display  = showSign ?'flex':'none';
-  document.getElementById('kp-stats-row').style.display  = 'none';
-  document.getElementById('kp-add-shift-wrap').style.display='none';
-  document.getElementById('kp-shift1-confirmed').style.display='none';
-  document.getElementById('kp-weekly-bar').style.display ='none';
-  document.getElementById('kp-format-hint').style.display='none';
-  document.getElementById('kp-box-sec').style.display    ='none';
-  document.getElementById('kp-confirm-btn').className    ='kp-confirm';
-  if(showDate){kpDate=todayStr();selectedDate=kpDate;document.getElementById('kp-date-lbl').textContent='Date: '+fmtDateUS(kpDate);}
-  if(showCode) selectCode(kpCode);
-  if(showSign) setKpSign(1);
-  updateKpDisplay();
-  document.getElementById('kp-overlay').classList.add('open');
-}
-function closeKp(){document.getElementById('kp-overlay').classList.remove('open');}
-function handleKpBg(e){if(e.target===document.getElementById('kp-overlay'))closeKp();}
+function _kpEl(id) { return document.getElementById(id); }
+function _show(id)  { var el=_kpEl(id); if(el) el.style.display='flex';  }
+function _showB(id) { var el=_kpEl(id); if(el) el.style.display='block'; }
+function _hide(id)  { var el=_kpEl(id); if(el) el.style.display='none';  }
+function _text(id,v){ var el=_kpEl(id); if(el) el.textContent=v; }
+function _html(id,v){ var el=_kpEl(id); if(el) el.innerHTML=v; }
+function _cls(id,v) { var el=_kpEl(id); if(el) el.className=v; }
 
-function selectCode(c){
-  kpCode=c;
-  ['310','320','331','ite'].forEach(x=>{
-    const el=document.getElementById('kpcode-'+x);
-    if(el){el.className='kp-code-pill c'+x+(x===c?' sel':'');}
-  });
-}
-function setKpSign(s){
-  kpSign=s;
-  document.getElementById('kp-sign-pos').style.opacity=s===1?'1':'0.5';
-  document.getElementById('kp-sign-neg').style.opacity=s===-1?'1':'0.5';
-  updateKpDisplay();
-}
+// ── Open generic keypad ──
+function openKp(title, opts) {
+  // opts: { desc, code, date, sign, secondBox }
+  opts = opts || {};
+  kpValue = '';
+  _text('kp-title', title);
+  _hide('kp-desc-wrap');
+  _hide('kp-code-wrap');
+  _hide('kp-date-wrap');
+  _hide('kp-sign-wrap');
+  _hide('kp-stats-row');
+  _hide('kp-add-shift-wrap');
+  _hide('kp-shift1-confirmed');
+  _hide('kp-weekly-bar');
+  _hide('kp-format-hint');
+  _hide('kp-box-sec');
+  _text('kp-box-main-lbl', opts.mainLbl || 'Amount');
+  _text('kp-box-main-val', '0');
+  _text('kp-box-main-sub', '');
+  _cls('kp-confirm-btn', 'kp-confirm');
+  _text('kp-confirm-btn', opts.confirmLabel || 'CONFIRM');
+  _kpEl('kp-confirm-btn').onclick = kpConfirm;
 
-function kpKey(k){
-  if(k==='C'){kpValue='';updateKpDisplay();return;}
-  if(k==='back'){kpValue=kpValue.slice(0,-1);updateKpDisplay();return;}
-  if(kpMode==='clock'||kpMode==='clock2'){
-    // 4-digit time mode: max 4 digits, digits only
-    if(kpValue.length>=4)return;
-    kpValue+=k;
-  } else {
-    if(k==='.'){if(!kpValue.includes('.'))kpValue+='.';else return;}
-    else{if(kpValue.length>=8)return;kpValue+=k;}
+  if (opts.desc) _showB('kp-desc-wrap');
+  if (opts.code) { _show('kp-code-wrap'); selectCode(kpCode); }
+  if (opts.sign) { _show('kp-sign-wrap'); setKpSign(1); }
+  if (opts.date) {
+    _show('kp-date-wrap');
+    kpDate = todayStr();
+    selectedDate = kpDate;
+    _text('kp-date-lbl', 'Date: ' + fmtDateUS(kpDate));
   }
-  updateKpDisplay();
+  _kpEl('kp-overlay').classList.add('open');
 }
 
-function updateKpDisplay(){
-  const raw=kpValue||'0';
-  let displayVal=raw, subText='';
+function closeKp() {
+  _kpEl('kp-overlay').classList.remove('open');
+}
+function handleKpBg(e) {
+  if (e.target === _kpEl('kp-overlay')) closeKp();
+}
 
-  if(kpMode==='clock'||kpMode==='clock2'){
-    // Show formatted HH:MM
-    const padded=raw.padStart(4,'0');
-    displayVal=padded.slice(0,2)+':'+padded.slice(2,4);
-    const rounded=premierRound(raw);
-    subText=raw.length>0?'▶ Premier rounds to: '+rounded.toFixed(2)+' hrs':'Enter 4 digits (HHMM)';
-    document.getElementById('kp-box-main-sub').className='kp-box-sub highlight';
+// ── Clock keypad (dedicated) ──
+function openClockKp(date, emp) {
+  kpMode  = 'clock';
+  kpShift = 1;
+  kpEmp   = emp;
+  kpDate  = date;
+  kpValue = '';
+  kpS1    = 0;
 
-    // OT stats
-    if(kpMode==='clock'||kpMode==='clock2'){
-      const s1hrs=kpMode==='clock2'?kpS1:0;
-      const thisHrs=premierRound(raw);
-      const dailyTotal=+(s1hrs+thisHrs).toFixed(4);
-      // Get weekly hrs so far (exclude today)
-      const iso=kpDate;
-      const weekBase=weekStart(new Date(iso));
-      let weekSoFar=0;
-      for(let i=0;i<7;i++){
-        const d=new Date(weekBase);d.setDate(d.getDate()+i);
-        const dayIso=isoFromDate(d);
-        if(dayIso===iso)break;
-        const entry=timesheet[dayIso]?.[kpEmp];
-        if(entry)weekSoFar+=+(entry.s1||0)+ +(entry.s2||0);
-      }
-      const weekAfter=+(weekSoFar+dailyTotal).toFixed(2);
-      const dayOT=calcOT([dailyTotal]);
-      document.getElementById('kp-stats-row').style.display='flex';
-      document.getElementById('ks-reg').textContent=dayOT.reg.toFixed(2);
-      document.getElementById('ks-ot15').textContent=dayOT.ot15.toFixed(2);
-      document.getElementById('ks-ot15').className='kp-stat-val '+(dayOT.ot15>0?'amber':'muted');
-      document.getElementById('ks-ot2').textContent=dayOT.ot2.toFixed(2);
-      document.getElementById('ks-ot2').className='kp-stat-val '+(dayOT.ot2>0?'red':'muted');
-      document.getElementById('ks-wk').textContent=weekAfter.toFixed(1);
-      document.getElementById('ks-wk').className='kp-stat-val '+(weekAfter>40?'amber':'');
-      document.getElementById('kp-weekly-bar').style.display='flex';
-      document.getElementById('kp-week-so-far').textContent=weekSoFar.toFixed(1)+' hrs · '+(weekSoFar>=40?'OT threshold reached':'OT starts at 40 hrs/wk');
+  var empObj = employees[emp] || EMP_DEFS[emp];
 
-      // Update confirm button
-      const confirmBtn=document.getElementById('kp-confirm-btn');
-      if(dailyTotal>0){
-        confirmBtn.textContent=(kpMode==='clock'?'CONFIRM SHIFT 1':'CONFIRM DAY')+' — '+rounded.toFixed(2)+' hrs'+(kpMode==='clock2'?' (Shift 2)':'');
-        confirmBtn.className=kpMode==='clock2'&&dailyTotal>0?'kp-confirm green':'kp-confirm';
-      }
+  // Reset all keypad elements
+  _hide('kp-desc-wrap');
+  _hide('kp-code-wrap');
+  _hide('kp-date-wrap');
+  _hide('kp-sign-wrap');
+  _hide('kp-box-sec');
+  _hide('kp-add-shift-wrap');
+  _show('kp-stats-row');
+  _showB('kp-format-hint');
+  _showB('kp-weekly-bar');
+
+  _text('kp-title', empObj.name + ' · ' + fmtDateUS(date));
+  _text('kp-box-main-lbl', 'Shift 1 (HHMM)');
+  _text('kp-box-main-val', '——:——');
+  _text('kp-box-main-sub', 'Enter 4 digits  e.g. 0830 = 8:30');
+
+  // Check if shift 1 already saved
+  var existing = timesheet[date] && timesheet[date][emp];
+  if (existing && (existing.s1 || 0) > 0) {
+    kpS1 = existing.s1;
+    _show('kp-shift1-confirmed');
+    _text('kp-s1-display', 'Shift 1: ' + existing.s1.toFixed(2) + ' hrs  (tap Edit to change)');
+    _showB('kp-add-shift-wrap');
+    _text('kp-confirm-btn', 'DONE — Close');
+    _cls('kp-confirm-btn', 'kp-confirm');
+    _kpEl('kp-confirm-btn').onclick = function() { closeKp(); renderClockLog(); };
+    // Switch to shift 2 mode for new input
+    kpShift = 2;
+    kpMode  = 'clock2';
+    _text('kp-box-main-lbl', 'Shift 2 (HHMM)');
+    _text('kp-box-main-sub', 'Enter 4 digits  or leave blank');
+    // Pre-fill shift 2 if exists
+    if (existing.s2 > 0) {
+      kpValue = '';
+      _text('kp-box-main-val', '——:——');
     }
   } else {
-    displayVal=raw;
-    subText=kpMode==='adj'?'Code '+kpCode+(kpSign===1?' · Increase':' · Decrease'):
-            kpMode==='nsfee'?'/month → Code 331':
-            kpMode==='projhrs'?'hours/day for '+(employees[kpField]||EMP_DEFS[kpField])?.name:'';
+    _hide('kp-shift1-confirmed');
+    _hide('kp-add-shift-wrap');
+    kpShift = 1;
+    kpMode  = 'clock';
+    _cls('kp-confirm-btn', 'kp-confirm');
+    _text('kp-confirm-btn', 'CONFIRM SHIFT 1');
+    _kpEl('kp-confirm-btn').onclick = kpConfirm;
   }
 
-  document.getElementById('kp-box-main-val').textContent=displayVal;
-  document.getElementById('kp-box-main-sub').textContent=subText;
+  // Weekly context
+  updateWeeklyBar();
+  updateClockStats();
+  _kpEl('kp-overlay').classList.add('open');
 }
 
-function kpConfirm(){
-  if(kpMode==='clock'||kpMode==='clock2'){
-    const rounded=premierRound(kpValue);
-    if(rounded<=0){showToast('Please enter valid hours.');return;}
-    if(kpMode==='clock'){
-      // Save shift 1
-      kpS1=rounded;
-      if(!timesheet[kpDate])timesheet[kpDate]={};
-      if(!timesheet[kpDate][kpEmp])timesheet[kpDate][kpEmp]={s1:0,s2:0};
-      timesheet[kpDate][kpEmp].s1=rounded;
-      saveS('sdp_ts_v2',timesheet);
-      bgSaveTs(kpDate,kpEmp,rounded,timesheet[kpDate][kpEmp].s2||0);
-      // Show shift 1 confirmed + add shift 2 button
-      document.getElementById('kp-shift1-confirmed').style.display='flex';
-      document.getElementById('kp-s1-display').textContent=formatHHMM(kpValue)+' → '+rounded.toFixed(2)+' hrs';
-      document.getElementById('kp-add-shift-wrap').style.display='block';
-      document.getElementById('kp-confirm-btn').textContent='DONE — Close';
-      document.getElementById('kp-confirm-btn').onclick=()=>{closeKp();renderClockLog();if(currentTab==='clocklog')renderClockLog();};
-      kpValue='';updateKpDisplay();
+function updateWeeklyBar() {
+  var weekBase = weekStart(new Date(kpDate));
+  var soFar = 0;
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(weekBase.getTime());
+    d.setDate(d.getDate() + i);
+    var dayIso = isoFromDate(d);
+    if (dayIso === kpDate) break;
+    var entry = timesheet[dayIso] && timesheet[dayIso][kpEmp];
+    if (entry) soFar += (entry.s1 || 0) + (entry.s2 || 0);
+  }
+  _text('kp-week-so-far', soFar.toFixed(1) + ' hrs · ' + (soFar >= 40 ? '⚠ OT threshold reached' : 'OT starts at 8 hrs/day, 40 hrs/wk'));
+}
+
+function updateClockStats() {
+  var rounded = kpValue.length >= 3 ? premierRound(kpValue) : 0;
+  var s1base  = (kpMode === 'clock2') ? kpS1 : 0;
+  var daily   = +(s1base + rounded).toFixed(4);
+  var ot      = calcOT([daily]);
+
+  // Format display
+  if (kpValue.length > 0) {
+    var padded = kpValue.padStart(4, '0');
+    _text('kp-box-main-val', padded.slice(0,2) + ':' + padded.slice(2,4));
+    if (rounded > 0) {
+      _text('kp-box-main-sub', '▶ Premier rounds to: ' + rounded.toFixed(2) + ' hrs');
+    }
+  } else {
+    _text('kp-box-main-val', '——:——');
+    _text('kp-box-main-sub', 'Enter 4 digits  e.g. 0830 = 8:30');
+  }
+
+  _text('ks-reg',  ot.reg.toFixed(2));
+  _text('ks-ot15', ot.ot15.toFixed(2));
+  _text('ks-ot2',  ot.ot2.toFixed(2));
+
+  _cls('ks-ot15', 'kp-stat-val ' + (ot.ot15 > 0 ? 'amber' : 'muted'));
+  _cls('ks-ot2',  'kp-stat-val ' + (ot.ot2  > 0 ? 'red'   : 'muted'));
+
+  // Week total after this entry
+  var weekBase = weekStart(new Date(kpDate));
+  var soFar = 0;
+  for (var i = 0; i < 7; i++) {
+    var d2 = new Date(weekBase.getTime());
+    d2.setDate(d2.getDate() + i);
+    var dayIso2 = isoFromDate(d2);
+    if (dayIso2 === kpDate) break;
+    var entry2 = timesheet[dayIso2] && timesheet[dayIso2][kpEmp];
+    if (entry2) soFar += (entry2.s1 || 0) + (entry2.s2 || 0);
+  }
+  var wkAfter = +(soFar + daily).toFixed(2);
+  _text('ks-wk', wkAfter.toFixed(1));
+  _cls('ks-wk', 'kp-stat-val ' + (wkAfter > 40 ? 'amber' : ''));
+
+  // Update confirm label if value entered
+  if (daily > 0) {
+    var lbl = (kpMode === 'clock' ? 'CONFIRM SHIFT 1' : 'CONFIRM DAY') + ' — ' + daily.toFixed(2) + ' hrs';
+    _text('kp-confirm-btn', lbl);
+    _cls('kp-confirm-btn', kpMode === 'clock2' ? 'kp-confirm green' : 'kp-confirm');
+    _kpEl('kp-confirm-btn').onclick = kpConfirm;
+  }
+}
+
+function addShift2() {
+  kpShift = 2;
+  kpMode  = 'clock2';
+  kpValue = '';
+  _hide('kp-add-shift-wrap');
+  _text('kp-box-main-lbl', 'Shift 2 (HHMM)');
+  _text('kp-box-main-val', '——:——');
+  _text('kp-box-main-sub', 'Enter 4 digits');
+  _text('kp-confirm-btn', 'CONFIRM SHIFT 2');
+  _cls('kp-confirm-btn', 'kp-confirm');
+  _kpEl('kp-confirm-btn').onclick = kpConfirm;
+  updateClockStats();
+}
+
+function editShift1() {
+  kpShift = 1;
+  kpMode  = 'clock';
+  kpS1    = 0;
+  kpValue = '';
+  _hide('kp-shift1-confirmed');
+  _hide('kp-add-shift-wrap');
+  _text('kp-box-main-lbl', 'Shift 1 (HHMM)');
+  _text('kp-box-main-val', '——:——');
+  _text('kp-confirm-btn', 'CONFIRM SHIFT 1');
+  _cls('kp-confirm-btn', 'kp-confirm');
+  _kpEl('kp-confirm-btn').onclick = kpConfirm;
+  updateClockStats();
+}
+
+// ── Key press handler ──
+function kpKey(k) {
+  var isClock = (kpMode === 'clock' || kpMode === 'clock2');
+
+  if (k === 'C') {
+    kpValue = '';
+  } else if (k === 'back') {
+    kpValue = kpValue.slice(0, -1);
+  } else if (isClock) {
+    // 4-digit only, digits only
+    if (kpValue.length >= 4) return;
+    if (!/[0-9]/.test(k)) return;
+    kpValue += k;
+  } else {
+    if (k === '.') { if (!kpValue.includes('.')) kpValue += '.'; }
+    else { if (kpValue.length >= 9) return; kpValue += k; }
+  }
+
+  if (isClock) {
+    updateClockStats();
+  } else {
+    updateKpDisplay();
+  }
+}
+
+// ── Generic display update ──
+function updateKpDisplay() {
+  var raw = kpValue || '0';
+  _text('kp-box-main-val', raw);
+  var sub = '';
+  if      (kpMode === 'adj')     sub = 'Code ' + kpCode + (kpSign === 1 ? ' · Increase' : ' · Decrease');
+  else if (kpMode === 'nsfee')   sub = '/month → Code 331';
+  else if (kpMode === 'projhrs') sub = 'hours/day';
+  else if (kpMode === 'projrate')sub = '$/hr base rate';
+  _text('kp-box-main-sub', sub);
+}
+
+// ── Confirm handler ──
+function kpConfirm() {
+  if (kpMode === 'clock' || kpMode === 'clock2') {
+    // Allow zero/empty to CLEAR the entry
+    var rounded = kpValue.length > 0 ? premierRound(kpValue) : 0;
+
+    if (!timesheet[kpDate]) timesheet[kpDate] = {};
+    if (!timesheet[kpDate][kpEmp]) timesheet[kpDate][kpEmp] = { s1: 0, s2: 0 };
+
+    if (kpMode === 'clock') {
+      // Shift 1 — zero clears the entry
+      if (rounded <= 0) {
+        // Delete the entry
+        timesheet[kpDate][kpEmp].s1 = 0;
+        timesheet[kpDate][kpEmp].s2 = 0;
+        if (timesheet[kpDate][kpEmp].s1 === 0 && timesheet[kpDate][kpEmp].s2 === 0) {
+          delete timesheet[kpDate][kpEmp];
+        }
+        saveS('sdp_ts_v2', timesheet);
+        bgSaveTs(kpDate, kpEmp, 0, 0);
+        closeKp();
+        renderClockLog();
+        showToast('Entry cleared for ' + (employees[kpEmp] || EMP_DEFS[kpEmp]).name);
+        return;
+      }
+      kpS1 = rounded;
+      timesheet[kpDate][kpEmp].s1 = rounded;
+      saveS('sdp_ts_v2', timesheet);
+      bgSaveTs(kpDate, kpEmp, rounded, timesheet[kpDate][kpEmp].s2 || 0);
+
+      // Show shift 1 confirmed state
+      _show('kp-shift1-confirmed');
+      _text('kp-s1-display', 'Shift 1: ' + rounded.toFixed(2) + ' hrs  ✓');
+      _showB('kp-add-shift-wrap');
+      _text('kp-confirm-btn', 'DONE — Close');
+      _cls('kp-confirm-btn', 'kp-confirm');
+      _kpEl('kp-confirm-btn').onclick = function() { closeKp(); renderClockLog(); };
+      kpValue = '';
+      // Switch to shift 2
+      kpMode  = 'clock2';
+      kpShift = 2;
+      _text('kp-box-main-lbl', 'Shift 2 (HHMM)');
+      _text('kp-box-main-val', '——:——');
+      _text('kp-box-main-sub', 'Optional — or tap DONE');
+      showToast('Shift 1 saved: ' + rounded.toFixed(2) + ' hrs ✓');
+
     } else {
-      // Save shift 2
-      if(!timesheet[kpDate])timesheet[kpDate]={};
-      if(!timesheet[kpDate][kpEmp])timesheet[kpDate][kpEmp]={s1:kpS1,s2:0};
-      timesheet[kpDate][kpEmp].s2=rounded;
-      saveS('sdp_ts_v2',timesheet);
-      bgSaveTs(kpDate,kpEmp,timesheet[kpDate][kpEmp].s1||kpS1,rounded);
+      // Shift 2
+      timesheet[kpDate][kpEmp].s2 = rounded;
+      saveS('sdp_ts_v2', timesheet);
+      bgSaveTs(kpDate, kpEmp, timesheet[kpDate][kpEmp].s1 || kpS1, rounded);
       closeKp();
       renderClockLog();
-      showToast('Day confirmed: '+(+(kpS1+rounded).toFixed(2))+' total hrs for '+(employees[kpEmp]||EMP_DEFS[kpEmp]).name+' ✓');
+      var total = +((timesheet[kpDate][kpEmp].s1 || kpS1) + rounded).toFixed(2);
+      showToast('Day saved: ' + total.toFixed(2) + ' hrs for ' + (employees[kpEmp] || EMP_DEFS[kpEmp]).name + ' ✓');
     }
     return;
   }
 
-  const val=parseFloat(kpValue);
-  if(isNaN(val)||val<0){showToast('Please enter a valid amount.');return;}
+  // ── Non-clock modes ──
+  var val = parseFloat(kpValue);
+  if (isNaN(val) || val < 0) { showToast('Please enter a valid amount.'); return; }
 
-  if(kpMode==='adj'){
-    const note=document.getElementById('kp-desc')?.value?.trim()||'';
-    const newAdj={id:'adj'+(nextAdjId++),date:kpDate,code:kpCode,amt:+(val*kpSign).toFixed(2),note,cycleId:currentCycle};
-    adjs.push(newAdj); saveS('sdp_adjs_v2',adjs); bgAddAdj(newAdj);
+  if (kpMode === 'adj') {
+    var note   = (_kpEl('kp-desc') && _kpEl('kp-desc').value) ? _kpEl('kp-desc').value.trim() : '';
+    var newAdj = { id: 'adj' + (nextAdjId++), date: kpDate, code: kpCode, amt: +(val * kpSign).toFixed(2), note: note, cycleId: currentCycle };
+    adjs.push(newAdj); saveS('sdp_adjs_v2', adjs); bgAddAdj(newAdj);
     closeKp(); renderBudget(); showToast('Adjustment added ✓');
-  } else if(kpMode==='nsfee'){
-    settings.nsFee=+val.toFixed(2); saveS('sdp_settings_v2',settings); bgSaveSettings();
-    closeKp(); renderBudget(); showToast('NextStep fee updated to '+fmt(settings.nsFee)+'/mo ✓');
-  } else if(kpMode==='ppamt'){
-    if(kpField==='gross'){
-      window._ppGross=+val.toFixed(2);
-      document.getElementById('pp-gross').textContent=fmt(val);
-      const taxRate=taxRateForDate(todayStr());
-      window._ppTax=+(val*taxRate).toFixed(2);
-      document.getElementById('pp-tax').textContent=fmt(window._ppTax);
-      document.getElementById('pp-total').textContent=fmt(val+window._ppTax);
+
+  } else if (kpMode === 'nsfee') {
+    settings.nsFee = +val.toFixed(2); saveS('sdp_settings_v2', settings); bgSaveSettings();
+    closeKp(); renderBudget(); showToast('NextStep fee updated to ' + fmt(settings.nsFee) + '/mo ✓');
+
+  } else if (kpMode === 'ppamt') {
+    if (kpField === 'gross') {
+      window._ppGross = +val.toFixed(2);
+      _html('pp-gross', fmt(val));
+      var taxR = taxRateForDate(todayStr());
+      window._ppTax = +(val * taxR).toFixed(2);
+      _html('pp-tax',   fmt(window._ppTax));
+      _html('pp-total', fmt(val + window._ppTax));
     } else {
-      window._ppTax=+val.toFixed(2);
-      document.getElementById('pp-tax').textContent=fmt(val);
-      document.getElementById('pp-total').textContent=fmt((window._ppGross||0)+val);
+      window._ppTax = +val.toFixed(2);
+      _html('pp-tax',   fmt(val));
+      _html('pp-total', fmt((window._ppGross || 0) + val));
     }
     closeKp();
-  } else if(kpMode==='pphrs'){
-    if(!window._ppHrs)window._ppHrs={};
-    window._ppHrs[kpField]=+val.toFixed(2);
-    document.getElementById('pp-hrs-'+kpField).textContent=val.toFixed(1)+' hrs';
+
+  } else if (kpMode === 'pphrs') {
+    if (!window._ppHrs) window._ppHrs = {};
+    window._ppHrs[kpField] = +val.toFixed(2);
+    _html('pp-hrs-' + kpField, val.toFixed(1) + ' hrs');
     closeKp();
-  } else if(kpMode==='projhrs'){
-    projInputs[kpField]=+val.toFixed(2);
+
+  } else if (kpMode === 'projhrs') {
+    projInputs[kpField] = +val.toFixed(2);
     closeKp(); renderProjection();
-  } else if(kpMode==='projrate'){
-    projInputs[kpField+'AdjRate']=+val.toFixed(2);
+
+  } else if (kpMode === 'projrate') {
+    projInputs[kpField + 'AdjRate'] = +val.toFixed(2);
     closeKp(); renderProjection();
-  } else if(kpMode==='split'){
-    const pct=Math.min(100,Math.max(0,Math.round(val)));
-    projInputs.splitPct310=pct;
+
+  } else if (kpMode === 'split') {
+    projInputs.splitPct310 = Math.min(100, Math.max(0, Math.round(val)));
     closeKp(); renderProjection();
-  } else if(kpMode==='emprate'){
-    window._empNewRate=+val.toFixed(2);
-    closeKp();
   }
 }
 
-function addShift2(){
-  document.getElementById('kp-add-shift-wrap').style.display='none';
-  document.getElementById('kp-confirm-btn').onclick=kpConfirm;
-  kpMode='clock2'; kpValue='';
-  document.getElementById('kp-title').textContent='Shift 2 — '+(employees[kpEmp]||EMP_DEFS[kpEmp]).name;
+function selectCode(c) {
+  kpCode = c;
+  ['310','320','331','ite'].forEach(function(x) {
+    var el = _kpEl('kpcode-' + x);
+    if (el) el.className = 'kp-code-pill c' + x + (x === c ? ' sel' : '');
+  });
+}
+
+function setKpSign(s) {
+  kpSign = s;
+  var pos = _kpEl('kp-sign-pos');
+  var neg = _kpEl('kp-sign-neg');
+  if (pos) pos.style.opacity = s === 1 ? '1' : '0.5';
+  if (neg) neg.style.opacity = s === -1 ? '1' : '0.5';
   updateKpDisplay();
 }
 
-function editShift1(){
-  document.getElementById('kp-shift1-confirmed').style.display='none';
-  document.getElementById('kp-add-shift-wrap').style.display='none';
-  kpMode='clock'; kpValue=''; kpS1=0;
-  document.getElementById('kp-confirm-btn').onclick=kpConfirm;
-  updateKpDisplay();
+// ── Specific keypad openers ──
+function openNsFeeKp() {
+  kpMode = 'nsfee';
+  openKp('Update NextStep Monthly Fee', { mainLbl: 'Amount ($/mo)', confirmLabel: 'UPDATE FEE' });
+}
+function openAdjKp() {
+  kpMode = 'adj'; kpCode = '320'; kpSign = 1;
+  if (_kpEl('kp-desc')) _kpEl('kp-desc').value = '';
+  openKp('Add Budget Adjustment', { desc: true, code: true, date: true, sign: true, mainLbl: 'Amount ($)', confirmLabel: 'ADD ADJUSTMENT' });
+}
+function openPpAmtKp(field) {
+  kpMode = 'ppamt'; kpField = field;
+  openKp(field === 'gross' ? 'Gross Labor ($)' : 'Employer Tax ($)', { mainLbl: 'Amount', confirmLabel: 'SET AMOUNT' });
+}
+function openPpHrsKp(e) {
+  kpMode = 'pphrs'; kpField = e;
+  openKp('Hours — ' + ((employees[e] || EMP_DEFS[e]).name), { mainLbl: 'Hours', confirmLabel: 'SET HOURS' });
+}
+function openProjHrsKp(e) {
+  kpMode = 'projhrs'; kpField = e;
+  openKp('Daily Hours — ' + ((employees[e] || EMP_DEFS[e]).name), { mainLbl: 'Hrs/day', confirmLabel: 'SET HOURS' });
+}
+function openProjRateKp(e) {
+  kpMode = 'projrate'; kpField = e;
+  openKp('Adjusted Rate — ' + ((employees[e] || EMP_DEFS[e]).name), { mainLbl: '$/hr', confirmLabel: 'SET RATE' });
+}
+function openProjDateKp(e) {
+  kpMode = 'projdate'; kpField = e;
+  selectedDate = projInputs[e + 'AdjDate'] || todayStr();
+  calDate = new Date(TODAY);
+  renderCal();
+  _kpEl('cal-overlay').classList.add('open');
+}
+function openCustomSplitKp() {
+  kpMode = 'split';
+  openKp('Code 310 Split %', { mainLbl: '% to Code 310 (0–100)', confirmLabel: 'SET SPLIT' });
 }
 
-// Open clock log keypad
-function openClockKp(date, emp){
-  kpMode='clock'; kpField=emp; kpDate=date; kpEmp=emp; kpS1=0; kpValue='';
-  const empObj=employees[emp]||EMP_DEFS[emp];
-  document.getElementById('kp-title').textContent='';
-  document.getElementById('kp-desc-wrap').style.display='none';
-  document.getElementById('kp-code-wrap').style.display='none';
-  document.getElementById('kp-sign-wrap').style.display='none';
-  document.getElementById('kp-date-wrap').style.display='none';
-  document.getElementById('kp-box-sec').style.display='none';
-  document.getElementById('kp-format-hint').style.display='block';
-  document.getElementById('kp-shift1-confirmed').style.display='none';
-  document.getElementById('kp-add-shift-wrap').style.display='none';
-
-  // Check if shift 1 already saved
-  const existing=timesheet[date]?.[emp];
-  if(existing&&(existing.s1||0)>0){
-    kpS1=existing.s1;
-    document.getElementById('kp-shift1-confirmed').style.display='flex';
-    document.getElementById('kp-s1-display').textContent=existing.s1.toFixed(2)+' hrs (Shift 1)';
-    document.getElementById('kp-add-shift-wrap').style.display='block';
-    document.getElementById('kp-confirm-btn').textContent='DONE — Close';
-    document.getElementById('kp-confirm-btn').onclick=()=>{closeKp();renderClockLog();};
-  } else {
-    document.getElementById('kp-confirm-btn').onclick=kpConfirm;
-  }
-
-  document.getElementById('kp-title').textContent='Hours — '+empObj.name+' · '+fmtDateUS(date);
-  document.getElementById('kp-overlay').classList.add('open');
-  updateKpDisplay();
-}
-
-// NS Fee keypad
-function openNsFeeKp(){kpMode='nsfee';openKp('Update NextStep Monthly Fee',false,false,false,false);document.getElementById('kp-box-main-lbl').textContent='Amount ($/mo)';}
-// Adj keypad
-function openAdjKp(){kpMode='adj';kpCode='320';kpSign=1;document.getElementById('kp-desc').value='';openKp('Add Budget Adjustment',true,true,true,true);}
-// PP keypads
-function openPpAmtKp(field){kpMode='ppamt';kpField=field;openKp(field==='gross'?'Gross Labor ($)':'Employer Tax ($)',false,false,false,false);document.getElementById('kp-box-main-lbl').textContent='Amount';}
-function openPpHrsKp(e){kpMode='pphrs';kpField=e;openKp('Hours — '+(employees[e]||EMP_DEFS[e]).name,false,false,false,false);document.getElementById('kp-box-main-lbl').textContent='Hours';}
 
 // ══════════════════════════════════════
 // CALENDAR
