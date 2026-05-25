@@ -798,10 +798,40 @@ function bgAddPeriod(p) { if(!syncReady)return; supaPost('pay_periods',periodToD
 function bgDeletePeriod(id) { if(!syncReady)return; supaDelete('pay_periods','id=eq.'+id).catch(e=>console.warn(e)); }
 function bgAddAdj(a) { if(!syncReady)return; supaPost('adjustments',{id:a.id,date:a.date,code:a.code,amt:a.amt,note:a.note||'',cycle_id:currentCycle}).catch(e=>console.warn(e)); }
 function bgDeleteAdj(id) { if(!syncReady)return; supaDelete('adjustments','id=eq.'+id).catch(e=>console.warn(e)); }
+var _tsSaveQueue = []; // pending saves before sync ready
+
 function bgSaveTs(date, emp, s1, s2, s1code, s2code) {
-  if(!syncReady)return;
-  supaDelete('timesheet','date=eq.'+date+'&emp=eq.'+emp).catch(()=>{})
-    .then(()=>{ if(s1>0||s2>0) supaPost('timesheet',{date,emp,shift1:s1,shift2:s2||0,hrs:+(s1+(s2||0)).toFixed(4),cycle_id:currentCycle,s1code:s1code||'320',s2code:s2code||s1code||'320'}).catch(e=>console.warn(e)); });
+  var payload = {date:date, emp:emp, s1:s1||0, s2:s2||0,
+    s1code:s1code||'320', s2code:s2code||s1code||'320'};
+  if (!syncReady) {
+    // Queue it - will flush when initDB completes
+    _tsSaveQueue = _tsSaveQueue.filter(function(q){ return !(q.date===date&&q.emp===emp); });
+    _tsSaveQueue.push(payload);
+    return;
+  }
+  _flushTsSave(payload);
+}
+
+function _flushTsSave(p) {
+  var row = {date:p.date, emp:p.emp, shift1:p.s1, shift2:p.s2,
+    hrs:+(p.s1+p.s2).toFixed(4), cycle_id:currentCycle,
+    s1code:p.s1code, s2code:p.s2code};
+  // Upsert: delete then insert, or use upsert header
+  fetch(SUPA_URL+'/rest/v1/timesheet', {
+    method: 'POST',
+    headers: {...supaHdrs(), 'Prefer': 'resolution=merge-duplicates,return=minimal'},
+    body: JSON.stringify(row)
+  }).catch(function(e){ console.warn('bgSaveTs:', e); });
+}
+
+function _flushTsQueue() {
+  if (!syncReady || _tsSaveQueue.length === 0) return;
+  var q = _tsSaveQueue.splice(0);
+  q.forEach(function(p) {
+    if (p.s1 > 0 || p.s2 > 0) _flushTsSave(p);
+    else supaDelete('timesheet','date=eq.'+p.date+'&emp=eq.'+p.emp).catch(()=>{});
+  });
+  console.log('Flushed ' + q.length + ' queued timesheet saves');
 }
 function bgSaveSettings() {
   if(!syncReady)return;
@@ -842,7 +872,7 @@ async function initDB() {
         // Support both old (hrs) and new (shift1/shift2) schema
         var s1 = r.shift1 || r.hrs || 0;
         var s2 = r.shift2 || 0;
-        loadedTs[r.date][r.emp] = {s1: s1, s2: s2};
+        loadedTs[r.date][r.emp] = {s1: s1, s2: s2, s1code: r.s1code||'320', s2code: r.s2code||r.s1code||'320'};
       });
       var sv = await supaGetSetting('settings');
       var tv = await supaGetSetting('taxRates');
@@ -860,6 +890,7 @@ async function initDB() {
     }
     syncReady = true;
     setSyncLabel('✓ Live', true);
+    _flushTsQueue(); // flush any saves made before sync was ready
     // ONLY re-render if keypad is closed AND we are on a data tab
     var ov = document.getElementById('kp-overlay');
     var kpOpen = ov && ov.classList.contains('open');
@@ -930,7 +961,9 @@ const TAX_RATE   = 0.2064;
 
 function loadS(k,seed){try{const s=localStorage.getItem(k);return s?JSON.parse(s):JSON.parse(JSON.stringify(seed));}catch(e){return JSON.parse(JSON.stringify(seed));}}
 function saveS(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-function saveAll(){saveS('sdp_periods_v2',periods);saveS('sdp_adjs_v2',adjs);saveS('sdp_settings_v2',settings);saveS('sdp_ts_v2',timesheet);saveS('sdp_taxrates_v2',taxRates);}
+function saveAll(){
+  // Also persist timesheet to localStorage as backup
+  saveS('sdp_ts_v2', timesheet);saveS('sdp_periods_v2',periods);saveS('sdp_adjs_v2',adjs);saveS('sdp_settings_v2',settings);saveS('sdp_ts_v2',timesheet);saveS('sdp_taxrates_v2',taxRates);}
 
 let currentCycle = '2025-26';
 let cycles       = loadS('sdp_cycles_v2',[{id:'2025-26',start:'2025-12-01',end:'2026-11-30',cats:JSON.parse(JSON.stringify(CATS_BASE))}]);
@@ -2605,7 +2638,7 @@ function kpConfirm() {
           delete timesheet[kpDate][kpEmp];
         }
         saveS('sdp_ts_v2', timesheet);
-        bgSaveTs(kpDate, kpEmp, 0, 0);
+        if (syncReady) supaDelete('timesheet','date=eq.'+kpDate+'&emp=eq.'+kpEmp).catch(()=>{});
         closeKp();
         renderClockLog();
         showToast('Entry cleared for ' + (employees[kpEmp] || EMP_DEFS[kpEmp]).name);
