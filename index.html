@@ -406,6 +406,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
         <button class="btn btn-ghost" onclick="clNavWeek(-1)">◀ Prev</button>
         <button class="btn btn-ghost" onclick="clNavWeek(0)">This Week</button>
         <button class="btn btn-ghost" onclick="clNavWeek(1)">Next ▶</button>
+        <button class="btn btn-yellow" onclick="openClockKp('2026-05-22','mav')">🧪 Test Keypad</button>
       </div>
     </div>
     <div class="card" style="margin-bottom:16px;">
@@ -1261,7 +1262,7 @@ function renderClockLog() {
       }
 
       // Use data attributes instead of inline onclick to avoid escaping issues
-      grid += '<div class="' + cls + '" data-iso="' + iso + '" data-emp="' + e + '">' + label + '</div>';
+      grid += '<button type="button" class="' + cls + '" onclick="openClockKp(\'' + iso + '\',\'' + e + '\')" style="width:100%;text-align:left;background:none;border:none;font-family:inherit;font-size:inherit;cursor:pointer;">' + label + '</button>';
     });
 
     grid += '<div class="clk-cell muted">' + (dayTotal > 0 ? dayTotal.toFixed(2) + ' hrs' : '—') + '</div>';
@@ -1286,24 +1287,7 @@ function renderClockLog() {
   document.getElementById('cl-grid-wrap').innerHTML = grid;
 
   // Attach click handlers via event delegation (no inline onclick)
-  document.getElementById('cl-grid-wrap').onclick = function(ev) {
-    ev.stopPropagation(); // prevent document click from interfering
-    var cell = ev.target.closest('.clk-clickable');
-    if (!cell) return;
-    var iso = cell.getAttribute('data-iso');
-    var emp = cell.getAttribute('data-emp');
-    if (iso && emp) openClockKp(iso, emp);
-  };
-  // iPad touch support
-  document.getElementById('cl-grid-wrap').addEventListener('touchend', function(ev) {
-    ev.stopPropagation();
-    var cell = ev.target.closest('.clk-clickable');
-    if (!cell) return;
-    ev.preventDefault();
-    var iso = cell.getAttribute('data-iso');
-    var emp = cell.getAttribute('data-emp');
-    if (iso && emp) openClockKp(iso, emp);
-  }, { passive: false });
+  // Click handled directly on button cells
 
   // OT warning
   var warnEl = document.getElementById('cl-ot-warning');
