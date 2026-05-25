@@ -456,13 +456,16 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
         </div>
       </div>
       <!-- Results -->
-      <div class="card">
-        <div class="card-hdr"><div class="card-title">Projected Results</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;" id="proj-days-label">—</div></div>
-        <div class="card-body" id="proj-results"></div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card">
+          <div class="card-hdr"><div class="card-title">Projected Results</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;" id="proj-days-label">—</div></div>
+          <div class="card-body" id="proj-results"></div>
+        </div>
+        <!-- Balance cards 2x2 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" id="proj-balance-cards"></div>
       </div>
     </div>
-    <!-- Balance cards -->
-    <div class="g3" id="proj-balance-cards"></div>
+
     <!-- Chart -->
     <div class="card">
       <div style="padding:16px 18px 8px;">
@@ -471,7 +474,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
           <div style="display:flex;flex-direction:column;justify-content:space-between;padding-bottom:22px;padding-right:8px;" id="chart-y-axis"></div>
           <div class="chart-area" style="flex:1;" id="proj-chart"></div>
         </div>
-        <div style="display:flex;gap:16px;padding:4px 0 8px;font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;align-items:center;">
+        <div class="chart-legend" style="display:flex;gap:16px;flex-wrap:wrap;padding:4px 0 8px;font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;align-items:center;">
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c310);margin-right:4px;"></span>Code 310</span>
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c320);margin-right:4px;"></span>Code 320</span>
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c331);margin-right:4px;"></span>Code 331</span>
@@ -543,10 +546,14 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
     </div>
   </div>
 </div>
+</div><!-- close reconcile panel -->
 
 <!-- ═══════════════════════════════ SETTINGS PANEL ═══════════════════════════════ -->
 <div class="panel" id="panel-settings">
   <div class="main">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+      <button class="btn btn-blue" onclick="openNewCycleModal()">🔄 Start New Cycle (12/1/26)</button>
+    </div>
     <div class="g2">
       <!-- Employees -->
       <div class="card">
@@ -569,67 +576,94 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 </div>
 
 <!-- ═══ KEYPAD OVERLAY ═══ -->
-<div class="kp-overlay" id="kp-overlay" onclick="handleKpBg(event)">
-  <div class="kp-sheet">
-    <div class="kp-handle"></div>
-    <div class="kp-top"><div class="kp-top-lbl" id="kp-title">Enter Value</div><div class="kp-x" onclick="closeKp()">✕</div></div>
-    <div class="kp-format-hint" id="kp-format-hint" style="display:none;">⌨ 4-digit: <strong>0830</strong> = 8:30 · <strong>1015</strong> = 10:15</div>
-    <div class="kp-weekly-bar" id="kp-weekly-bar" style="display:none;">
-      <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.5);">Week total so far</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#fff;" id="kp-week-so-far">—</div></div>
-      <div style="text-align:right;"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.5);">OT threshold</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--yellow);">8 hrs/day · 40 hrs/wk</div></div>
+<div id="kp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center;">
+  <div id="kp-sheet" style="width:100%;max-width:520px;background:#003c6e;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom);">
+    <div style="width:36px;height:4px;background:rgba(255,255,255,.3);border-radius:2px;margin:10px auto 6px;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 8px;">
+      <div id="kp-title" style="font-size:13px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.08em;font-family:'IBM Plex Mono',monospace;"></div>
+      <div onclick="closeKp()" style="font-size:22px;color:rgba(255,255,255,.5);cursor:pointer;padding:4px 10px;">✕</div>
     </div>
-    <div id="kp-shift1-confirmed" style="display:none;" class="kp-shift-confirmed">
-      <div><div style="font-size:10px;color:rgba(13,158,110,.8);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Shift 1 Confirmed ✓</div><div style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#6ee7b7;" id="kp-s1-display">—</div></div>
-      <button onclick="editShift1()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:7px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;">Edit</button>
+    <!-- format hint -->
+    <div id="kp-format-hint" style="display:none;margin:0 16px 8px;background:rgba(255,255,255,.08);border-radius:8px;padding:6px 12px;font-size:12px;color:rgba(255,255,255,.7);font-family:'IBM Plex Mono',monospace;">
+      4-digit format: <strong>0830</strong> = 8:30 &nbsp;·&nbsp; <strong>1015</strong> = 10:15
     </div>
-    <div class="kp-displays" id="kp-displays">
-      <div class="kp-box active" id="kp-box-main">
-        <div class="kp-box-lbl" id="kp-box-main-lbl">Value</div>
-        <div class="kp-box-val" id="kp-box-main-val">0</div>
-        <div class="kp-box-sub highlight" id="kp-box-main-sub"></div>
+    <!-- weekly bar -->
+    <div id="kp-weekly-bar" style="display:none;margin:0 16px 8px;background:rgba(0,0,0,.2);border-radius:10px;padding:9px 14px;justify-content:space-between;align-items:center;">
+      <div style="font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;">Week so far</div>
+      <div id="kp-week-so-far" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#fff;"></div>
+    </div>
+    <!-- shift 1 confirmed -->
+    <div id="kp-shift1-confirmed" style="display:none;margin:0 16px 8px;background:rgba(13,158,110,.15);border:1.5px solid rgba(13,158,110,.35);border-radius:10px;padding:10px 14px;justify-content:space-between;align-items:center;">
+      <div id="kp-s1-display" style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#6ee7b7;"></div>
+      <button type="button" onclick="editShift1()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:7px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;">Edit</button>
+    </div>
+    <!-- main display -->
+    <div style="padding:0 16px 10px;">
+      <div style="background:rgba(0,0,0,.28);border-radius:12px;padding:12px 14px;">
+        <div id="kp-box-main-lbl" style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.6);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;"></div>
+        <div id="kp-box-main-val" style="font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:500;color:#fff;line-height:1.1;">0</div>
+        <div id="kp-box-main-sub" style="font-size:12px;color:#f5c842;margin-top:4px;font-family:'IBM Plex Mono',monospace;"></div>
       </div>
-      <div class="kp-box" id="kp-box-sec" style="display:none;">
-        <div class="kp-box-lbl" id="kp-box-sec-lbl">—</div>
-        <div class="kp-box-val" id="kp-box-sec-val">—</div>
-        <div class="kp-box-sub" id="kp-box-sec-sub"></div>
+    </div>
+    <!-- stats row -->
+    <div id="kp-stats-row" style="display:none;gap:6px;padding:0 16px 10px;">
+      <div style="flex:1;background:rgba(0,0,0,.2);border-radius:8px;padding:7px 10px;text-align:center;">
+        <div style="font-size:9px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px;">Reg hrs</div>
+        <div id="ks-reg" style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#6ee7b7;">0</div>
+      </div>
+      <div style="flex:1;background:rgba(0,0,0,.2);border-radius:8px;padding:7px 10px;text-align:center;">
+        <div style="font-size:9px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px;">OT 1.5×</div>
+        <div id="ks-ot15" style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:rgba(255,255,255,.4);">0</div>
+      </div>
+      <div style="flex:1;background:rgba(0,0,0,.2);border-radius:8px;padding:7px 10px;text-align:center;">
+        <div style="font-size:9px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px;">2× OT</div>
+        <div id="ks-ot2" style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:rgba(255,255,255,.4);">0</div>
+      </div>
+      <div style="flex:1;background:rgba(0,0,0,.2);border-radius:8px;padding:7px 10px;text-align:center;">
+        <div style="font-size:9px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:2px;">Wk after</div>
+        <div id="ks-wk" style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#fff;">0</div>
       </div>
     </div>
-    <div class="kp-stats-row" id="kp-stats-row" style="display:none;">
-      <div class="kp-stat"><div class="kp-stat-lbl">Reg hrs</div><div class="kp-stat-val green" id="ks-reg">0</div></div>
-      <div class="kp-stat"><div class="kp-stat-lbl">OT 1.5×</div><div class="kp-stat-val amber" id="ks-ot15">0</div></div>
-      <div class="kp-stat"><div class="kp-stat-lbl">2× OT</div><div class="kp-stat-val red" id="ks-ot2">0</div></div>
-      <div class="kp-stat"><div class="kp-stat-lbl">Wk after</div><div class="kp-stat-val" id="ks-wk">0</div></div>
+    <!-- add shift button -->
+    <div id="kp-add-shift-wrap" style="display:none;padding:0 16px 10px;">
+      <button type="button" onclick="addShift2()" style="width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;">+ Add Shift 2</button>
     </div>
-    <div id="kp-add-shift-wrap" style="display:none;"><button class="kp-add-shift-btn" onclick="addShift2()">+ Add Shift 2</button></div>
-    <div class="kp-desc-row" id="kp-desc-wrap" style="display:none;"><input class="kp-desc-input" id="kp-desc" type="text" placeholder="Note / description…" autocomplete="off"></div>
-    <div class="kp-code-row" id="kp-code-wrap" style="display:none;">
+    <!-- desc / code / date / sign - hidden by default -->
+    <div id="kp-desc-wrap" style="display:none;padding:0 16px 10px;">
+      <input id="kp-desc" type="text" placeholder="Note / description…" autocomplete="off" style="width:100%;background:rgba(0,0,0,.2);border:1.5px solid rgba(255,255,255,.2);color:#fff;padding:9px 13px;border-radius:10px;font-size:13px;font-family:'Syne',sans-serif;outline:none;">
+    </div>
+    <div id="kp-code-wrap" style="display:none;gap:8px;padding:0 16px 10px;">
       <div class="kp-code-pill c310" id="kpcode-310" onclick="selectCode('310')">310</div>
       <div class="kp-code-pill c320" id="kpcode-320" onclick="selectCode('320')">320</div>
       <div class="kp-code-pill c331" id="kpcode-331" onclick="selectCode('331')">331</div>
       <div class="kp-code-pill" id="kpcode-ite" onclick="selectCode('ite')">ITE</div>
     </div>
-    <div class="kp-date-row" id="kp-date-wrap" style="display:none;">
-      <div class="kp-date-lbl" id="kp-date-lbl">Date: —</div>
-      <button class="kp-date-btn" onclick="openKpCal()">📅 Change</button>
+    <div id="kp-date-wrap" style="display:none;align-items:center;justify-content:space-between;padding:0 16px 10px;">
+      <div id="kp-date-lbl" style="font-size:12px;font-family:'IBM Plex Mono',monospace;color:#fff;"></div>
+      <button type="button" onclick="openKpCal()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;">📅 Change</button>
     </div>
-    <div class="kp-sign-row" id="kp-sign-wrap" style="display:none;">
-      <div class="kp-sign-btn pos" id="kp-sign-pos" onclick="setKpSign(1)">+ Increase</div>
-      <div class="kp-sign-btn neg" id="kp-sign-neg" onclick="setKpSign(-1)">− Decrease</div>
+    <div id="kp-sign-wrap" style="display:none;gap:10px;padding:0 16px 10px;">
+      <div id="kp-sign-pos" onclick="setKpSign(1)" style="flex:1;padding:9px 0;text-align:center;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;background:#dcfce7;color:#14532d;border:1.5px solid #86efac;font-family:'Syne',sans-serif;">+ Increase</div>
+      <div id="kp-sign-neg" onclick="setKpSign(-1)" style="flex:1;padding:9px 0;text-align:center;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;background:#fee2e2;color:#7c2d12;border:1.5px solid #fca5a5;font-family:'Syne',sans-serif;opacity:.5;">− Decrease</div>
     </div>
-    <div class="kp-grid">
-      <button type="button" class="kp-key" onclick="kpKey('1')">1</button>
-      <button type="button" class="kp-key" onclick="kpKey('2')">2<div class="ksub">ABC</button></div>
-      <button type="button" class="kp-key" onclick="kpKey('3')">3<div class="ksub">DEF</button></div>
-      <button type="button" class="kp-key" onclick="kpKey('4')">4<div class="ksub">GHI</button></div>
-      <button type="button" class="kp-key" onclick="kpKey('5')">5<div class="ksub">JKL</button></div>
-      <button type="button" class="kp-key" onclick="kpKey('6')">6<div class="ksub">MNO</button></div>
-      <button type="button" class="kp-key" onclick="kpKey('7')">7<div class="ksub">PQRS</button></div>
-      <button type="button" class="kp-key" onclick="kpKey('8')">8<div class="ksub">TUV</button></div>
-      <button type="button" class="kp-key" onclick="kpKey('9')">9<div class="ksub">WXYZ</button></div>
-      <button type="button" class="kp-key dark" onclick="kpKey('C')">C</button>
-      <button type="button" class="kp-key" onclick="kpKey('0')">0</button>
-      <button type="button" class="kp-key dark" onclick="kpKey('back')">⌫</button>
-      <button class="kp-confirm" id="kp-confirm-btn" onclick="kpConfirm()">CONFIRM</button>
+    <!-- hidden secondary box (unused but referenced) -->
+    <div id="kp-box-sec" style="display:none;"></div>
+    <div id="kp-displays" style="display:none;"></div>
+    <!-- number keys -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.1);">
+      <button type="button" onclick="kpKey('1')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">1</button>
+      <button type="button" onclick="kpKey('2')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">2</button>
+      <button type="button" onclick="kpKey('3')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">3</button>
+      <button type="button" onclick="kpKey('4')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">4</button>
+      <button type="button" onclick="kpKey('5')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">5</button>
+      <button type="button" onclick="kpKey('6')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">6</button>
+      <button type="button" onclick="kpKey('7')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">7</button>
+      <button type="button" onclick="kpKey('8')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">8</button>
+      <button type="button" onclick="kpKey('9')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">9</button>
+      <button type="button" onclick="kpKey('C')" style="background:rgba(0,0,0,.18);padding:18px 0;font-size:20px;font-weight:600;color:#fff;border:none;cursor:pointer;">C</button>
+      <button type="button" onclick="kpKey('0')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">0</button>
+      <button type="button" onclick="kpKey('back')" style="background:rgba(0,0,0,.18);padding:18px 0;font-size:20px;font-weight:600;color:#fff;border:none;cursor:pointer;">⌫</button>
+      <button type="button" id="kp-confirm-btn" onclick="kpConfirm()" style="grid-column:span 3;background:#f5c842;color:#003f63;padding:17px;font-size:15px;font-weight:800;font-family:'Syne',sans-serif;border:none;cursor:pointer;letter-spacing:.04em;">CONFIRM</button>
     </div>
   </div>
 </div>
@@ -747,25 +781,36 @@ function setSyncLabel(msg, ok) {
   if(el){el.textContent=msg; el.className='sync-pill '+(ok?'live':'wait');}
 }
 function dbToPeriod(r) {
-  return {id:r.id,label:r.label,code:r.code,gross:r.gross||0,tax:r.tax||0,
-    locked:r.locked||false,note:r.note||'',reconciled:r.reconciled||false,
-    premierTax:r.premier_tax||null,cycleId:r.cycle_id||'2025-26',
-    hrs:{cor:r.hrs_cor||0,mav:r.hrs_mav||0,raf:r.hrs_raf||0,nic:r.hrs_nic||0}};
+  return {
+    id: r.id, label: r.label, code: r.code,
+    gross: r.gross||0, tax: r.tax||0,
+    locked: r.locked||false, note: r.note||'',
+    reconciled: r.reconciled||false,
+    premierTax: r.premier_tax||null,
+    cycleId: r.cycle_id||'2025-26',
+    hrs: {cor:r.hrs_cor||0, mav:r.hrs_mav||0, raf:r.hrs_raf||0, nic:r.hrs_nic||0}
+  };
 }
 function periodToDb(p) {
-  return {id:p.id,label:p.label,code:p.code,gross:p.gross||0,tax:p.tax||0,
-    locked:p.locked||false,note:p.note||'',reconciled:p.reconciled||false,
-    premier_tax:p.premierTax||null,cycle_id:p.cycleId||currentCycle,
-    hrs_cor:p.hrs?.cor||0,hrs_mav:p.hrs?.mav||0,hrs_raf:p.hrs?.raf||0,hrs_nic:p.hrs?.nic||0};
+  return {
+    id: p.id, label: p.label, code: p.code,
+    gross: p.gross||0, tax: p.tax||0,
+    locked: p.locked||false, note: p.note||'',
+    reconciled: p.reconciled||false,
+    premier_tax: p.premierTax||null,
+    cycle_id: p.cycleId||currentCycle,
+    hrs_cor: p.hrs?.cor||0, hrs_mav: p.hrs?.mav||0,
+    hrs_raf: p.hrs?.raf||0, hrs_nic: p.hrs?.nic||0
+  };
 }
 function bgAddPeriod(p) { if(!syncReady)return; supaPost('pay_periods',periodToDb(p)).catch(e=>console.warn(e)); }
 function bgDeletePeriod(id) { if(!syncReady)return; supaDelete('pay_periods','id=eq.'+id).catch(e=>console.warn(e)); }
-function bgAddAdj(a) { if(!syncReady)return; supaPost('adjustments',{...a,cycle_id:currentCycle}).catch(e=>console.warn(e)); }
+function bgAddAdj(a) { if(!syncReady)return; supaPost('adjustments',{id:a.id,date:a.date,code:a.code,amt:a.amt,note:a.note||'',cycle_id:currentCycle}).catch(e=>console.warn(e)); }
 function bgDeleteAdj(id) { if(!syncReady)return; supaDelete('adjustments','id=eq.'+id).catch(e=>console.warn(e)); }
 function bgSaveTs(date, emp, s1, s2) {
   if(!syncReady)return;
-  supaDelete('timesheet','date=eq.'+date+'&emp=eq.'+emp+'&cycle_id=eq.'+currentCycle).catch(()=>{})
-    .then(()=>{ if(s1>0||s2>0) supaPost('timesheet',{date,emp,shift1:s1,shift2:s2||0,cycle_id:currentCycle}).catch(e=>console.warn(e)); });
+  supaDelete('timesheet','date=eq.'+date+'&emp=eq.'+emp).catch(()=>{})
+    .then(()=>{ if(s1>0||s2>0) supaPost('timesheet',{date,emp,shift1:s1,shift2:s2||0,hrs:+(s1+(s2||0)).toFixed(4),cycle_id:currentCycle}).catch(e=>console.warn(e)); });
 }
 function bgSaveSettings() {
   if(!syncReady)return;
@@ -782,7 +827,7 @@ async function initDB() {
       setSyncLabel('Seeding…', false);
       const ppDbRows = SEED_PERIODS.map(periodToDb);
       await supaPost('pay_periods', ppDbRows);
-      const adjDbRows = SEED_ADJS.map(function(a){ return Object.assign({}, a, {cycle_id: currentCycle}); });
+      const adjDbRows = SEED_ADJS.map(function(a){ return {id:a.id, date:a.date, code:a.code, amt:a.amt, note:a.note||'', cycle_id:currentCycle}; });
       await supaPost('adjustments', adjDbRows);
       await supaSetSetting('settings', settings);
       await supaSetSetting('taxRates', taxRates);
@@ -795,7 +840,10 @@ async function initDB() {
       var loadedTs = {};
       tsRows.forEach(function(r){
         if (!loadedTs[r.date]) loadedTs[r.date] = {};
-        loadedTs[r.date][r.emp] = {s1: r.shift1||0, s2: r.shift2||0};
+        // Support both old (hrs) and new (shift1/shift2) schema
+        var s1 = r.shift1 || r.hrs || 0;
+        var s2 = r.shift2 || 0;
+        loadedTs[r.date][r.emp] = {s1: s1, s2: s2};
       });
       var sv = await supaGetSetting('settings');
       var tv = await supaGetSetting('taxRates');
@@ -1043,12 +1091,21 @@ function renderBudget() {
   // Alerts
   let alerts='';
   const cats=cycleCats();
+  const daysLeft=Math.max(0,Math.round((BUDGET_END-TODAY)/86400000));
+  const burnRate=ppCount>0?ts/ppCount:0; // per period
+  const periodsLeft=Math.round(daysLeft/15);
+  const projTotal=ts+(burnRate*periodsLeft);
+  const projOver=projTotal>tb;
+  // Days remaining banner
+  alerts+=`<div class="alert ${daysLeft<60?'warn':'info'}"><span>${daysLeft<60?'⚠':'ℹ'}</span> ${daysLeft} days remaining in budget year (ends Nov 30, 2026) · ${ppCount} pay periods recorded · Avg ${fmt(burnRate)}/period</div>`;
+  // Projection warning
+  if(projOver) alerts+=`<div class="alert danger"><span>⚠</span> At current burn rate, projected total ${fmt(projTotal)} exceeds budget ${fmt(tb)} by ${fmt(projTotal-tb)}.</div>`;
   Object.keys(cats).forEach(code=>{
     const rem=catBudget(code)-catSpent(code);
     const bud=catBudget(code);
     const pu=bud>0?catSpent(code)/bud*100:0;
     if(rem<0) alerts+=`<div class="alert danger"><span>⚠</span> Code ${code} OVER BUDGET by ${fmt(Math.abs(rem))}.</div>`;
-    else if(pu>90) alerts+=`<div class="alert warn"><span>⚠</span> Code ${code} is ${pu.toFixed(0)}% used — ${fmt(rem)} remaining.</div>`;
+    else if(pu>90) alerts+=`<div class="alert warn"><span>⚠</span> Code ${code} ${pu.toFixed(0)}% used — only ${fmt(rem)} remaining.</div>`;
   });
   document.getElementById('budget-alerts').innerHTML=alerts;
 
@@ -1090,7 +1147,7 @@ let selectedPpId = null;
 
 function renderPeriods() {
   const BADGE={'310':'b310','320':'b320','331':'b331','ite':'bite'};
-  const cyclPeriods=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle);
+  const cyclPeriods=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle).slice().reverse();
 
   // Populate rec dropdown
   const recSel=document.getElementById('rec-history-tbody');
@@ -1163,18 +1220,22 @@ function renderSidePanel(id) {
   let bodyHtml='';
   const activeEmps=ALL_EMPS.filter(e=>(p.hrs?.[e]||0)>0);
 
+  // Pre-calculate total estimated gross for proportional allocation
+  const totalEmpGross = activeEmps.reduce((s,e) => {
+    const r = getRate(e, (p.date||'2025-12-01'));
+    return s + +((p.hrs?.[e]||0) * r.reg).toFixed(2);
+  }, 0);
+
   activeEmps.forEach(e=>{
     const emp=employees[e]||EMP_DEFS[e];
     const hrs=p.hrs?.[e]||0;
     const rate=getRate(e, (p.date||'2025-12-01'));
-    // Simple breakdown: assume hrs over 8/day pattern
-    const regHrs=Math.min(hrs,hrs); // full hrs as regular for locked periods without daily detail
-    const empGross=p.gross?null:+(hrs*rate.reg).toFixed(2);
     const tax=taxShares[e]||0;
-    const totalEmpCost=(empGross||0)+tax;
 
-    // Calculate emp gross from period gross proportionally if not available
-    const empGrossCalc = empGross || (p.gross > 0 && totalEmpGross > 0 ? +(p.gross * (+(hrs * rate.reg).toFixed(2)) / totalEmpGross).toFixed(2) : +(hrs * rate.reg).toFixed(2));
+    // Proportional gross from period total, or estimate from hours × rate
+    const empGrossCalc = p.gross > 0 && totalEmpGross > 0
+      ? +(p.gross * (+(hrs * rate.reg).toFixed(2)) / totalEmpGross).toFixed(2)
+      : +(hrs * rate.reg).toFixed(2);
     const empTotalCost = +(empGrossCalc + tax).toFixed(2);
     bodyHtml+=`<div class="emp-section">
       <div class="emp-hdr">
@@ -1204,7 +1265,7 @@ function renderSidePanel(id) {
 }
 
 // ══════════════════════════════════════
-// RENDER CLOCK LOG
+// IMPROVED CLOCK LOG RENDER
 // ══════════════════════════════════════
 let clWeekOffset = 0;
 function clNavWeek(dir) {
@@ -1213,7 +1274,6 @@ function clNavWeek(dir) {
 }
 
 function renderClockLog() {
-  // Guard: elements must exist
   if (!document.getElementById('cl-grid-wrap')) return;
 
   const base = weekStart(new Date(TODAY.getTime()));
@@ -1229,10 +1289,14 @@ function renderClockLog() {
   const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  var lbl = document.getElementById('cl-week-label');
-  if (lbl) lbl.textContent = 'Week of ' + DOW[0] + ' ' + MON[base.getMonth()] + ' ' + base.getDate() + ', ' + base.getFullYear();
+  // Week range label e.g. "Sun May 17 – Sat May 23, 2026"
+  const endDay = days[6];
+  const lbl = DOW[0] + ' ' + MON[base.getMonth()] + ' ' + base.getDate() +
+    ' – ' + DOW[6] + ' ' + MON[endDay.getMonth()] + ' ' + endDay.getDate() + ', ' + endDay.getFullYear();
+  const lblEl = document.getElementById('cl-week-label');
+  if (lblEl) lblEl.textContent = lbl;
 
-  // Collect weekly hours per employee
+  // Build weekly hours
   var weekHrs = {};
   ACTIVE_EMPS.forEach(function(e) {
     weekHrs[e] = days.map(function(d) {
@@ -1244,7 +1308,7 @@ function renderClockLog() {
     });
   });
 
-  // Build grid HTML using string concat (no nested template literals)
+  // Build grid HTML
   var grid = '<div class="clk-grid">';
   grid += '<div class="clk-hdr">Date</div>';
   ACTIVE_EMPS.forEach(function(e) {
@@ -1257,66 +1321,65 @@ function renderClockLog() {
     var iso     = isoFromDate(d);
     var isToday = (iso === todayStr());
     var dateCls = 'clk-cell' + (isToday ? ' today-row' : '');
-    var dateStyle = isToday
-      ? 'font-weight:700;color:var(--blue);'
-      : 'color:var(--text2);';
+    var dateStyle = isToday ? 'font-weight:700;color:var(--blue);' : 'color:var(--text1);';
     var dateLabel = DOW[i] + ' ' + MON[d.getMonth()] + ' ' + d.getDate();
     if (isToday) dateLabel += ' <span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 5px;border-radius:4px;margin-left:3px;">TODAY</span>';
     grid += '<div class="' + dateCls + '" style="' + dateStyle + '">' + dateLabel + '</div>';
 
     var dayTotal = 0;
     ACTIVE_EMPS.forEach(function(e) {
-      var h   = weekHrs[e][i].total;
-      var s1  = weekHrs[e][i].s1;
-      var s2  = weekHrs[e][i].s2;
+      var s1 = weekHrs[e][i].s1;
+      var s2 = weekHrs[e][i].s2;
+      var h  = weekHrs[e][i].total;
       dayTotal += h;
 
       var cls   = 'clk-cell clk-clickable';
-      var label = '<span style="color:var(--text3);">tap to enter</span>';
+      var label = '<span style="color:var(--text3);font-size:13px;">tap to enter</span>';
 
       if (h > 0) {
-        label = s1.toFixed(2) + (s2 > 0 ? ' + ' + s2.toFixed(2) : '') + ' hrs';
-        if (h > 12) { cls += ' ot2'; label += ' ⚠2×'; }
-        else if (h > 8) { cls += ' ot'; label += ' ⚠OT'; }
+        // Show S1 + S2 breakdown clearly
+        if (s2 > 0) {
+          label = '<div style="font-size:12px;line-height:1.4;">' +
+            'S1: ' + s1.toFixed(2) + '<br>' +
+            'S2: ' + s2.toFixed(2) + '<br>' +
+            '<strong>' + h.toFixed(2) + ' hrs</strong>' +
+            (h > 12 ? ' <span style="color:var(--red);">2×</span>' : h > 8 ? ' <span style="color:var(--orange);">OT</span>' : '') +
+            '</div>';
+        } else {
+          label = s1.toFixed(2) + ' hrs' + (h > 12 ? ' ⚠2×' : h > 8 ? ' ⚠OT' : '');
+        }
+        if (h > 12) cls += ' ot2';
+        else if (h > 8) cls += ' ot';
       }
 
-      // Use data attributes instead of inline onclick to avoid escaping issues
-      grid += '<button type="button" class="' + cls + '" onclick="openClockKp(\'' + iso + '\',\'' + e + '\')" style="width:100%;text-align:left;background:none;border:none;font-family:inherit;font-size:inherit;cursor:pointer;">' + label + '</button>';
+      grid += '<button type="button" class="' + cls + '" onclick="openClockKp(\'' + iso + '\',\'' + e + '\')" style="width:100%;text-align:left;background:none;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:14px;padding:11px 14px;cursor:pointer;">' + label + '</button>';
     });
 
     grid += '<div class="clk-cell muted">' + (dayTotal > 0 ? dayTotal.toFixed(2) + ' hrs' : '—') + '</div>';
   });
 
-  // Week totals row
+  // Week totals
   grid += '<div class="clk-cell clk-tot" style="font-weight:700;color:var(--text2);">Week Total</div>';
   ACTIVE_EMPS.forEach(function(e) {
-    var wk   = weekHrs[e].reduce(function(s,h){ return +(s + h.total).toFixed(4); }, 0);
+    var wk   = weekHrs[e].reduce(function(s, h) { return +(s + h.total).toFixed(4); }, 0);
     var isOT = wk > 40;
     var cls  = 'clk-cell clk-tot' + (isOT ? ' ot' : '');
-    var txt  = wk > 0 ? wk.toFixed(1) + ' hrs' + (isOT ? ' ⚠' : '') : '—';
-    if (isOT) warnings.push((employees[e] || EMP_DEFS[e]).name + ': ' + wk.toFixed(1) + ' hrs — weekly OT applies');
-    grid += '<div class="' + cls + '">' + txt + '</div>';
+    if (isOT) warnings.push((employees[e] || EMP_DEFS[e]).name + ': ' + wk.toFixed(1) + ' hrs — weekly OT');
+    grid += '<div class="' + cls + '">' + (wk > 0 ? wk.toFixed(1) + ' hrs' + (isOT ? ' ⚠' : '') : '—') + '</div>';
   });
-  var wkTotal = ACTIVE_EMPS.reduce(function(s,e) {
-    return +(s + weekHrs[e].reduce(function(ss,h){ return +(ss+h.total).toFixed(4); }, 0)).toFixed(4);
+  var wkTotal = ACTIVE_EMPS.reduce(function(s, e) {
+    return +(s + weekHrs[e].reduce(function(ss, h) { return +(ss + h.total).toFixed(4); }, 0)).toFixed(4);
   }, 0);
   grid += '<div class="clk-cell clk-tot">' + (wkTotal > 0 ? wkTotal.toFixed(1) + ' hrs' : '—') + '</div>';
-  grid += '</div>'; // close clk-grid
+  grid += '</div>';
 
   document.getElementById('cl-grid-wrap').innerHTML = grid;
-
-  // Attach click handlers via event delegation (no inline onclick)
-  // Click handled directly on button cells
 
   // OT warning
   var warnEl = document.getElementById('cl-ot-warning');
   if (warnEl) {
-    if (warnings.length) {
-      warnEl.style.display = 'block';
-      warnEl.innerHTML = '⚠ ' + warnings.join(' · ');
-    } else {
-      warnEl.style.display = 'none';
-    }
+    warnEl.style.display = warnings.length ? 'block' : 'none';
+    if (warnings.length) warnEl.innerHTML = '⚠ ' + warnings.join(' · ');
   }
 
   // Per-employee summary cards
@@ -1324,7 +1387,7 @@ function renderClockLog() {
     var el = document.getElementById('cl-sum-' + e);
     if (!el) return;
     var emp      = employees[e] || EMP_DEFS[e];
-    var dailyArr = weekHrs[e].map(function(h){ return h.total; });
+    var dailyArr = weekHrs[e].map(function(h) { return h.total; });
     var ot       = calcOT(dailyArr);
     var rate     = getRate(e, todayStr());
     var gross    = +(ot.reg * rate.reg + ot.ot15 * rate.ot + ot.ot2 * rate.ot2).toFixed(2);
@@ -1332,15 +1395,16 @@ function renderClockLog() {
 
     el.innerHTML =
       '<div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:10px;">' + emp.name + '</div>' +
-      '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;color:var(--text2);display:flex;flex-direction:column;gap:7px;">' +
-        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Reg hrs</span><span>' + ot.reg.toFixed(2) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 1.5× hrs</span><span style="color:' + (ot.ot15 > 0 ? 'var(--orange)' : 'var(--text1)') + ';">' + ot.ot15.toFixed(2) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 2× hrs</span><span style="color:' + (ot.ot2 > 0 ? 'var(--red)' : 'var(--text1)') + ';">' + ot.ot2.toFixed(2) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:6px;"><span style="color:var(--text3);">Total hrs</span><strong>' + total.toFixed(1) + '</strong></div>' +
+      '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;display:flex;flex-direction:column;gap:7px;">' +
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Reg hrs</span><span style="color:var(--text1);">' + ot.reg.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 1.5× hrs</span><span style="color:' + (ot.ot15 > 0 ? 'var(--orange)' : 'var(--text3)') + ';">' + ot.ot15.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 2× hrs</span><span style="color:' + (ot.ot2 > 0 ? 'var(--red)' : 'var(--text3)') + ';">' + ot.ot2.toFixed(2) + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:6px;"><span style="color:var(--text3);">Total hrs</span><strong style="color:var(--text1);">' + total.toFixed(1) + '</strong></div>' +
         '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Est. gross</span><strong style="color:var(--green);">' + fmt(gross) + '</strong></div>' +
       '</div>';
   });
 }
+
 
 
 // ══════════════════════════════════════
@@ -1519,57 +1583,122 @@ function renderProjection() {
 }
 
 function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsTotal, nsMonths) {
-  const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const startMonth=TODAY.getMonth(), startYear=TODAY.getFullYear();
-  const endMonth=10, endYear=2026; // Nov 2026
+  var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var startMonth = TODAY.getMonth();
+  var startYear  = TODAY.getFullYear();
+  var endMonth   = 10; // Nov
+  var endYear    = 2026;
 
-  let months=[];
-  let y=startYear, m=startMonth;
-  while(y<endYear||(y===endYear&&m<=endMonth)){
-    months.push({y,m,label:MONTH_NAMES[m]+(y!==startYear?'\''+String(y).slice(2):'')});
-    m++; if(m>11){m=0;y++;}
+  var months = [];
+  var y = startYear, m = startMonth;
+  while (y < endYear || (y === endYear && m <= endMonth)) {
+    months.push({y:y, m:m, label: MONTH_NAMES[m] + (y !== startYear ? '\'' + String(y).slice(2) : '')});
+    m++; if (m > 11) { m = 0; y++; }
   }
 
-  const monthlyWage=+(dailyCost*daysPerWk*4.33).toFixed(2);
-  const monthlyNS=+(settings.nsFee).toFixed(2);
-  let maxVal=0;
-  const barData=months.map((mo,i)=>{
-    // Use actual for confirmed periods
-    const key=mo.y+'-'+String(mo.m+1).padStart(2,'0');
-    const actualPeriods=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle&&p.label&&(p.label.startsWith(String(mo.m+1)+'/')||p.label.includes('/'+String(mo.m+1)+'/'+String(mo.y).slice(2))));
-    const actual=actualPeriods.reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);
-    const isCurrentMonth=mo.m===TODAY.getMonth()&&mo.y===TODAY.getFullYear();
-    const isPast=(mo.y<TODAY.getFullYear())||(mo.y===TODAY.getFullYear()&&mo.m<TODAY.getMonth());
-    const wage310=isPast?0:+(monthlyWage*(split310/100)).toFixed(2);
-    const wage320=isPast?0:+(monthlyWage*((100-split310)/100)).toFixed(2);
-    const ns331=monthlyNS;
-    const total=isPast?actual:wage310+wage320+ns331;
-    maxVal=Math.max(maxVal,total);
-    return{...mo,isPast,isCurrentMonth,actual,wage310,wage320,ns331,total,key};
+  var monthlyWage = +(dailyCost * daysPerWk * 4.33).toFixed(2);
+  var monthlyNS   = +settings.nsFee.toFixed(2);
+  var projMonthly = +(monthlyWage + monthlyNS).toFixed(2);
+
+  // Calculate actual monthly spend from confirmed periods
+  var actualByMonth = {};
+  periods.filter(function(p){ return (p.cycleId||'2025-26') === currentCycle; }).forEach(function(p) {
+    var key = p.label ? p.label.slice(-5,-3) + '/20' + p.label.slice(-2) : '';
+    // Parse month from label e.g. "4/16–4/30/26" -> month 4
+    var mMatch = p.label ? p.label.match(/^(\d+)\//) : null;
+    if (mMatch) {
+      var mo = parseInt(mMatch[1]) - 1; // 0-indexed
+      var yr = 2025 + (mo < 11 ? 1 : 0); // rough year
+      var mkey = yr + '-' + mo;
+      if (!actualByMonth[mkey]) actualByMonth[mkey] = 0;
+      actualByMonth[mkey] += (p.gross||0) + (p.tax||0);
+    }
   });
 
-  const ySteps=[0,4000,8000,12000,16000,20000].filter(v=>v<=maxVal*1.2);
-  const maxY=ySteps[ySteps.length-1]||16000;
+  // Average actual monthly spend
+  var actualVals = Object.values(actualByMonth).filter(function(v){ return v > 0; });
+  var avgActual  = actualVals.length ? actualVals.reduce(function(s,v){ return s+v; },0) / actualVals.length : 0;
 
-  document.getElementById('chart-y-axis').innerHTML=ySteps.slice().reverse().map(v=>
-    `<div style="font-size:9px;color:var(--text3);font-family:'IBM Plex Mono',monospace;text-align:right;">${v>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+v}</div>`).join('');
+  var barData = months.map(function(mo, i) {
+    var isPast = (mo.y < TODAY.getFullYear()) || (mo.y === TODAY.getFullYear() && mo.m < TODAY.getMonth());
+    var isCurrentMonth = mo.m === TODAY.getMonth() && mo.y === TODAY.getFullYear();
+    var mkey = mo.y + '-' + mo.m;
+    var actual = actualByMonth[mkey] || 0;
+    var wage310 = isPast ? 0 : +(monthlyWage * (split310/100)).toFixed(2);
+    var wage320 = isPast ? 0 : +(monthlyWage * ((100-split310)/100)).toFixed(2);
+    var total   = isPast ? actual : projMonthly;
+    return { mo:mo, isPast:isPast, isCurrentMonth:isCurrentMonth, actual:actual, wage310:wage310, wage320:wage320, ns331:monthlyNS, total:total };
+  });
 
-  const barsHtml=barData.map(b=>{
-    const h310=b.isPast?0:Math.round((b.wage310/maxY)*180);
-    const h320=b.isPast?Math.round((b.actual/maxY)*180):Math.round((b.wage320/maxY)*180);
-    const h331=b.isPast?0:Math.round((b.ns331/maxY)*180);
-    const totalH=b.isPast?Math.round((b.actual/maxY)*180):h310+h320+h331;
-    return `<div class="bar-group">
-      <div class="bar-amt">${b.total>=1000?'$'+(b.total/1000).toFixed(1)+'k':fmt(b.total)}</div>
-      <div class="bar-stack" style="height:${totalH}px;">
-        <div class="bar-seg" style="height:${h331}px;background:var(--c331);"></div>
-        <div class="bar-seg" style="height:${h310}px;background:var(--c310);"></div>
-        <div class="bar-seg" style="flex:1;background:var(--c320);"></div>
-      </div>
-      <div class="bar-month">${b.label}${b.isCurrentMonth?'(r)':''}</div>
-    </div>`;
+  var maxVal = Math.max.apply(null, barData.map(function(b){ return b.total; }).concat([avgActual, projMonthly]));
+  maxVal = maxVal * 1.15; // 15% headroom for lines
+
+  // Y axis steps
+  var step = maxVal > 16000 ? 4000 : maxVal > 8000 ? 2000 : 1000;
+  var ySteps = [];
+  for (var v = 0; v <= maxVal; v += step) ySteps.push(v);
+
+  // Line positions as % of chart height (180px)
+  var chartH = 180;
+  var avgPct    = avgActual  > 0 ? Math.min(100, (avgActual  / maxVal) * 100) : 0;
+  var projPct   = projMonthly > 0 ? Math.min(100, (projMonthly / maxVal) * 100) : 0;
+  var avgY      = chartH - (avgPct  / 100 * chartH);
+  var projY     = chartH - (projPct / 100 * chartH);
+
+  // Y axis
+  document.getElementById('chart-y-axis').innerHTML = ySteps.slice().reverse().map(function(v) {
+    return '<div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;text-align:right;">' +
+      (v >= 1000 ? '$' + (v/1000).toFixed(0) + 'k' : '$' + v) + '</div>';
   }).join('');
-  document.getElementById('proj-chart').innerHTML=barsHtml;
+
+  // Build bars with SVG overlay for lines
+  var barsHtml = barData.map(function(b) {
+    var h310 = b.isPast ? 0 : Math.round((b.wage310 / maxVal) * chartH);
+    var h320 = b.isPast ? Math.round((b.actual / maxVal) * chartH) : Math.round((b.wage320 / maxVal) * chartH);
+    var h331 = b.isPast ? 0 : Math.round((b.ns331 / maxVal) * chartH);
+    var totalH = b.isPast ? h320 : h310 + h320 + h331;
+    var opacity = b.isPast ? '1' : '0.65';
+    var lbl = b.total >= 1000 ? '$' + (b.total/1000).toFixed(1) + 'k' : '$' + Math.round(b.total);
+    return '<div class="bar-group">' +
+      '<div class="bar-amt" style="color:var(--text3);">' + lbl + '</div>' +
+      '<div class="bar-stack" style="height:' + totalH + 'px;opacity:' + opacity + ';">' +
+        '<div class="bar-seg" style="height:' + h331 + 'px;background:var(--c331);"></div>' +
+        '<div class="bar-seg" style="height:' + h310 + 'px;background:var(--c310);"></div>' +
+        '<div class="bar-seg" style="flex:1;background:var(--c320);"></div>' +
+      '</div>' +
+      '<div class="bar-month" style="font-family:\'IBM Plex Mono\',monospace;">' + b.mo.label + (b.isCurrentMonth ? '(r)' : '') + '</div>' +
+    '</div>';
+  }).join('');
+
+  var chartEl = document.getElementById('proj-chart');
+  chartEl.innerHTML = barsHtml;
+  chartEl.style.position = 'relative';
+
+  // Add SVG lines overlay
+  var svgW = chartEl.offsetWidth || 600;
+  var svg = '<svg style="position:absolute;top:0;left:0;width:100%;height:' + chartH + 'px;pointer-events:none;overflow:visible;" viewBox="0 0 ' + svgW + ' ' + chartH + '" preserveAspectRatio="none">';
+
+  if (avgActual > 0) {
+    svg += '<line x1="0" y1="' + avgY + '" x2="' + svgW + '" y2="' + avgY + '" stroke="#0077b6" stroke-width="2" stroke-dasharray="6,4" opacity="0.8"/>';
+    svg += '<text x="4" y="' + (avgY - 4) + '" font-size="9" fill="#0077b6" font-family="IBM Plex Mono, monospace" font-weight="600">Avg actual: $' + Math.round(avgActual/1000*10)/10 + 'k/mo</text>';
+  }
+  if (projMonthly > 0) {
+    svg += '<line x1="0" y1="' + projY + '" x2="' + svgW + '" y2="' + projY + '" stroke="#e07b00" stroke-width="2" stroke-dasharray="2,3" opacity="0.9"/>';
+    svg += '<text x="4" y="' + (projY - 4) + '" font-size="9" fill="#e07b00" font-family="IBM Plex Mono, monospace" font-weight="600">Projected: $' + Math.round(projMonthly/1000*10)/10 + 'k/mo</text>';
+  }
+  svg += '</svg>';
+  chartEl.innerHTML += svg;
+
+  // Update legend
+  var legendEl = chartEl.parentElement.querySelector('.chart-legend-extra');
+  if (!legendEl) {
+    var leg = chartEl.parentElement.querySelector('.chart-legend');
+    if (leg) {
+      leg.innerHTML = leg.innerHTML +
+        '<span style="display:inline-flex;align-items:center;gap:4px;"><svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#0077b6" stroke-width="2" stroke-dasharray="5,3"/></svg> Avg actual</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:4px;"><svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#e07b00" stroke-width="2" stroke-dasharray="2,3"/></svg> Projected</span>';
+    }
+  }
 }
 
 // Projection input setters
@@ -1585,238 +1714,395 @@ function openCustomSplitKp(){kpMode='split';openKp('Code 310 Split %', { mainLbl
 // RENDER RECONCILE
 // ══════════════════════════════════════
 function renderReconcile() {
-  // Steps
-  const stepDefs=[
-    {label:'Upload Statement',   sub:recState.step>1?'PDF processed':'Upload Premier PDF'},
-    {label:'Select Period',      sub:recState.periodId?('pp '+recState.periodId):'Select pay period'},
-    {label:'Review Comparison',  sub:recState.step===3?'Review flags':'Pending'},
-    {label:'Approve & Mark',     sub:recState.step===4?'Complete':'Pending'},
+  const cyclPeriods = periods
+    .filter(p => (p.cycleId||'2025-26') === currentCycle)
+    .slice().reverse();
+
+  // Steps indicator
+  const stepDefs = [
+    { label:'Upload Statement',  sub: recState.step > 1 ? 'PDF processed' : 'Upload Premier PDF' },
+    { label:'Select Period',     sub: recState.periodId ? recState.periodId : 'Select pay period' },
+    { label:'Review Comparison', sub: recState.step === 3 ? 'Review flags' : 'Pending' },
+    { label:'Approve & Mark',    sub: recState.step === 4 ? 'Complete' : 'Pending' },
   ];
-  document.getElementById('rec-steps').innerHTML=stepDefs.map((s,i)=>{
-    const stepNum=i+1;
-    const cls=recState.step>stepNum?'done':recState.step===stepNum?'active':'todo';
-    return `<div class="step ${cls}"><div class="step-num">${cls==='done'?'✓':stepNum}</div><div><div class="step-lbl">${s.label}</div><div class="step-sub">${s.sub}</div></div></div>`;
+  document.getElementById('rec-steps').innerHTML = stepDefs.map((s, i) => {
+    const n = i + 1;
+    const cls = recState.step > n ? 'done' : recState.step === n ? 'active' : 'todo';
+    return '<div class="step ' + cls + '"><div class="step-num">' + (cls==='done'?'✓':n) + '</div>' +
+      '<div><div class="step-lbl">' + s.label + '</div><div class="step-sub">' + s.sub + '</div></div></div>';
   }).join('');
 
-  // Show/hide steps
-  document.getElementById('rec-step1').style.display=recState.step===1?'block':'none';
-  document.getElementById('rec-step2plus').style.display=recState.step>=2?'block':'none';
-  document.getElementById('rec-approve-card').style.display=recState.step>=3?'block':'none';
+  // Show/hide panels
+  document.getElementById('rec-step1').style.display      = recState.step === 1 ? 'block' : 'none';
+  document.getElementById('rec-step2plus').style.display  = recState.step >= 2 ? 'block' : 'none';
+  document.getElementById('rec-approve-card').style.display = recState.step >= 3 ? 'block' : 'none';
 
-  if(recState.step>=2&&recState.periodId){
-    const p=periods.find(x=>x.id===recState.periodId);
-    if(p){
-      const BADGE={'310':'b310','320':'b320','331':'b331','ite':'bite'};
-      document.getElementById('rec-period-badge').textContent=p.id+' · '+p.label;
-      document.getElementById('rec-table-title').textContent='Comparison — '+p.id+' · '+p.label;
+  if (recState.step >= 2 && recState.periodId) {
+    const p = periods.find(x => x.id === recState.periodId);
+    if (p) {
+      document.getElementById('rec-period-badge').textContent = p.id + ' · ' + p.label;
+      document.getElementById('rec-table-title').textContent  = 'Comparison — ' + p.id + ' · ' + p.label;
     }
   }
 
-  if(recState.step===3) renderReconcileComparison();
-  renderRecHistory();
+  if (recState.step === 3) renderReconcileComparison();
+  renderRecHistory(cyclPeriods);
 }
 
-function renderRecHistory(){
-  const cyclPeriods=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle);
-  document.getElementById('rec-history-tbody').innerHTML=[...cyclPeriods].reverse().map(p=>`<tr>
-    <td class="mono" style="font-weight:700;">${p.id}</td>
-    <td style="font-size:12px;">${p.label}</td>
-    <td>
-      ${p.reconciled
-        ? `<div style="display:flex;align-items:center;gap:8px;"><span class="rec-badge">✓ Reconciled</span><button class="btn btn-ghost btn-sm" onclick="startManualRec('${p.id}')">Re-run</button></div>`
-        : `<button class="btn btn-blue btn-sm" onclick="startManualRec('${p.id}')">▶ Reconcile</button>`
-      }
-    </td>
-  </tr>`).join('');
+function renderRecHistory(cyclPeriods) {
+  const el = document.getElementById('rec-history-tbody');
+  if (!el) return;
+  el.innerHTML = cyclPeriods.map(p =>
+    '<tr><td class="mono" style="font-weight:700;">' + p.id + '</td>' +
+    '<td style="font-size:12px;">' + p.label + '</td>' +
+    '<td>' + (p.reconciled
+      ? '<div style="display:flex;align-items:center;gap:8px;"><span class="rec-badge">✓ Reconciled</span>' +
+        '<button class="btn btn-ghost btn-sm" onclick="startManualRec(\'' + p.id + '\')">Re-run</button></div>'
+      : '<button class="btn btn-blue btn-sm" onclick="startManualRec(\'' + p.id + '\')">▶ Reconcile</button>'
+    ) + '</td></tr>'
+  ).join('');
 }
 
-function startManualRec(id){
-  recState={step:2,periodId:id,extracted:{}};
+function startManualRec(id) {
+  recState = { step: 2, periodId: id, extracted: {}, pdfFilename: '' };
   renderReconcile();
 }
 
+function resetReconcile() {
+  recState = { step: 1, periodId: null, extracted: {}, pdfFilename: '' };
+  renderReconcile();
+}
+
+// ── PDF Upload & Text Extraction ──
 function handlePdfUpload(event) {
-  const file=event.target.files[0];
-  if(!file){return;}
+  const file = event.target.files[0];
+  if (!file) return;
   showToast('Reading PDF…');
+
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      // Extract text from PDF data URL — works for digital PDFs
-      // Parse the PDF text to find pay period data
-      extractPremierData(file.name, e.target.result);
-    } catch(err) {
-      console.warn('PDF extraction error:', err);
-      // Fall back to manual entry
-      recState.step = 2;
-      document.getElementById('rec-extracted-banner').style.display = 'flex';
+      // Extract raw text from PDF data
+      const raw = e.target.result;
+      // Convert binary to string for text search
+      let text = '';
+      if (typeof raw === 'string') {
+        text = raw;
+      } else {
+        // ArrayBuffer → string
+        const bytes = new Uint8Array(raw);
+        for (let i = 0; i < Math.min(bytes.length, 500000); i++) {
+          if (bytes[i] > 31 && bytes[i] < 127) text += String.fromCharCode(bytes[i]);
+          else if (bytes[i] === 10 || bytes[i] === 13) text += '\n';
+          else text += ' ';
+        }
+      }
+      const extracted = parsePremierPDF(text, file.name);
+      recState.pdfFilename = file.name;
+      recState.extracted   = extracted;
+      recState.step        = 2;
+
+      const banner = document.getElementById('rec-extracted-banner');
+      if (banner) {
+        banner.style.display = 'flex';
+        const empCount = Object.keys(extracted).filter(k => k.endsWith('Gross')).length;
+        banner.innerHTML = '<span>✓</span> Extracted from: <strong>' + file.name + '</strong> · ' +
+          (empCount > 0 ? empCount + ' employees found · PDF discarded' : 'Select period to enter manually · PDF discarded');
+      }
       renderReconcile();
-      showToast('PDF read — enter figures manually to reconcile.');
+      showToast(empCount > 0 ? 'PDF extracted — ' + empCount + ' employees found ✓' : 'PDF read — select period to reconcile');
+    } catch(err) {
+      console.warn('PDF parse error:', err);
+      recState.step = 2;
+      showToast('PDF loaded — select a period to reconcile');
+      renderReconcile();
     }
     event.target.value = '';
   };
-  reader.readAsDataURL(file);
+  reader.readAsArrayBuffer(file);
 }
 
-function extractPremierData(filename, dataUrl) {
-  // Premier PDF extraction: identify pay periods from filename or user selection
-  // Since PDF text extraction requires a library (pdf.js), we advance to manual review
-  // with the PDF name shown for reference
-  recState.step = 2;
-  recState.pdfFilename = filename;
-  document.getElementById('rec-extracted-banner').style.display = 'flex';
-  document.getElementById('rec-extracted-banner').innerHTML =
-    '<span>✓</span> PDF received: <strong>' + filename + '</strong> · Select a period below to reconcile · PDF discarded';
-  renderReconcile();
-  showToast('PDF loaded · Select a pay period to reconcile');
-}
+// ── Premier PDF Parser ──
+function parsePremierPDF(text, filename) {
+  const result = {};
 
-function renderReconcileComparison(){
-  const p=periods.find(x=>x.id===recState.periodId);
-  if(!p)return;
-  const ext=recState.extracted;
-  let rows='',flags=[],hasErr=false;
+  // Name mapping: Premier uses "LastName, FirstName" format
+  const nameMap = {
+    'nguyen, cordelia':   'cor',
+    'cordelia':           'cor',
+    'gerber, maverick':   'mav',
+    'maverick':           'mav',
+    'bouhamouda, rafi':   'raf',
+    'rafi':               'raf',
+    'dungey, nicholas':   'nic',
+    'nicholas':           'nic',
+  };
 
-  ACTIVE_EMPS.forEach(e=>{
-    const emp=employees[e]||EMP_DEFS[e];
-    const ourHrs=p.hrs?.[e]||0;
-    if(ourHrs===0&&!ext[e+'Hrs'])return;
-    const premHrs=ext[e+'Hrs']||ourHrs;
-    const rate=getRate(e,(p.date||'2025-12-01'));
-    const ourGross=+(ourHrs*rate.reg).toFixed(2);
-    const premGross=ext[e+'Gross']||ourGross;
-    const diff=+(ourHrs-premHrs).toFixed(2);
-    const diffGross=+(ourGross-premGross).toFixed(2);
-    const match=Math.abs(diff)<0.01&&Math.abs(diffGross)<0.05;
-    const roundOnly=Math.abs(diff)<0.01&&Math.abs(diffGross)>=0.01&&Math.abs(diffGross)<0.10;
-    if(!match&&!roundOnly)hasErr=true;
+  // Clean up text
+  text = text.replace(/\s+/g, ' ');
 
-    rows+=`<tr class="${!match&&!roundOnly?'row-mismatch':''}">
-      <td><strong>${emp.name}</strong></td><td>Total hours</td>
-      <td class="mono center">${ourHrs.toFixed(2)} hrs</td>
-      <td class="mono center">${premHrs.toFixed(2)} hrs</td>
-      <td class="${diff!==0?'amber':'green'} center">${diff!==0?(diff>0?'+':'')+diff.toFixed(2)+' hrs':'—'}</td>
-      <td class="center"><span class="flag ${match?'flag-ok':roundOnly?'flag-warn':'flag-err'}">${match?'✓ Match':roundOnly?'⚠ Rounding':'✗ Mismatch'}</span></td>
-    </tr>
-    <tr class="${Math.abs(diffGross)>=0.10?'row-mismatch':''}">
-      <td></td><td>Gross wages</td>
-      <td class="mono center">${fmt(ourGross)}</td>
-      <td class="mono center">${fmt(premGross)}</td>
-      <td class="${Math.abs(diffGross)>=0.10?'red':'green'} center">${Math.abs(diffGross)>=0.01?(diffGross>0?'+':'')+fmt(diffGross):'—'}</td>
-      <td class="center"><span class="flag ${Math.abs(diffGross)<0.05?'flag-ok':Math.abs(diffGross)<0.10?'flag-warn':'flag-err'}">${Math.abs(diffGross)<0.05?'✓ Match':Math.abs(diffGross)<0.10?'⚠ Rounding':'✗ Mismatch'}</span></td>
-    </tr>`;
+  // Find employer taxes - look for pattern "Employer Taxes $X,XXX.XX"
+  const taxMatch = text.match(/Employer\s+Taxes\s+\$?([\d,]+\.?\d*)/i);
+  if (taxMatch) {
+    result.totalTax = parseFloat(taxMatch[1].replace(/,/g, ''));
+  }
 
-    if(!match) flags.push({emp:emp.name,diff,diffGross});
+  // Find total usage - "Total Usage in Report Period $X,XXX.XX"
+  const totalMatch = text.match(/Total\s+Usage\s+in\s+Report\s+Period\s+\$?([\d,]+\.?\d*)/i);
+  if (totalMatch) {
+    result.grandTotal = parseFloat(totalMatch[1].replace(/,/g, ''));
+  }
+
+  // Find employee gross amounts
+  // Pattern: employee name appears, then rate, hours, usage
+  // We accumulate usage per employee
+  const empTotals = {};
+
+  // Match patterns like: "Nguyen, Cordelia -- date $31.11 22.00 $684.42"
+  // or just "$31.11 22.00 $684.42" after an employee name line
+  const lines = text.split(/[\n\r]+/);
+  let currentEmp = null;
+
+  lines.forEach(function(line) {
+    const lower = line.toLowerCase().trim();
+
+    // Check if line contains a known employee name
+    Object.keys(nameMap).forEach(function(name) {
+      if (lower.includes(name)) {
+        currentEmp = nameMap[name];
+        if (!empTotals[currentEmp]) empTotals[currentEmp] = 0;
+      }
+    });
+
+    // Match dollar amounts that look like usage: $X,XXX.XX at end of line
+    // Pattern: rate hours usage → we want the usage (last dollar amount)
+    const usageMatch = line.match(/\$([\d,]+\.\d{2})\s*(?:\d+\.?\d*)?\s*\$([\d,]+\.\d{2})/);
+    if (usageMatch && currentEmp) {
+      // Second dollar amount is the usage for this rate tier
+      const usage = parseFloat(usageMatch[2].replace(/,/g, ''));
+      if (usage > 0 && usage < 50000) { // sanity check
+        empTotals[currentEmp] = (empTotals[currentEmp] || 0) + usage;
+      }
+    }
+
+    // Also match simpler: just "$X,XXX.XX" as usage after hours
+    const simpleMatch = line.match(/(\d+\.?\d*)\s+\$([\d,]+\.\d{2})\s*$/);
+    if (simpleMatch && currentEmp) {
+      const usage = parseFloat(simpleMatch[2].replace(/,/g, ''));
+      if (usage > 0 && usage < 20000) {
+        empTotals[currentEmp] = (empTotals[currentEmp] || 0) + usage;
+      }
+    }
   });
 
-  // Employer tax row
-  const ourTax=p.tax||0, premTax=ext.totalTax||ourTax;
-  const taxDiff=+(ourTax-premTax).toFixed(2);
-  rows+=`<tr class="tbl-section"><td colspan="6">Employer Burden</td></tr>
-  <tr class="${Math.abs(taxDiff)>1?'row-warn':''}">
-    <td colspan="2">Total employer tax</td>
-    <td class="mono center">${fmt(ourTax)}<br><span style="font-size:10px;color:var(--text3);">your calc</span></td>
-    <td class="mono center">${fmt(premTax)}<br><span style="font-size:10px;color:var(--text3);">statement</span></td>
-    <td class="${Math.abs(taxDiff)>1?'amber':'green'} center">${Math.abs(taxDiff)>0.01?(taxDiff>0?'+':'')+fmt(taxDiff):'—'}</td>
-    <td class="center"><span class="flag flag-info">? Review</span></td>
-  </tr>`;
+  // Map to result keys
+  Object.keys(empTotals).forEach(function(emp) {
+    result[emp + 'Gross'] = empTotals[emp];
+  });
+
+  // Find hours per employee per rate tier
+  // Pattern: $XX.XX HH.HH $X,XXX.XX
+  const hrsPerEmp = {};
+  currentEmp = null;
+
+  lines.forEach(function(line) {
+    const lower = line.toLowerCase().trim();
+    Object.keys(nameMap).forEach(function(name) {
+      if (lower.includes(name)) currentEmp = nameMap[name];
+    });
+    // Match: rate hours usage pattern
+    const hrsMatch = line.match(/\$[\d.]+\s+([\d.]+)\s+\$/);
+    if (hrsMatch && currentEmp) {
+      const hrs = parseFloat(hrsMatch[1]);
+      if (hrs > 0 && hrs < 300) {
+        hrsPerEmp[currentEmp] = (hrsPerEmp[currentEmp] || 0) + hrs;
+      }
+    }
+  });
+
+  Object.keys(hrsPerEmp).forEach(function(emp) {
+    result[emp + 'Hrs'] = hrsPerEmp[emp];
+  });
+
+  console.log('Premier PDF parsed:', result);
+  return result;
+}
+
+function renderReconcileComparison() {
+  const p = periods.find(x => x.id === recState.periodId);
+  if (!p) return;
+  const ext = recState.extracted || {};
+  let rows = '', flags = [], hasErr = false;
+
+  const BADGE = {'310':'b310','320':'b320','331':'b331','ite':'bite'};
+
+  ACTIVE_EMPS.forEach(function(e) {
+    const emp      = employees[e] || EMP_DEFS[e];
+    const ourHrs   = p.hrs?.[e] || 0;
+    const extHrs   = ext[e + 'Hrs'] || null;
+    const extGross = ext[e + 'Gross'] || null;
+    if (ourHrs === 0 && !extHrs && !extGross) return;
+
+    const rate     = getRate(e, p.date || '2025-12-01');
+    const ourGross = ourHrs > 0 ? +(ourHrs * rate.reg).toFixed(2) : 0;
+    const premHrs  = extHrs   !== null ? extHrs   : ourHrs;
+    const premGross= extGross !== null ? extGross : ourGross;
+    const diffHrs  = +(ourHrs - premHrs).toFixed(2);
+    const diffGross= +(ourGross - premGross).toFixed(2);
+    const hrsMatch = Math.abs(diffHrs) < 0.01;
+    const grossMatch = Math.abs(diffGross) < 0.10;
+    const roundOnly  = hrsMatch && !grossMatch && Math.abs(diffGross) < 1.00;
+    if (!hrsMatch || (!grossMatch && !roundOnly)) hasErr = true;
+
+    rows += '<tr class="tbl-section"><td colspan="6">' + emp.name + '</td></tr>';
+    rows += '<tr class="' + (!hrsMatch ? 'row-mismatch' : '') + '">' +
+      '<td><strong>' + emp.name + '</strong></td><td>Total hours</td>' +
+      '<td class="mono center">' + ourHrs.toFixed(2) + ' hrs</td>' +
+      '<td class="mono center">' + premHrs.toFixed(2) + ' hrs</td>' +
+      '<td class="' + (diffHrs !== 0 ? 'amber' : 'green') + ' center">' + (diffHrs !== 0 ? (diffHrs > 0 ? '+' : '') + diffHrs.toFixed(2) + ' hrs' : '—') + '</td>' +
+      '<td class="center"><span class="flag ' + (hrsMatch ? 'flag-ok' : 'flag-err') + '">' + (hrsMatch ? '✓ Match' : '✗ Mismatch') + '</span></td></tr>';
+
+    rows += '<tr class="' + (!grossMatch && !roundOnly ? 'row-mismatch' : '') + '">' +
+      '<td></td><td>Gross wages</td>' +
+      '<td class="mono center">' + fmt(ourGross) + '</td>' +
+      '<td class="mono center">' + fmt(premGross) + '</td>' +
+      '<td class="' + (Math.abs(diffGross) > 0.10 ? 'red' : 'green') + ' center">' + (Math.abs(diffGross) > 0.01 ? (diffGross > 0 ? '+' : '') + fmt(diffGross) : '—') + '</td>' +
+      '<td class="center"><span class="flag ' + (grossMatch ? 'flag-ok' : roundOnly ? 'flag-warn' : 'flag-err') + '">' + (grossMatch ? '✓ Match' : roundOnly ? '⚠ Rounding' : '✗ Mismatch') + '</span></td></tr>';
+
+    if (!hrsMatch) flags.push({ emp: emp.name, diffHrs: diffHrs, diffGross: diffGross });
+  });
+
+  // Employer tax
+  const ourTax  = p.tax || 0;
+  const premTax = ext.totalTax || null;
+  const taxDiff = premTax !== null ? +(ourTax - premTax).toFixed(2) : 0;
+  rows += '<tr class="tbl-section"><td colspan="6">Employer Burden</td></tr>';
+  rows += '<tr class="' + (Math.abs(taxDiff) > 1 ? 'row-warn' : '') + '">' +
+    '<td colspan="2">Total employer tax</td>' +
+    '<td class="mono center">' + fmt(ourTax) + '<br><span style="font-size:10px;color:var(--text3);">your calc</span></td>' +
+    '<td class="mono center">' + (premTax !== null ? fmt(premTax) : '<span style="color:var(--text3);">not extracted</span>') + '</td>' +
+    '<td class="' + (Math.abs(taxDiff) > 1 ? 'amber' : 'green') + ' center">' + (premTax !== null && Math.abs(taxDiff) > 0.01 ? (taxDiff > 0 ? '+' : '') + fmt(taxDiff) : '—') + '</td>' +
+    '<td class="center"><span class="flag flag-info">? Review</span></td></tr>';
 
   // Totals
-  const ourTotal=(p.gross||0)+(p.tax||0);
-  const premTotal=ext.grandTotal||ourTotal;
-  const totalDiff=+(ourTotal-premTotal).toFixed(2);
-  rows+=`<tr class="tot-row">
-    <td colspan="2"><strong>Period Total</strong></td>
-    <td class="mono center"><strong>${fmt(ourTotal)}</strong></td>
-    <td class="mono center"><strong>${fmt(premTotal)}</strong></td>
-    <td class="${Math.abs(totalDiff)>0.50?'red':'green'} center"><strong>${Math.abs(totalDiff)>0.01?(totalDiff>0?'+':'')+fmt(totalDiff):'—'}</strong></td>
-    <td class="center"><span class="flag ${Math.abs(totalDiff)<=0.50?'flag-ok':'flag-err'}">${Math.abs(totalDiff)<=0.50?'✓ Match':'✗ Mismatch'}</span></td>
-  </tr>`;
+  const ourTotal  = (p.gross || 0) + (p.tax || 0);
+  const premTotal = ext.grandTotal || null;
+  const totalDiff = premTotal !== null ? +(ourTotal - premTotal).toFixed(2) : 0;
+  rows += '<tr class="tot-row">' +
+    '<td colspan="2"><strong>Period Total</strong></td>' +
+    '<td class="mono center"><strong>' + fmt(ourTotal) + '</strong></td>' +
+    '<td class="mono center"><strong>' + (premTotal !== null ? fmt(premTotal) : '—') + '</strong></td>' +
+    '<td class="' + (Math.abs(totalDiff) > 0.50 ? 'red' : 'green') + ' center"><strong>' + (premTotal !== null && Math.abs(totalDiff) > 0.01 ? (totalDiff > 0 ? '+' : '') + fmt(totalDiff) : '—') + '</strong></td>' +
+    '<td class="center"><span class="flag ' + (premTotal === null ? 'flag-info' : Math.abs(totalDiff) <= 0.50 ? 'flag-ok' : 'flag-err') + '">' + (premTotal === null ? '? Manual' : Math.abs(totalDiff) <= 0.50 ? '✓ Match' : '✗ Mismatch') + '</span></td></tr>';
 
-  document.getElementById('rec-tbody').innerHTML=rows;
+  document.getElementById('rec-tbody').innerHTML = rows;
 
   // Result panel
-  let resultHtml=`<div style="border-radius:14px;padding:16px 18px;margin-bottom:14px;border:2px solid;${hasErr?'background:var(--red-lt);border-color:#fca5a5;':'background:var(--green-lt);border-color:#6ee7b7;'}">
-    <div style="font-size:18px;font-weight:800;color:${hasErr?'var(--red-dk)':'var(--green-dk)'};">${hasErr?'✗ Issues Found':'✓ Looks Good'}</div>
-    <div style="font-size:12px;font-family:'IBM Plex Mono',monospace;color:${hasErr?'var(--red)':'var(--green)'};">Period ${recState.periodId}</div>
-  </div>`;
+  let resultHtml = '<div style="border-radius:14px;padding:16px 18px;margin-bottom:14px;border:2px solid;' +
+    (hasErr ? 'background:var(--red-lt);border-color:#fca5a5;' : 'background:var(--green-lt);border-color:#6ee7b7;') + '">' +
+    '<div style="font-size:18px;font-weight:800;color:' + (hasErr ? 'var(--red-dk)' : 'var(--green-dk)') + ';">' +
+    (hasErr ? '✗ ' + flags.length + ' Issue' + (flags.length > 1 ? 's' : '') + ' Found' : '✓ Looks Good') + '</div>' +
+    '<div style="font-size:12px;font-family:\'IBM Plex Mono\',monospace;color:' + (hasErr ? 'var(--red)' : 'var(--green)') + ';">Period ' + recState.periodId + '</div></div>';
 
-  if(flags.length){
-    flags.forEach(f=>{
-      resultHtml+=`<div class="mismatch-item">
-        <div style="font-size:16px;">✗</div>
-        <div><div style="font-size:13px;font-weight:700;color:var(--red-dk);">${f.emp} — Hours Mismatch</div>
-        <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--red);">Hour diff: ${f.diff>0?'+':''}${f.diff.toFixed(2)} · Gross diff: ${f.diffGross>0?'+':''}${fmt(f.diffGross)}</div></div>
-      </div>`;
-    });
+  flags.forEach(function(f) {
+    resultHtml += '<div class="mismatch-item"><div style="font-size:16px;">✗</div>' +
+      '<div><div style="font-size:13px;font-weight:700;color:var(--red-dk);">' + f.emp + ' — Hours Mismatch</div>' +
+      '<div style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--red);">' +
+      'Hour diff: ' + (f.diffHrs > 0 ? '+' : '') + f.diffHrs.toFixed(2) +
+      ' · Gross diff: ' + (f.diffGross > 0 ? '+' : '') + fmt(f.diffGross) + '</div></div></div>';
+  });
+
+  if (Math.abs(taxDiff) > 1 && premTax !== null) {
+    resultHtml += '<div class="warn-item"><div style="font-size:16px;">⚠</div>' +
+      '<div><div style="font-size:13px;font-weight:700;color:var(--orange);">Employer Tax — Review</div>' +
+      '<div style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:#9a3412;">Diff: ' + fmt(taxDiff) + ' · Premier allocates differently per employee.</div></div></div>';
   }
-  if(Math.abs(taxDiff)>1){
-    resultHtml+=`<div class="warn-item"><div style="font-size:16px;">⚠</div>
-      <div><div style="font-size:13px;font-weight:700;color:var(--orange);">Employer Tax — Review</div>
-      <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:#9a3412;">Diff: ${fmt(taxDiff)} · Premier applies rate differently per employee.</div></div>
-    </div>`;
+
+  if (Object.keys(ext).length === 0) {
+    resultHtml += '<div class="alert info"><span>ℹ</span> No data extracted from PDF. Select a period and the comparison will use your tracked figures.</div>';
   }
-  document.getElementById('rec-result-body').innerHTML=resultHtml;
+
+  document.getElementById('rec-result-body').innerHTML = resultHtml;
 
   // Approve summary
-  document.getElementById('rec-approve-summary').innerHTML=`
-    <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>Our tracked total</span><span style="font-family:'IBM Plex Mono',monospace;">${fmt(ourTotal)}</span></div>
-    <div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span>Premier statement total</span><span style="font-family:'IBM Plex Mono',monospace;">${fmt(premTotal)}</span></div>
-    <div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:8px;"><span>Variance</span><span style="font-family:'IBM Plex Mono',monospace;color:${Math.abs(totalDiff)<=0.50?'var(--green)':'var(--orange)'};">${fmt(totalDiff)}</span></div>`;
-}
-
-function approveReconcile(){
-  const p=periods.find(x=>x.id===recState.periodId);
-  if(!p)return;
-  p.reconciled=true;
-  if(recState.extracted.totalTax) p.premierTax=recState.extracted.totalTax;
-  saveS('sdp_periods_v2',periods);
-  if(syncReady){
-    supaPost('pay_periods',periodToDb(p)).catch(e=>console.warn(e));
+  const approveEl = document.getElementById('rec-approve-summary');
+  if (approveEl) {
+    approveEl.innerHTML =
+      '<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span>Our tracked total</span><span style="font-family:\'IBM Plex Mono\',monospace;">' + fmt(ourTotal) + '</span></div>' +
+      (premTotal !== null ? '<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span>Premier statement total</span><span style="font-family:\'IBM Plex Mono\',monospace;">' + fmt(premTotal) + '</span></div>' : '') +
+      '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:8px;font-size:12px;"><span>Variance</span><span style="font-family:\'IBM Plex Mono\',monospace;color:' + (Math.abs(totalDiff) <= 0.50 ? 'var(--green)' : 'var(--orange)') + ';">' + (premTotal !== null ? fmt(totalDiff) : 'N/A') + '</span></div>';
   }
-  recState={step:1,periodId:null,extracted:{}};
-  showToast('Period '+p.id+' marked as reconciled ✓');
-  renderReconcile();
 }
 
-function resetReconcile(){recState={step:1,periodId:null,extracted:{}};renderReconcile();}
+function approveReconcile() {
+  const p = periods.find(x => x.id === recState.periodId);
+  if (!p) return;
+  p.reconciled = true;
+  if (recState.extracted && recState.extracted.totalTax) p.premierTax = recState.extracted.totalTax;
+  saveS('sdp_periods_v2', periods);
+  // Sync to Supabase
+  if (syncReady) {
+    supaDelete('pay_periods', 'id=eq.' + p.id)
+      .then(() => supaPost('pay_periods', periodToDb(p)))
+      .catch(e => console.warn('sync reconcile:', e));
+  }
+  recState = { step: 1, periodId: null, extracted: {}, pdfFilename: '' };
+  showToast('Period ' + p.id + ' marked reconciled ✓ — hours transferred to Timesheet');
+  renderReconcile();
+  renderTimesheet();
+}
+
 
 // ══════════════════════════════════════
 // RENDER SETTINGS
 // ══════════════════════════════════════
 function renderSettings(){
-  // Employee list
+  // Employee list with rate history
   let empHtml='';
   Object.entries(employees).forEach(([key,emp])=>{
     const rate=getRate(key,todayStr());
-    empHtml+=`<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(221,227,236,.5);">
-      <div class="emp-avatar" style="background:${emp.color||'#888'};opacity:${emp.active?1:0.4};">${emp.name?.[0]||'?'}</div>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--text1);${!emp.active?'text-decoration:line-through;color:var(--text3);':''}">${emp.name}</div>
-        <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2× · Since ${fmtDateUS(emp.startDate||'')}</div>
-        ${emp.endDate?`<div style="font-size:10px;color:var(--orange);font-family:'IBM Plex Mono',monospace;">Ended ${fmtDateUS(emp.endDate)}</div>`:''}
-      </div>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="openEditEmpModal('${key}')">Edit Rate</button>
-        ${emp.active?`<button class="btn btn-red btn-sm" onclick="toggleEmpActive('${key}')">End</button>`:`<button class="btn btn-ghost btn-sm" onclick="toggleEmpActive('${key}')">Reactivate</button>`}
-      </div>
-    </div>`;
+    const rateRows=(emp.rates||[]).slice().sort((a,b)=>b.from.localeCompare(a.from))
+      .map(r=>'<tr><td style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;color:var(--text3);">'+fmtDateUS(r.from)+'</td>'+
+        '<td style="font-size:12px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;font-weight:700;">$'+r.reg+'/hr</td>'+
+        '<td style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:5px 10px;color:var(--text3);">OT $'++(r.reg*1.5).toFixed(2)+' · 2× $'++(r.reg*2).toFixed(2)+'</td></tr>').join('');
+    empHtml+='<div style="padding:14px 0;border-bottom:1px solid rgba(221,227,236,.5);">'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">'+
+        '<div class="emp-avatar" style="background:'+(emp.color||'#888')+';opacity:'+(emp.active?1:0.4)+';">'+(emp.name?.[0]||'?')+'</div>'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:14px;font-weight:700;color:var(--text1);'+(emp.active?'':'text-decoration:line-through;color:var(--text3);')+'">'+emp.name+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">Current: $'+rate.reg+'/hr REG · $'+rate.ot+'/hr OT · $'+rate.ot2+'/hr 2×'+(emp.startDate?' · Since '+fmtDateUS(emp.startDate):'')+'</div>'+
+          (emp.endDate?'<div style="font-size:10px;color:var(--orange);font-family:'IBM Plex Mono',monospace;">Ended '+fmtDateUS(emp.endDate)+'</div>':'')+
+        '</div>'+
+        '<div style="display:flex;gap:6px;">'+
+          '<button class="btn btn-ghost btn-sm" onclick="openEditEmpModal(''+key+'')">+ Rate</button>'+
+          (emp.active?'<button class="btn btn-red btn-sm" onclick="toggleEmpActive(''+key+'')">End</button>':
+                      '<button class="btn btn-ghost btn-sm" onclick="toggleEmpActive(''+key+'')">Reactivate</button>')+
+        '</div>'+
+      '</div>'+
+      '<div style="margin-left:46px;background:var(--gray-bg);border-radius:8px;overflow:hidden;">'+
+        '<table style="width:100%;border-collapse:collapse;">'+
+          '<thead><tr>'+
+            '<th style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);padding:5px 10px;text-align:left;background:rgba(0,0,0,.03);">Effective Date</th>'+
+            '<th style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);padding:5px 10px;text-align:left;background:rgba(0,0,0,.03);">Base Rate</th>'+
+            '<th style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);padding:5px 10px;text-align:left;background:rgba(0,0,0,.03);">OT Rates</th>'+
+          '</tr></thead>'+
+          '<tbody>'+rateRows+'</tbody>'+
+        '</table>'+
+      '</div>'+
+    '</div>';
   });
   document.getElementById('settings-emp-list').innerHTML=empHtml;
 
-  // Tax rates
-  document.getElementById('tax-rate-tbody').innerHTML=[...taxRates].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr>
-    <td class="mono">${fmtDateUS(t.date)}</td>
-    <td class="mono">${(t.rate*100).toFixed(2)}%</td>
-    <td><button class="btn btn-red btn-sm" onclick="deleteTaxRate('${t.date}')">✕</button></td>
-  </tr>`).join('');
+  // Tax rate history
+  document.getElementById('tax-rate-tbody').innerHTML=[...taxRates].sort((a,b)=>b.date.localeCompare(a.date)).map(t=>
+    '<tr><td class="mono">'+fmtDateUS(t.date)+'</td><td class="mono">'+(t.rate*100).toFixed(2)+'%</td>'+
+    '<td><button class="btn btn-red btn-sm" onclick="deleteTaxRate(''+t.date+'')">✕</button></td></tr>').join('');
 
-  // NS fee
-  document.getElementById('ns-fee-tbody').innerHTML=`<tr>
-    <td class="mono">${fmtDateUS(settings.nsFeeStart||'2025-12-01')}</td>
-    <td class="mono">${fmt(settings.nsFee)}/mo</td>
-    <td><button class="btn btn-ghost btn-sm" onclick="openNsFeeKp()">Edit</button></td>
-  </tr>`;
+  // NS fee history
+  document.getElementById('ns-fee-tbody').innerHTML='<tr>'+
+    '<td class="mono">'+fmtDateUS(settings.nsFeeStart||'2025-12-01')+'</td>'+
+    '<td class="mono">'+fmt(settings.nsFee)+'/mo</td>'+
+    '<td></td></tr>';
 }
 
 function toggleEmpActive(key){
@@ -1920,16 +2206,12 @@ function openKp(title, opts) {
     _text('kp-date-lbl', 'Date: ' + fmtDateUS(kpDate));
   }
   var ov = _kpEl('kp-overlay');
-  ov.classList.add('open');
-  ov.style.opacity = '1';
-  ov.style.pointerEvents = 'all';
+  ov.style.display = 'flex';
 }
 
 function closeKp() {
   var ov = _kpEl('kp-overlay');
-  ov.classList.remove('open');
-  ov.style.opacity = '';
-  ov.style.pointerEvents = '';
+  ov.style.display = 'none';
 }
 function handleKpBg(e) {
   if (e.target === _kpEl('kp-overlay')) closeKp();
@@ -1937,7 +2219,6 @@ function handleKpBg(e) {
 
 // ── Clock keypad (dedicated) ──
 function openClockKp(date, emp) {
-  console.log('openClockKp called:', date, emp);
   kpMode  = 'clock';
   kpShift = 1;
   kpEmp   = emp;
@@ -1994,12 +2275,10 @@ function openClockKp(date, emp) {
   }
 
   // Weekly context
-  updateWeeklyBar();
-  updateClockStats();
+  try { updateWeeklyBar(); } catch(e) { console.error('updateWeeklyBar failed:', e); }
+  try { updateClockStats(); } catch(e) { console.error('updateClockStats failed:', e); }
   var ov = _kpEl('kp-overlay');
-  ov.classList.add('open');
-  ov.style.opacity = '1';
-  ov.style.pointerEvents = 'all';
+  ov.style.display = 'flex';
 
 
 }
@@ -2523,6 +2802,26 @@ function showToast(msg){
 // INIT
 // ══════════════════════════════════════
 renderCycleMenu();
+// Migration: ensure all seed periods are present in localStorage
+(function() {
+  var existingIds = periods.map(function(p){ return p.id; });
+  var added = false;
+  SEED_PERIODS.forEach(function(sp) {
+    if (existingIds.indexOf(sp.id) === -1) {
+      periods.push(JSON.parse(JSON.stringify(sp)));
+      added = true;
+    }
+  });
+  if (added) {
+    // Sort by id number
+    periods.sort(function(a,b){ 
+      return parseInt(a.id.replace(/\D/g,'')) - parseInt(b.id.replace(/\D/g,'')); 
+    });
+    saveS('sdp_periods_v2', periods);
+    console.log('Migration: added missing seed periods');
+  }
+})();
+
 renderBudget();
 initDB();
 
