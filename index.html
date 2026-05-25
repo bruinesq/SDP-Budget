@@ -746,24 +746,24 @@ function supaHdrs(prefer) {
   if(prefer) h['Prefer'] = prefer;
   return h;
 }
-async function supaGet(table, q) {
+async async function supaGet(table, q) {
   const r = await fetch(SUPA_URL+'/rest/v1/'+table+(q ? ('?'+q) : ''),{headers:supaHdrs()});
   if(!r.ok) throw new Error(await r.text());
   return r.json();
 }
-async function supaPost(table, body) {
+async async function supaPost(table, body) {
   const r = await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:supaHdrs('return=minimal'),body:JSON.stringify(body)});
   if(!r.ok) throw new Error(await r.text());
 }
-async function supaDelete(table, q) {
+async async function supaDelete(table, q) {
   const r = await fetch(SUPA_URL+'/rest/v1/'+table+'?'+q,{method:'DELETE',headers:supaHdrs()});
   if(!r.ok) throw new Error(await r.text());
 }
-async function supaGetSetting(key) {
+async async function supaGetSetting(key) {
   const rows = await supaGet('app_settings','key=eq.sdp_'+key);
   return rows&&rows.length ? JSON.parse(rows[0].value) : null;
 }
-async function supaSetSetting(key, val) {
+async async function supaSetSetting(key, val) {
   await supaDelete('app_settings','key=eq.sdp_'+key).catch(()=>{});
   await supaPost('app_settings',{key:'sdp_'+key, value:JSON.stringify(val)});
 }
@@ -813,15 +813,33 @@ function bgSaveTs(date, emp, s1, s2, s1code, s2code) {
 }
 
 function _flushTsSave(p) {
-  var row = {date:p.date, emp:p.emp, shift1:p.s1, shift2:p.s2,
-    hrs:+(p.s1+p.s2).toFixed(4), cycle_id:currentCycle,
-    s1code:p.s1code, s2code:p.s2code};
-  // Upsert: delete then insert, or use upsert header
-  fetch(SUPA_URL+'/rest/v1/timesheet', {
-    method: 'POST',
-    headers: {...supaHdrs(), 'Prefer': 'resolution=merge-duplicates,return=minimal'},
-    body: JSON.stringify(row)
-  }).catch(function(e){ console.warn('bgSaveTs:', e); });
+  var row = {
+    date:     p.date,
+    emp:      p.emp,
+    shift1:   +(p.s1||0).toFixed(4),
+    shift2:   +(p.s2||0).toFixed(4),
+    hrs:      +((p.s1||0)+(p.s2||0)).toFixed(4),
+    cycle_id: currentCycle
+  };
+  // Delete existing row first, then insert fresh
+  supaDelete('timesheet', 'date=eq.'+p.date+'&emp=eq.'+p.emp)
+    .catch(function(){})
+    .then(function(){
+      return fetch(SUPA_URL+'/rest/v1/timesheet', {
+        method: 'POST',
+        headers: {...supaHdrs(), 'Prefer': 'return=minimal'},
+        body: JSON.stringify(row)
+      });
+    })
+    .then(function(r){
+      if (r && !r.ok) {
+        r.text().then(function(t){
+          console.error('TS insert failed:', r.status, t);
+          showToast('⚠ Sync error '+r.status);
+        });
+      }
+    })
+    .catch(function(e){ console.warn('TS save error:', e); });
 }
 
 function _flushTsQueue() {
