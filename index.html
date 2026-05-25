@@ -43,8 +43,8 @@ body{font-family:'Syne',sans-serif;background:linear-gradient(170deg,#003f63 0%,
 .tab.active{color:#fff;border-bottom-color:var(--yellow);}
 .tab:hover:not(.active){color:rgba(255,255,255,.8);}
 /* MAIN */
-.main{padding:22px 28px 40px;max-width:1280px;}
-.panel{display:none;}.panel.active{display:block;}
+.main{padding:22px 28px 40px;max-width:1280px;margin:0 auto;}
+.panel{display:none;}.panel.active{display:block;min-height:calc(100vh - 100px);}
 /* CARD */
 .card{background:var(--card);border:1px solid var(--card-bdr);border-radius:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,60,100,.10);backdrop-filter:blur(6px);}
 .card-hdr{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid rgba(221,227,236,.6);background:rgba(232,244,251,.7);}
@@ -139,7 +139,7 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .ot-chip{font-size:9px;background:#fff3e0;color:var(--orange);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:700;}
 .ot2-chip{font-size:9px;background:var(--red-lt);color:var(--red-dk);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:700;}
 /* CLOCK LOG GRID */
-.clk-grid{display:grid;grid-template-columns:120px repeat(3,1fr) 110px;}
+.clk-grid{display:grid;border:1px solid var(--gray-bdr);border-radius:12px;overflow:hidden;}
 .clk-hdr{padding:9px 14px;background:rgba(232,244,251,.8);border-bottom:1px solid var(--gray-bdr);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
 .clk-cell{padding:11px 14px;border-bottom:1px solid rgba(240,242,245,.8);font-size:15px;font-family:'IBM Plex Mono',monospace;color:var(--text1);cursor:pointer;}
 .clk-cell:hover{background:rgba(0,119,182,.06);}
@@ -269,13 +269,22 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 /* TIMESHEET + CLOCKLOG larger text */
 #panel-timesheet table td, #panel-timesheet table th { font-size:14px !important; padding:11px 16px !important; }
 #panel-clocklog .clk-sum-text { font-size:14px; }
-#panel-clocklog .card-body { font-size:14px; }
+#panel-clocklog .card-body { font-size:14px; } #settings-emp-list { min-height:200px; }
 /* TOAST */
 .toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:#0d1b2a;color:#fff;border-radius:12px;padding:10px 22px;font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 /* RADIO */
 input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer;}
 
+
+.clk-grid{display:grid;gap:0;}
+.clk-hdr{padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);background:rgba(240,244,248,.9);border-bottom:1px solid var(--gray-bdr);}
+.clk-subhdr{padding:5px 6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-align:center;border-bottom:2px solid rgba(0,0,0,.08);}
+.clk-cell{padding:10px 8px;border-bottom:1px solid rgba(220,230,240,.6);font-size:13px;font-family:IBM Plex Mono,monospace;display:flex;align-items:center;color:var(--text1);}
+.clk-ot-cell{justify-content:center;text-align:center;cursor:pointer;border:none;font-family:IBM Plex Mono,monospace;font-size:13px;}
+.clk-ot-cell:active{opacity:.7;}
+.clk-tot{padding:8px 8px;font-size:12px;font-family:IBM Plex Mono,monospace;background:rgba(240,244,248,.6);border-top:2px solid var(--gray-bdr);}
+.today-row{background:rgba(0,119,182,.04);}
 </style>
 </head>
 <body>
@@ -409,7 +418,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
       </div>
     </div>
     <div class="card" style="margin-bottom:16px;">
-      <div id="cl-grid-wrap"></div>
+      <div style="overflow-x:auto;"><div id="cl-grid-wrap"></div></div>
       <div id="cl-ot-warning" style="display:none;padding:10px 16px;background:#fff8dc;border-top:1px solid var(--yellow);font-size:12px;color:var(--blue-deep);font-weight:600;"></div>
     </div>
     <div class="g3">
@@ -488,67 +497,49 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 <!-- ═══════════════════════════════ RECONCILE PANEL ═══════════════════════════════ -->
 <div class="panel" id="panel-reconcile">
   <div class="main">
-    <div class="steps" id="rec-steps"></div>
-    <div class="g2l" id="rec-content" style="grid-template-columns:1fr 1.2fr;">
-      <!-- LEFT: Result panel -->
-      <div id="rec-right-panel">
-        <div class="card" style="margin-bottom:16px;">
-          <div class="card-hdr"><div class="card-title">Reconciliation Result</div></div>
-          <div class="card-body" id="rec-result-body"><div style="color:var(--text3);font-size:13px;">Upload a statement or select a period to begin.</div></div>
-        </div>
-        <div class="card" id="rec-approve-card" style="display:none;">
-          <div class="card-hdr"><div class="card-title">Approve Reconciliation</div></div>
-          <div class="card-body">
-            <div id="rec-approve-summary" style="background:var(--gray-bg);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;"></div>
-            <button class="btn btn-green" style="width:100%;font-size:15px;padding:13px;" onclick="approveReconcile()">✓ Mark Reconciled</button>
-            <div style="text-align:center;margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="resetReconcile()">Re-upload Statement</button></div>
-          </div>
-        </div>
+
+    <!-- History table -->
+    <div class="card" style="margin-bottom:18px;">
+      <div class="card-hdr">
+        <div class="card-title">Pay Period History</div>
+        <div style="font-size:11px;color:var(--text3);">Tap a period to reconcile</div>
       </div>
-      <!-- RIGHT: Upload + Select PP + Comparison -->
-      <div>
-      <!-- Step 1: Upload -->
-      <div id="rec-step1">
-        <!-- Upload button - compact -->
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
-          <div onclick="document.getElementById('pdf-upload').click()" style="
-            display:flex;align-items:center;gap:10px;
-            background:var(--blue);color:#fff;
-            border-radius:12px;padding:12px 20px;cursor:pointer;
-            box-shadow:0 2px 10px rgba(0,119,182,.3);
-            font-size:14px;font-weight:700;font-family:'Syne',sans-serif;
-            transition:background .15s;
-          ">
-            <span style="font-size:22px;">⬆</span>
-            Upload Premier Statement (PDF)
-          </div>
-          <div style="font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace;line-height:1.5;">
-            Digital PDF only<br>Extracted &amp; discarded after processing
-          </div>
-          <input type="file" id="pdf-upload" accept=".pdf" style="display:none" onchange="handlePdfUpload(event)">
-        </div>
-        <div style="font-size:13px;color:rgba(255,255,255,.7);font-weight:600;margin-bottom:10px;">Or select a period to reconcile manually:</div>
-        <div class="card"><div class="t-wrap"><table><thead><tr><th>Period</th><th>Dates</th><th>Action / Status</th></tr></thead><tbody id="rec-history-tbody"></tbody></table></div></div>
+      <div class="t-wrap" style="max-height:220px;overflow-y:auto;">
+        <table>
+          <thead><tr>
+            <th>Period</th><th>Dates</th><th>Code</th>
+            <th class="right">Gross</th><th class="right">Tax</th>
+            <th class="right">Total</th><th>Status</th>
+          </tr></thead>
+          <tbody id="rec-history-tbody"></tbody>
+        </table>
       </div>
-      <!-- Step 2+: Comparison (hidden initially) -->
-      <div id="rec-step2plus" style="display:none;">
-        <div id="rec-period-bar" style="display:flex;align-items:center;gap:12px;background:var(--yellow-lt);border:1px solid var(--yellow);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--blue-deep);">Reconciling:</div>
-          <div style="background:var(--blue);color:#fff;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;font-family:'IBM Plex Mono',monospace;" id="rec-period-badge">—</div>
-          <div style="font-size:11px;color:var(--blue);font-weight:700;cursor:pointer;margin-left:auto;" onclick="resetReconcile()">Change period</div>
+    </div>
+
+    <!-- Reconcile form -->
+    <div id="rec-form-card" style="display:none;">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title" id="rec-form-title">Reconcile</div>
+          <button class="btn btn-ghost btn-sm" onclick="cancelRec()">&#x2715; Cancel</button>
         </div>
-        <div id="rec-extracted-banner" style="display:none;" class="alert good"><span>✓</span> Premier statement extracted · PDF discarded</div>
-        <div class="card" style="margin-bottom:16px;">
-          <div class="card-hdr"><div class="card-title" id="rec-table-title">Comparison</div></div>
-          <div class="t-wrap"><table><thead><tr><th>Employee</th><th>Line Item</th><th class="center">Your Clock Log</th><th class="center">Premier Statement</th><th class="center">Difference</th><th class="center">Status</th></tr></thead><tbody id="rec-tbody"></tbody></table></div>
+        <div class="card-body">
+          <!-- Step tabs -->
+          <div style="display:flex;gap:0;margin-bottom:16px;border-radius:10px;overflow:hidden;border:1px solid var(--gray-bdr);">
+            <div id="rec-stp1" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;background:var(--blue);color:#fff;">1 · Statement</div>
+            <div id="rec-stp2" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;background:var(--gray-bg);color:var(--text3);">2 · Compare</div>
+            <div id="rec-stp3" style="flex:1;padding:8px 0;text-align:center;font-size:11px;font-weight:700;background:var(--gray-bg);color:var(--text3);">3 · Finalize</div>
+          </div>
+          <div id="rec-step1-panel"></div>
+          <div id="rec-step2-panel" style="display:none;"></div>
+          <div id="rec-step3-panel" style="display:none;"></div>
         </div>
       </div>
     </div>
-  </div>
-</div>
-</div><!-- close reconcile panel -->
 
-<!-- ═══════════════════════════════ SETTINGS PANEL ═══════════════════════════════ -->
+      </div>
+  </div><!-- /panel-reconcile -->
+
 <div class="panel" id="panel-settings">
   <div class="main">
     <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
@@ -756,7 +747,7 @@ function supaHdrs(prefer) {
   return h;
 }
 async function supaGet(table, q) {
-  const r = await fetch(SUPA_URL+'/rest/v1/'+table+(q?'?'+q:''),{headers:supaHdrs()});
+  const r = await fetch(SUPA_URL+'/rest/v1/'+table+(q ? ('?'+q) : ''),{headers:supaHdrs()});
   if(!r.ok) throw new Error(await r.text());
   return r.json();
 }
@@ -807,15 +798,17 @@ function bgAddPeriod(p) { if(!syncReady)return; supaPost('pay_periods',periodToD
 function bgDeletePeriod(id) { if(!syncReady)return; supaDelete('pay_periods','id=eq.'+id).catch(e=>console.warn(e)); }
 function bgAddAdj(a) { if(!syncReady)return; supaPost('adjustments',{id:a.id,date:a.date,code:a.code,amt:a.amt,note:a.note||'',cycle_id:currentCycle}).catch(e=>console.warn(e)); }
 function bgDeleteAdj(id) { if(!syncReady)return; supaDelete('adjustments','id=eq.'+id).catch(e=>console.warn(e)); }
-function bgSaveTs(date, emp, s1, s2) {
+function bgSaveTs(date, emp, s1, s2, s1code, s2code) {
   if(!syncReady)return;
   supaDelete('timesheet','date=eq.'+date+'&emp=eq.'+emp).catch(()=>{})
-    .then(()=>{ if(s1>0||s2>0) supaPost('timesheet',{date,emp,shift1:s1,shift2:s2||0,hrs:+(s1+(s2||0)).toFixed(4),cycle_id:currentCycle}).catch(e=>console.warn(e)); });
+    .then(()=>{ if(s1>0||s2>0) supaPost('timesheet',{date,emp,shift1:s1,shift2:s2||0,hrs:+(s1+(s2||0)).toFixed(4),cycle_id:currentCycle,s1code:s1code||'320',s2code:s2code||s1code||'320'}).catch(e=>console.warn(e)); });
 }
 function bgSaveSettings() {
   if(!syncReady)return;
   supaSetSetting('settings',settings).catch(e=>console.warn(e));
   supaSetSetting('taxRates',taxRates).catch(e=>console.warn(e));
+
+  supaSetSetting('taxHistory', taxHistory).catch(e=>console.warn(e));
 }
 
 async function initDB() {
@@ -826,7 +819,13 @@ async function initDB() {
       // Seed
       setSyncLabel('Seeding…', false);
       const ppDbRows = SEED_PERIODS.map(periodToDb);
-      await supaPost('pay_periods', ppDbRows);
+      // Use upsert to avoid duplicate key errors on re-seed
+      const upsertResp = await fetch(SUPA_URL+'/rest/v1/pay_periods', {
+        method: 'POST',
+        headers: {...supaHdrs(), 'Prefer': 'resolution=merge-duplicates,return=minimal'},
+        body: JSON.stringify(ppDbRows)
+      });
+      if (!upsertResp.ok) console.warn('Seed upsert:', await upsertResp.text());
       const adjDbRows = SEED_ADJS.map(function(a){ return {id:a.id, date:a.date, code:a.code, amt:a.amt, note:a.note||'', cycle_id:currentCycle}; });
       await supaPost('adjustments', adjDbRows);
       await supaSetSetting('settings', settings);
@@ -847,12 +846,14 @@ async function initDB() {
       });
       var sv = await supaGetSetting('settings');
       var tv = await supaGetSetting('taxRates');
+      var thv = await supaGetSetting('taxHistory');
       // Only update memory - never touch the DOM here
       periods   = loadedPeriods;
       adjs      = loadedAdjs;
       timesheet = loadedTs;
       if (sv) settings  = sv;
       if (tv) taxRates  = tv;
+      if (thv) taxHistory = thv;
       nextPpId  = periods.length  ? Math.max.apply(null, periods.map(function(p){ return parseInt(p.id.replace(/\D/g,''))||0; }))+1 : 13;
       nextAdjId = adjs.length     ? Math.max.apply(null, adjs.map(function(a){ return parseInt(a.id.replace(/\D/g,''))||0; }))+1 : 3;
       saveAll();
@@ -879,18 +880,19 @@ async function initDB() {
 // SEED DATA
 // ══════════════════════════════════════
 const SEED_PERIODS = [
-  {id:'pp1', label:'12/1–12/15/25', code:'310',gross:5253.76, tax:1217.24,locked:true,reconciled:true,note:'Cor:$31.11 · Mav:$31.11/$46.67 · Nic:$31.11/$46.67',cycleId:'2025-26',hrs:{cor:22.00,mav:87.75,raf:0,nic:53.50}},
-  {id:'pp2', label:'12/16–12/31/25',code:'310',gross:6541.00, tax:1217.24,locked:true,reconciled:true,note:'Mav:$31.11/$46.67 · Nic:$31.11/$46.67/$62.22',cycleId:'2025-26',hrs:{cor:0,    mav:92.50,raf:0,nic:61.00}},
-  {id:'pp3', label:'12/1–12/15/25', code:'320',gross:1714.80, tax:353.90, locked:true,reconciled:true,note:'Cor:$28.58/$42.87',cycleId:'2025-26',hrs:{cor:60.00,mav:0,    raf:0,nic:0}},
-  {id:'pp4', label:'12/16–12/31/25',code:'320',gross:2050.62, tax:423.25, locked:true,reconciled:true,note:'Cor:$28.58/$42.87',cycleId:'2025-26',hrs:{cor:71.81,mav:0,    raf:0,nic:0}},
-  {id:'pp5', label:'1/1–1/15/26',   code:'320',gross:6151.91, tax:1269.75,locked:true,reconciled:true,note:'Cor:$28.58/$42.87 · Mav:$28.58/$42.87 · Nic:$28.58/$42.87/$57.16',cycleId:'2025-26',hrs:{cor:68.00,mav:72.00,raf:0,nic:55.00}},
-  {id:'pp6', label:'1/16–1/31/26',  code:'320',gross:7642.79, tax:1577.47,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Nic:$25/$37.50',cycleId:'2025-26',hrs:{cor:80.00,mav:88.00,raf:0,nic:58.00}},
-  {id:'pp7', label:'2/1–2/15/26',   code:'320',gross:6513.38, tax:1344.36,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Rafi starts 2/15',cycleId:'2025-26',hrs:{cor:76.00,mav:82.00,raf:8.00, nic:0}},
-  {id:'pp8', label:'2/16–2/28/26',  code:'320',gross:5572.90, tax:1150.24,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50',cycleId:'2025-26',hrs:{cor:65.00,mav:70.00,raf:0,    nic:0}},
-  {id:'pp9', label:'3/1–3/15/26',   code:'320',gross:6379.88, tax:1316.81,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Raf:$26',cycleId:'2025-26',hrs:{cor:68.50,mav:74.00,raf:22.00,nic:0}},
-  {id:'pp10',label:'3/16–3/31/26',  code:'320',gross:7358.15, tax:1518.72,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Raf:$26/$39',cycleId:'2025-26',hrs:{cor:80.00,mav:86.00,raf:35.00,nic:0}},
-  {id:'pp11',label:'4/1–4/15/26',   code:'320',gross:7567.75, tax:1561.99,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Raf:$26/$39',cycleId:'2025-26',hrs:{cor:82.00,mav:88.00,raf:38.00,nic:0}},
-  {id:'pp12',label:'4/16–4/30/26',  code:'320',gross:9219.94, tax:1903.01,locked:true,reconciled:true,note:'Cor:$33/$49.50 · Mav:$33/$49.50/$66 · Raf:$28/$42',cycleId:'2025-26',hrs:{cor:89.50,mav:96.00,raf:52.00,nic:0}},
+  {id:'pp1', label:'12/1/25 - 12/15/25', code:'310',gross:5253.76, tax:1217.24,locked:true,reconciled:true,note:'Cor:$31.11 · Mav:$31.11/$46.67 · Nic:$31.11/$46.67',cycleId:'2025-26',hrs:{cor:22.00,mav:87.75,raf:0,nic:53.50}},
+  {id:'pp2', label:'12/16/25 - 12/31/25',code:'310',gross:6541.00, tax:1217.24,locked:true,reconciled:true,note:'Mav:$31.11/$46.67 · Nic:$31.11/$46.67/$62.22',cycleId:'2025-26',hrs:{cor:0,    mav:92.50,raf:0,nic:61.00}},
+  {id:'pp3', label:'12/1/25 - 12/15/25', code:'320',gross:1714.80, tax:353.90, locked:true,reconciled:true,note:'Cor:$28.58/$42.87',cycleId:'2025-26',hrs:{cor:60.00,mav:0,    raf:0,nic:0}},
+  {id:'pp4', label:'12/16/25 - 12/31/25',code:'320',gross:2050.62, tax:423.25, locked:true,reconciled:true,note:'Cor:$28.58/$42.87',cycleId:'2025-26',hrs:{cor:71.81,mav:0,    raf:0,nic:0}},
+  {id:'pp5', label:'1/1/26 - 1/15/26',   code:'320',gross:6151.91, tax:1269.75,locked:true,reconciled:true,note:'Cor:$28.58/$42.87 · Mav:$28.58/$42.87 · Nic:$28.58/$42.87/$57.16',cycleId:'2025-26',hrs:{cor:68.00,mav:72.00,raf:0,nic:55.00}},
+  {id:'pp6', label:'1/16/26 - 1/31/26',  code:'320',gross:7642.79, tax:1577.47,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Nic:$25/$37.50',cycleId:'2025-26',hrs:{cor:80.00,mav:88.00,raf:0,nic:58.00}},
+  {id:'pp7', label:'2/1/26 - 2/15/26',   code:'320',gross:6513.38, tax:1344.36,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Rafi starts 2/15',cycleId:'2025-26',hrs:{cor:76.00,mav:82.00,raf:8.00, nic:0}},
+  {id:'pp8', label:'2/16/26 - 2/28/26',  code:'320',gross:5572.90, tax:1150.24,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50',cycleId:'2025-26',hrs:{cor:65.00,mav:70.00,raf:0,    nic:0}},
+  {id:'pp9', label:'3/1/26 - 3/15/26',   code:'320',gross:6379.88, tax:1316.81,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Raf:$26',cycleId:'2025-26',hrs:{cor:68.50,mav:74.00,raf:22.00,nic:0}},
+  {id:'pp10',label:'3/16/26 - 3/31/26',  code:'320',gross:7358.15, tax:1518.72,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Raf:$26/$39',cycleId:'2025-26',hrs:{cor:80.00,mav:86.00,raf:35.00,nic:0}},
+  {id:'pp11',label:'4/1/26 - 4/15/26',   code:'320',gross:7567.75, tax:1561.99,locked:true,reconciled:true,note:'Cor:$30/$45 · Mav:$33/$49.50 · Raf:$26/$39',cycleId:'2025-26',hrs:{cor:82.00,mav:88.00,raf:38.00,nic:0}},
+  {id:'pp12',label:'4/16/26 - 4/30/26',  code:'320',gross:9219.94, tax:1903.01,locked:true,reconciled:true,note:'Cor:$33/$49.50 · Mav:$33/$49.50/$66 · Raf:$28/$42',cycleId:'2025-26',hrs:{cor:89.50,mav:96.00,raf:52.00,nic:0}},
+  {id:'pp13',label:'5/1/26 - 5/15/26',    code:'320',gross:7154.04, tax:1476.39,locked:false,reconciled:false,note:'Cor:$33/$49.50 · Mav:$33/$49.50 · Raf:$28/$42',cycleId:'2025-26',hrs:{cor:98.25,mav:74.50,raf:35.25,nic:0}},
 ];
 const SEED_ADJS = [
   {id:'adj1',date:'2026-04-08',code:'320',amt:59452.65,note:'Harbor RC budget increase'},
@@ -935,6 +937,21 @@ let cycles       = loadS('sdp_cycles_v2',[{id:'2025-26',start:'2025-12-01',end:'
 let periods      = loadS('sdp_periods_v2', SEED_PERIODS);
 let adjs         = loadS('sdp_adjs_v2',    SEED_ADJS);
 let settings     = loadS('sdp_settings_v2',{nsFee:375,nsFeeStart:'2025-12-01'});
+let taxHistory   = loadS('sdp_taxhist_v1', []);
+// taxHistory = [{date, code, cumulative, periodId}]
+
+// Phase III reconcile state (global)
+var recP3 = {
+  periodId: null, step: 1,
+  bal310: null, bal320: null, bal331: null,
+  lastBal310: loadS('sdp_rec_bal310', null),
+  lastBal320: loadS('sdp_rec_bal320', null),
+  lastBal331: loadS('sdp_rec_bal331', null),
+  cumTax310: null, cumTax320: null,
+  lastCumTax310: loadS('sdp_rec_ctx310', 0),
+  lastCumTax320: loadS('sdp_rec_ctx320', 0),
+  discrepancies: [],
+};
 let timesheet    = loadS('sdp_ts_v2',{});
 let taxRates     = loadS('sdp_taxrates_v2',[{date:'2025-12-01',rate:0.2064}]);
 let employees    = loadS('sdp_employees_v2', JSON.parse(JSON.stringify(EMP_DEFS)));
@@ -948,7 +965,6 @@ let projInputs = { cor:8, mav:8, raf:4, daysPerWeek:5, splitPct310:0,
   rafAdjRate:null, rafAdjDate:null, rafUseAdj:false };
 
 // Reconcile state
-let recState = { step:1, periodId:null, extracted:{} };
 
 // ══════════════════════════════════════
 // HELPERS
@@ -1021,9 +1037,32 @@ function catBudget(code){
   adjs.filter(a=>a.code===code&&(a.cycleId||'2025-26')===currentCycle).forEach(a=>b+=a.amt);
   return b;
 }
-function catSpent(code){return periods.filter(p=>(p.cycleId||'2025-26')===currentCycle&&p.code===code).reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);}
+function catSpent(code){
+  var ppSpent = periods.filter(p=>(p.cycleId||'2025-26')===currentCycle&&p.code===code)
+    .reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);
+  if (code==='331') {
+    // Add NextStep fees: count months from budget start through today
+    var budgetStart = new Date(2025,11,1); // Dec 1 2025
+    var now = TODAY;
+    var months = (now.getFullYear()-budgetStart.getFullYear())*12 +
+                 (now.getMonth()-budgetStart.getMonth()) + 1;
+    months = Math.max(0, Math.min(months, 24)); // cap at budget length
+    ppSpent += +(settings.nsFee * months).toFixed(2);
+  }
+  return ppSpent;
+}
 function totalBudget(){return Object.keys(cycleCats()).reduce((s,c)=>s+catBudget(c),0);}
-function totalSpent(){return periods.filter(p=>(p.cycleId||'2025-26')===currentCycle).reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);}
+function totalSpent(){
+  var ppTotal = periods.filter(p=>(p.cycleId||'2025-26')===currentCycle)
+    .reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);
+  // Add NextStep fees (Code 331) - paid monthly, not via pay periods
+  var budgetStart = new Date(2025,11,1);
+  var months = (TODAY.getFullYear()-budgetStart.getFullYear())*12 +
+               (TODAY.getMonth()-budgetStart.getMonth()) + 1;
+  months = Math.max(0, Math.min(months, 24));
+  var nsTotal = +(settings.nsFee * months).toFixed(2);
+  return ppTotal + nsTotal;
+}
 function nsFeeSpent(){
   const start=new Date(settings.nsFeeStart||'2025-12-01');
   let m=(TODAY.getFullYear()-start.getFullYear())*12+(TODAY.getMonth()-start.getMonth())+1;
@@ -1061,6 +1100,8 @@ function switchTab(tab) {
   const panelEl = document.getElementById('panel-'+tab);
   if(tabEl) tabEl.classList.add('active');
   if(panelEl) panelEl.classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+
   currentTab = tab;
   const renders = {budget:renderBudget,periods:renderPeriods,clocklog:renderClockLog,timesheet:renderTimesheet,projection:renderProjection,reconcile:renderReconcile,settings:renderSettings};
   if(renders[tab]) renders[tab]();
@@ -1147,7 +1188,14 @@ let selectedPpId = null;
 
 function renderPeriods() {
   const BADGE={'310':'b310','320':'b320','331':'b331','ite':'bite'};
-  const cyclPeriods=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle).slice().reverse();
+  const cyclPeriods=periods
+    .filter(p=>(p.cycleId||'2025-26')===currentCycle)
+    .slice()
+    .sort(function(a,b){
+      var na=parseInt((a.id||'').replace(/\D/g,''))||0;
+      var nb=parseInt((b.id||'').replace(/\D/g,''))||0;
+      return nb-na;
+    });
 
   // Populate rec dropdown
   const recSel=document.getElementById('rec-history-tbody');
@@ -1205,207 +1253,272 @@ function closeSidePanel() {
 }
 
 function renderSidePanel(id) {
-  const p=periods.find(x=>x.id===id);
-  if(!p)return;
-  const BADGE={'310':'b310','320':'b320','331':'b331','ite':'bite'};
-  const CAT_LABEL={'310':'Respite Services','320':'Community Living Support','331':'Community Integration (NS)','ite':'Individual Training'};
+  var p = periods.find(function(x){ return x.id === id; });
+  if (!p) return;
+  var panel = document.getElementById('side-panel');
+  if (!panel) return;
+  panel.classList.add('open');
 
-  document.getElementById('sp-period-id').textContent='Pay Period '+id;
-  document.getElementById('sp-period-dates').textContent=p.label||'—';
-  document.getElementById('sp-code-badge').className='badge '+(BADGE[p.code]||'b320');
-  document.getElementById('sp-code-badge').textContent=(p.code||'').toUpperCase();
-  document.getElementById('sp-code-label').textContent=CAT_LABEL[p.code]||'';
+  var activeEmps = ALL_EMPS.filter(function(e){ return (p.hrs||{})[e] > 0; });
+  var totalGross = 0;
+  var empRows = '';
 
-  const taxShares=empTaxShare(p);
-  let bodyHtml='';
-  const activeEmps=ALL_EMPS.filter(e=>(p.hrs?.[e]||0)>0);
+  activeEmps.forEach(function(e) {
+    var emp  = employees[e] || EMP_DEFS[e];
+    var rate = getRate(e, p.label ? p.label.slice(0,8) : todayStr());
+    var ot   = calcEmpPeriodOT(p, e);
+    totalGross += ot.gross;
 
-  // Pre-calculate total estimated gross for proportional allocation
-  const totalEmpGross = activeEmps.reduce((s,e) => {
-    const r = getRate(e, (p.date||'2025-12-01'));
-    return s + +((p.hrs?.[e]||0) * r.reg).toFixed(2);
-  }, 0);
+    // Employer tax: use stored empTax if reconciled, else proportional estimate
+    var empTax = 0;
+    if (p.empTax && p.empTax[e] != null) {
+      empTax = p.empTax[e];
+    } else {
+      var taxRate = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
+      empTax = +(ot.gross * taxRate).toFixed(2);
+    }
+    var total = +(ot.gross + empTax).toFixed(2);
 
-  activeEmps.forEach(e=>{
-    const emp=employees[e]||EMP_DEFS[e];
-    const hrs=p.hrs?.[e]||0;
-    const rate=getRate(e, (p.date||'2025-12-01'));
-    const tax=taxShares[e]||0;
-
-    // Proportional gross from period total, or estimate from hours × rate
-    const empGrossCalc = p.gross > 0 && totalEmpGross > 0
-      ? +(p.gross * (+(hrs * rate.reg).toFixed(2)) / totalEmpGross).toFixed(2)
-      : +(hrs * rate.reg).toFixed(2);
-    const empTotalCost = +(empGrossCalc + tax).toFixed(2);
-    bodyHtml+=`<div class="emp-section">
-      <div class="emp-hdr">
-        <div><div class="emp-name">${emp.name||e}</div></div>
-        <div style="text-align:right;"><div style="font-size:13px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);">${fmt(empTotalCost)}</div><div style="font-size:10px;color:var(--text3);">wages + employer tax</div></div>
-      </div>
-      <div class="emp-rows">
-        <div class="emp-row-item"><div class="erl"><span class="rate-chip">$${rate.reg}/hr</span> Hours worked</div><div class="erv">${hrs.toFixed(2)} hrs</div></div>
-        <div class="emp-row-item"><div class="erl">Gross wages</div><div class="erv">${fmt(empGrossCalc)}</div></div>
-        <div class="emp-row-item"><div class="erl">Employer tax (proportionate share)</div><div class="erv">+ ${fmt(tax)}</div></div>
-        <div style="border-top:1px dashed var(--gray-bdr);margin:4px 0;"></div>
-        <div class="emp-row-item total-line"><div class="erl" style="font-weight:700;color:var(--text1);">${emp.name||e} Total Cost</div><div class="erv" style="color:var(--blue);font-size:15px;">${fmt(empTotalCost)}</div></div>
-      </div>
-    </div>`;
+    empRows +=
+      '<div style="padding:10px 0;border-bottom:1px solid var(--gray-bdr);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+          '<div style="font-size:13px;font-weight:700;color:var(--text1);">' + emp.name + '</div>' +
+          '<div style="font-size:14px;font-family:IBM Plex Mono,monospace;font-weight:700;color:var(--blue);">' + fmt(total) + '</div>' +
+        '</div>' +
+        '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;color:var(--text3);">' +
+          (ot.estimated
+            ? ot.total.toFixed(2) + ' hrs (est.) × $' + rate.reg + ' = ' + fmt(ot.gross)
+            : 'Reg ' + ot.reg.toFixed(2) + '@$' + rate.reg +
+              (ot.ot15>0 ? ' · OT ' + ot.ot15.toFixed(2) + '@$' + rate.ot : '') +
+              (ot.ot2>0  ? ' · 2× ' + ot.ot2.toFixed(2)  + '@$' + rate.ot2 : '') +
+              ' = ' + fmt(ot.gross)) +
+        '</div>' +
+        '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;color:var(--text3);">Tax: ' + fmt(empTax) + '</div>' +
+      '</div>';
   });
-  document.getElementById('sp-body').innerHTML=bodyHtml||'<div style="padding:20px;color:var(--text3);">No hours recorded.</div>';
 
-  const total=(p.gross||0)+(p.tax||0);
-  document.getElementById('sp-footer').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:rgba(255,255,255,.7);"><span>Total gross wages</span><strong style="font-family:'IBM Plex Mono',monospace;">${fmt(p.gross||0)}</strong></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;color:rgba(255,255,255,.7);"><span>Total employer tax</span><strong style="font-family:'IBM Plex Mono',monospace;">${fmt(p.tax||0)}</strong></div>
-    ${p.premierTax!==null&&p.premierTax!==undefined?`<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;color:rgba(255,255,255,.5);"><span>Premier actual tax</span><span style="font-family:'IBM Plex Mono',monospace;">${fmt(p.premierTax)}</span></div>`:''}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.2);">
-      <span style="font-size:13px;font-weight:700;color:rgba(255,255,255,.8);">Period Total Cost</span>
-      <strong style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;color:var(--yellow);">${fmt(total)}</strong>
-    </div>`;
+  var totalTax = p.tax || 0;
+  var grandTotal = +(totalGross + totalTax).toFixed(2);
+
+  var html =
+    '<div style="font-size:16px;font-weight:800;margin-bottom:2px;">' + p.id + ' — ' + p.label + '</div>' +
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Code ' + p.code +
+      (p.reconciled ? ' · <span style="color:var(--green);">✓ Reconciled</span>' :
+       p.locked     ? ' · <span style="color:var(--orange);">🔒 Locked</span>' : '') +
+    '</div>' +
+    empRows +
+    '<div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-size:13px;">' +
+      '<span style="color:var(--text2);">Total gross wages</span>' +
+      '<span style="font-family:IBM Plex Mono,monospace;">' + fmt(totalGross) + '</span></div>' +
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;">' +
+      '<span style="color:var(--text2);">Employer tax</span>' +
+      '<span style="font-family:IBM Plex Mono,monospace;">' + fmt(totalTax) + (p.empTax ? '' : ' <span style="font-size:10px;color:var(--text3);">(est.)</span>') + '</span></div>' +
+    '<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:15px;font-weight:700;border-top:2px solid var(--gray-bdr);">' +
+      '<span>Period Total</span>' +
+      '<span style="font-family:IBM Plex Mono,monospace;color:var(--blue);">' + fmt(grandTotal) + '</span></div>';
+
+  var body = document.getElementById('side-panel-body');
+  if (body) body.innerHTML = html;
 }
 
 // ══════════════════════════════════════
 // IMPROVED CLOCK LOG RENDER
 // ══════════════════════════════════════
-let clWeekOffset = 0;
+
+
+
+
+// ══════════════════════════════════════
+// RENDER CLOCK LOG
+// ══════════════════════════════════════
+var clWeekOffset = 0;
 function clNavWeek(dir) {
   if (dir === 0) clWeekOffset = 0; else clWeekOffset += dir;
   renderClockLog();
 }
 
+// Employee column colors
+var EMP_COL = {
+  cor: {bg:'rgba(0,119,182,0.06)',  hdr:'rgba(0,119,182,0.18)',  accent:'#0077b6'},
+  mav: {bg:'rgba(0,150,110,0.06)',  hdr:'rgba(0,150,110,0.18)',  accent:'#00966e'},
+  raf: {bg:'rgba(156,77,191,0.06)', hdr:'rgba(156,77,191,0.18)', accent:'#9c4dbf'},
+  nic: {bg:'rgba(180,100,0,0.06)',  hdr:'rgba(180,100,0,0.18)',  accent:'#b46400'},
+};
+
 function renderClockLog() {
   if (!document.getElementById('cl-grid-wrap')) return;
 
-  const base = weekStart(new Date(TODAY.getTime()));
+
+  var base = weekStart(new Date(TODAY.getTime()));
   base.setDate(base.getDate() + clWeekOffset * 7);
 
-  const days = [];
+  var days = [];
   for (var i = 0; i < 7; i++) {
     var d = new Date(base.getTime());
     d.setDate(d.getDate() + i);
     days.push(d);
   }
 
-  const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  // Week range label e.g. "Sun May 17 – Sat May 23, 2026"
-  const endDay = days[6];
-  const lbl = DOW[0] + ' ' + MON[base.getMonth()] + ' ' + base.getDate() +
-    ' – ' + DOW[6] + ' ' + MON[endDay.getMonth()] + ' ' + endDay.getDate() + ', ' + endDay.getFullYear();
-  const lblEl = document.getElementById('cl-week-label');
+  // Week range label
+  var endDay = days[6];
+  var lbl = DOW[0]+' '+MON[base.getMonth()]+' '+base.getDate()+
+    ' – '+DOW[6]+' '+MON[endDay.getMonth()]+' '+endDay.getDate()+', '+endDay.getFullYear();
+  var lblEl = document.getElementById('cl-week-label');
   if (lblEl) lblEl.textContent = lbl;
 
-  // Build weekly hours
-  var weekHrs = {};
+  // Collect daily OT per employee
+  var weekData = {};
   ACTIVE_EMPS.forEach(function(e) {
-    weekHrs[e] = days.map(function(d) {
+    weekData[e] = days.map(function(d) {
       var iso   = isoFromDate(d);
       var entry = timesheet[iso] && timesheet[iso][e];
       var s1    = entry ? (entry.s1 || 0) : 0;
       var s2    = entry ? (entry.s2 || 0) : 0;
-      return { s1: s1, s2: s2, total: +((s1 + s2).toFixed(4)) };
+      var total = +((s1+s2).toFixed(4));
+      // CA OT per day
+      var reg   = Math.min(total, 8);
+      var ot15  = Math.max(0, Math.min(total,12) - 8);
+      var ot2   = Math.max(0, total - 12);
+      var s1code = entry ? (entry.s1code || '320') : '320';
+      var s2code = entry ? (entry.s2code || s1code) : s1code;
+      return {s1, s2, total, reg, ot15, ot2, s1code, s2code, iso};
     });
   });
 
-  // Build grid HTML
-  var grid = '<div class="clk-grid">';
-  grid += '<div class="clk-hdr">Date</div>';
-  ACTIVE_EMPS.forEach(function(e) {
-    grid += '<div class="clk-hdr">' + ((employees[e] || EMP_DEFS[e]).name) + '</div>';
-  });
-  grid += '<div class="clk-hdr">Day Total</div>';
+  // Count columns: 1 (date) + 3 per employee (R, 1.5x, 2x)
+  var nEmps = ACTIVE_EMPS.length;
+  var cols   = 1 + nEmps * 3;
 
+  // Build grid CSS: date col + 3 cols per employee
+  var colTemplate = '140px';
+  ACTIVE_EMPS.forEach(function() { colTemplate += ' 72px 72px 72px'; });
+
+  var grid = '<div class="clk-grid" style="grid-template-columns:'+colTemplate+';">';
+
+  // Header row
+  grid += '<div class="clk-hdr" style="grid-column:1;">Date</div>';
+  ACTIVE_EMPS.forEach(function(e, ei) {
+    var emp = employees[e] || EMP_DEFS[e];
+    var col = EMP_COL[e] || EMP_COL.cor;
+    var colStart = 2 + ei*3;
+    // Employee name spans 3 columns
+    grid += '<div class="clk-hdr" style="grid-column:'+colStart+'/'+(colStart+3)+';background:'+col.hdr+';color:'+col.accent+';text-align:center;border-radius:6px 6px 0 0;">'+emp.name+'</div>';
+  });
+
+  // Sub-header: R / 1.5x / 2x per employee
+  grid += '<div class="clk-hdr" style="opacity:0;"></div>';
+  ACTIVE_EMPS.forEach(function(e) {
+    var col = EMP_COL[e] || EMP_COL.cor;
+    grid += '<div class="clk-subhdr" style="background:'+col.hdr+';color:'+col.accent+';">Reg</div>';
+    grid += '<div class="clk-subhdr" style="background:'+col.hdr+';color:'+col.accent+';">1.5×</div>';
+    grid += '<div class="clk-subhdr" style="background:'+col.hdr+';color:'+col.accent+';">2×</div>';
+  });
+
+  // Data rows
   var warnings = [];
-  days.forEach(function(d, i) {
+  days.forEach(function(d, di) {
     var iso     = isoFromDate(d);
     var isToday = (iso === todayStr());
-    var dateCls = 'clk-cell' + (isToday ? ' today-row' : '');
-    var dateStyle = isToday ? 'font-weight:700;color:var(--blue);' : 'color:var(--text1);';
-    var dateLabel = DOW[i] + ' ' + MON[d.getMonth()] + ' ' + d.getDate();
-    if (isToday) dateLabel += ' <span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 5px;border-radius:4px;margin-left:3px;">TODAY</span>';
-    grid += '<div class="' + dateCls + '" style="' + dateStyle + '">' + dateLabel + '</div>';
+    var dateStyle = isToday
+      ? 'font-weight:700;color:var(--blue);'
+      : 'color:var(--text1);';
+    var dateLbl = DOW[di]+' '+MON[d.getMonth()]+' '+d.getDate();
+    if (isToday) dateLbl += ' <span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 5px;border-radius:4px;margin-left:3px;">TODAY</span>';
 
-    var dayTotal = 0;
+    grid += '<div class="clk-cell" style="'+dateStyle+'">'+dateLbl+'</div>';
+
     ACTIVE_EMPS.forEach(function(e) {
-      var s1 = weekHrs[e][i].s1;
-      var s2 = weekHrs[e][i].s2;
-      var h  = weekHrs[e][i].total;
-      dayTotal += h;
+      var col  = EMP_COL[e] || EMP_COL.cor;
+      var day  = weekData[e][di];
+      var bg   = col.bg;
 
-      var cls   = 'clk-cell clk-clickable';
-      var label = '<span style="color:var(--text3);font-size:13px;">tap to enter</span>';
+      // Reg cell
+      var regLbl = day.reg > 0 ? day.reg.toFixed(2) : '<span style="color:var(--text3);font-size:11px;">—</span>';
+      var regCls = 'clk-cell clk-ot-cell';
+      var regCls = 'clk-cell clk-ot-cell';
+      grid += '<button type="button" class="'+regCls+'" data-iso="'+iso+'" data-emp="'+e+'"' +
+        ' onclick="openClockKp(this.dataset.iso,this.dataset.emp)"' +
+        ' style="width:100%;text-align:center;background:'+bg+';border-left:2px solid '+col.hdr+';border:none;font-family:IBM Plex Mono,monospace;font-size:13px;padding:10px 0;cursor:pointer;">'+regLbl+'</button>';
+      // OT 1.5x cell
+      var ot15Lbl = day.ot15 > 0
+        ? '<span style="color:var(--orange);font-weight:700;">'+day.ot15.toFixed(2)+'</span>'
+        : '<span style="color:var(--text3);font-size:11px;">—</span>';
+      grid += '<button type="button" class="clk-cell clk-ot-cell" data-iso="'+iso+'" data-emp="'+e+'"' +
+        ' onclick="openClockKp(this.dataset.iso,this.dataset.emp)"' +
+        ' style="width:100%;text-align:center;background:'+bg+';border:none;font-family:IBM Plex Mono,monospace;font-size:13px;padding:10px 0;cursor:pointer;">'+ot15Lbl+'</button>';
 
-      if (h > 0) {
-        // Show S1 + S2 breakdown clearly
-        if (s2 > 0) {
-          label = '<div style="font-size:12px;line-height:1.4;">' +
-            'S1: ' + s1.toFixed(2) + '<br>' +
-            'S2: ' + s2.toFixed(2) + '<br>' +
-            '<strong>' + h.toFixed(2) + ' hrs</strong>' +
-            (h > 12 ? ' <span style="color:var(--red);">2×</span>' : h > 8 ? ' <span style="color:var(--orange);">OT</span>' : '') +
-            '</div>';
-        } else {
-          label = s1.toFixed(2) + ' hrs' + (h > 12 ? ' ⚠2×' : h > 8 ? ' ⚠OT' : '');
-        }
-        if (h > 12) cls += ' ot2';
-        else if (h > 8) cls += ' ot';
+      // OT 2x cell
+      var ot2Lbl = day.ot2 > 0
+        ? '<span style="color:var(--red);font-weight:700;">'+day.ot2.toFixed(2)+'</span>'
+        : '<span style="color:var(--text3);font-size:11px;">—</span>';
+      grid += '<button type="button" class="clk-cell clk-ot-cell" data-iso="'+iso+'" data-emp="'+e+'"' +
+        ' onclick="openClockKp(this.dataset.iso,this.dataset.emp)"' +
+        ' style="width:100%;text-align:center;background:'+bg+';border:none;font-family:IBM Plex Mono,monospace;font-size:13px;padding:10px 0;cursor:pointer;">'+ot2Lbl+'</button>';
+      // Weekly OT check
+      if (di === 6) {
+        var wkTotal = weekData[e].reduce(function(s,x){return s+x.total;},0);
+        if (wkTotal > 40) warnings.push((employees[e]||EMP_DEFS[e]).name+': '+wkTotal.toFixed(1)+' hrs week OT');
       }
-
-      grid += '<button type="button" class="' + cls + '" onclick="openClockKp(\'' + iso + '\',\'' + e + '\')" style="width:100%;text-align:left;background:none;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:14px;padding:11px 14px;cursor:pointer;">' + label + '</button>';
     });
-
-    grid += '<div class="clk-cell muted">' + (dayTotal > 0 ? dayTotal.toFixed(2) + ' hrs' : '—') + '</div>';
   });
 
-  // Week totals
-  grid += '<div class="clk-cell clk-tot" style="font-weight:700;color:var(--text2);">Week Total</div>';
+  // Week total row
+  grid += '<div class="clk-cell clk-tot" style="font-weight:700;">Week Total</div>';
   ACTIVE_EMPS.forEach(function(e) {
-    var wk   = weekHrs[e].reduce(function(s, h) { return +(s + h.total).toFixed(4); }, 0);
-    var isOT = wk > 40;
-    var cls  = 'clk-cell clk-tot' + (isOT ? ' ot' : '');
-    if (isOT) warnings.push((employees[e] || EMP_DEFS[e]).name + ': ' + wk.toFixed(1) + ' hrs — weekly OT');
-    grid += '<div class="' + cls + '">' + (wk > 0 ? wk.toFixed(1) + ' hrs' + (isOT ? ' ⚠' : '') : '—') + '</div>';
+    var col   = EMP_COL[e] || EMP_COL.cor;
+    var bg    = col.bg;
+    var wkReg  = weekData[e].reduce(function(s,x){return s+x.reg; },0);
+    var wkOT15 = weekData[e].reduce(function(s,x){return s+x.ot15;},0);
+    var wkOT2  = weekData[e].reduce(function(s,x){return s+x.ot2; },0);
+    var wkTot  = weekData[e].reduce(function(s,x){return s+x.total;},0);
+    var isWkOT = wkTot > 40;
+    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';border-left:2px solid '+col.hdr+';">'+(wkReg>0?wkReg.toFixed(1):'—')+'</div>';
+    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(wkOT15>0||isWkOT?'color:var(--orange);font-weight:700;':'')+';">'+(wkOT15>0||isWkOT?'+'+(wkOT15+Math.max(0,wkTot-40)).toFixed(1):'—')+'</div>';
+    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(wkOT2>0?'color:var(--red);font-weight:700;':'')+';">'+(wkOT2>0?wkOT2.toFixed(1):'—')+'</div>';
   });
-  var wkTotal = ACTIVE_EMPS.reduce(function(s, e) {
-    return +(s + weekHrs[e].reduce(function(ss, h) { return +(ss + h.total).toFixed(4); }, 0)).toFixed(4);
-  }, 0);
-  grid += '<div class="clk-cell clk-tot">' + (wkTotal > 0 ? wkTotal.toFixed(1) + ' hrs' : '—') + '</div>';
+
   grid += '</div>';
 
   document.getElementById('cl-grid-wrap').innerHTML = grid;
+
 
   // OT warning
   var warnEl = document.getElementById('cl-ot-warning');
   if (warnEl) {
     warnEl.style.display = warnings.length ? 'block' : 'none';
-    if (warnings.length) warnEl.innerHTML = '⚠ ' + warnings.join(' · ');
+    if (warnings.length) warnEl.innerHTML = '⚠ '+warnings.join(' · ');
   }
 
-  // Per-employee summary cards
+  // Per-employee summary cards (week totals with OT)
   ACTIVE_EMPS.forEach(function(e) {
-    var el = document.getElementById('cl-sum-' + e);
+    var el = document.getElementById('cl-sum-'+e);
     if (!el) return;
-    var emp      = employees[e] || EMP_DEFS[e];
-    var dailyArr = weekHrs[e].map(function(h) { return h.total; });
-    var ot       = calcOT(dailyArr);
-    var rate     = getRate(e, todayStr());
-    var gross    = +(ot.reg * rate.reg + ot.ot15 * rate.ot + ot.ot2 * rate.ot2).toFixed(2);
-    var total    = +(ot.reg + ot.ot15 + ot.ot2).toFixed(2);
+    var emp  = employees[e] || EMP_DEFS[e];
+    var rate = getRate(e, todayStr());
+    var wkReg  = weekData[e].reduce(function(s,x){return s+x.reg; },0);
+    var wkOT15 = weekData[e].reduce(function(s,x){return s+x.ot15;},0);
+    var wkOT2  = weekData[e].reduce(function(s,x){return s+x.ot2; },0);
+    var wkTot  = weekData[e].reduce(function(s,x){return s+x.total;},0);
+    // Apply weekly OT rule: hours over 40 become 1.5x
+    var wkOver40 = Math.max(0, wkTot - 40);
+    var adjReg   = Math.max(0, wkReg - wkOver40);
+    var adjOT15  = wkOT15 + wkOver40;
+    var gross = +(adjReg*rate.reg + adjOT15*rate.ot + wkOT2*rate.ot2).toFixed(2);
+    var col   = EMP_COL[e] || EMP_COL.cor;
 
     el.innerHTML =
-      '<div style="font-size:15px;font-weight:700;color:var(--text1);margin-bottom:10px;">' + emp.name + '</div>' +
-      '<div style="font-size:14px;font-family:\'IBM Plex Mono\',monospace;display:flex;flex-direction:column;gap:7px;">' +
-        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Reg hrs</span><span style="color:var(--text1);">' + ot.reg.toFixed(2) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 1.5× hrs</span><span style="color:' + (ot.ot15 > 0 ? 'var(--orange)' : 'var(--text3)') + ';">' + ot.ot15.toFixed(2) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 2× hrs</span><span style="color:' + (ot.ot2 > 0 ? 'var(--red)' : 'var(--text3)') + ';">' + ot.ot2.toFixed(2) + '</span></div>' +
-        '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:6px;"><span style="color:var(--text3);">Total hrs</span><strong style="color:var(--text1);">' + total.toFixed(1) + '</strong></div>' +
-        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Est. gross</span><strong style="color:var(--green);">' + fmt(gross) + '</strong></div>' +
+      '<div style="font-size:14px;font-weight:700;color:'+col.accent+';margin-bottom:8px;">'+emp.name+'</div>'+
+      '<div style="font-size:13px;font-family:IBM Plex Mono,monospace;display:flex;flex-direction:column;gap:5px;">'+
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Reg hrs</span><span>'+adjReg.toFixed(2)+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 1.5× hrs</span><span style="color:'+(adjOT15>0?'var(--orange)':'var(--text3)')+';">'+adjOT15.toFixed(2)+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 2× hrs</span><span style="color:'+(wkOT2>0?'var(--red)':'var(--text3)')+';">'+wkOT2.toFixed(2)+'</span></div>'+
+        '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:5px;"><span style="color:var(--text3);">Est. gross</span><strong style="color:var(--green);">'+fmt(gross)+'</strong></div>'+
       '</div>';
   });
 }
-
-
 
 // ══════════════════════════════════════
 // RENDER TIMESHEET
@@ -1457,8 +1570,8 @@ function renderProjection() {
     return `<div style="border-bottom:1px solid rgba(221,227,236,.5);padding-bottom:12px;margin-bottom:4px;">
       <div style="display:flex;align-items:center;gap:12px;padding:10px 0 6px;">
         <div class="emp-avatar" style="background:${emp.color||'#888'};">${emp.name?.[0]||'?'}</div>
-        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">${emp.name}</div><div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2×</div></div>
-        <div><div class="tap-box" onclick="openProjHrsKp('${e}')">${hrs.toFixed(1)}</div><div style="font-size:9px;color:var(--text3);text-align:center;margin-top:3px;font-family:'IBM Plex Mono',monospace;">hrs/day</div></div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">${emp.name}</div><div style="font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2×</div></div>
+        <div><div class="tap-box" onclick="openProjHrsKp('${e}')">${hrs.toFixed(1)}</div><div style="font-size:9px;color:var(--text3);text-align:center;margin-top:3px;font-family:IBM Plex Mono,monospace;">hrs/day</div></div>
         <div><span class="est-chip">~${fmt(dailyCost)}/day</span></div>
       </div>
       <div style="margin-left:46px;display:flex;flex-direction:column;gap:6px;">
@@ -1474,7 +1587,7 @@ function renderProjection() {
               <div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:90px;${useAdj?'border-color:var(--blue);background:#eff6ff;':''}" onclick="openProjDateKp('${e}')">${adjDate||'Pick date'}</div>
               <span style="font-size:12px;color:var(--text3);">new base rate:</span>
               <div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:70px;${useAdj?'border-color:var(--blue);background:#eff6ff;':''}" onclick="openProjRateKp('${e}')">${adjRate?'$'+adjRate:' Tap'}</div>
-              ${adjRate?`<span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);font-weight:700;">OT: $${+(adjRate*1.5).toFixed(2)} · 2×: $${+(adjRate*2).toFixed(2)} ✓</span>`:''}
+              ${adjRate?`<span style="font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--green);font-weight:700;">OT: $${+(adjRate*1.5).toFixed(2)} · 2×: $${+(adjRate*2).toFixed(2)} ✓</span>`:''}
             </div>
           </div>
         </label>
@@ -1499,7 +1612,7 @@ function renderProjection() {
       <div style="width:${pct310bar}%;background:#3b82f6;transition:width .3s;"></div>
       <div style="width:${pct320bar}%;background:#16a34a;transition:width .3s;"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-top:3px;">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;margin-top:3px;">
       <span style="color:#1e40af;">310: ${pct310bar}%</span>
       <span style="color:#065f46;">320: ${pct320bar}%</span>
     </div>`;
@@ -1540,20 +1653,20 @@ function renderProjection() {
   document.getElementById('proj-results').innerHTML=`
     <div class="result-item"><div class="result-lbl">Daily labor cost (incl. tax)</div><div class="result-val big blue">${fmt(dailyCostTotal)}</div></div>
     <div class="result-item"><div class="result-lbl">Weekly cost (${projInputs.daysPerWeek} days)</div><div class="result-val big">${fmt(weeklyCost)}</div></div>
-    <div class="result-item"><div class="result-lbl">NextStep <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--text3);">${nsMonths} mo × $${settings.nsFee}</span></div><div class="result-val orange">${fmt(nsProj)}</div></div>
+    <div class="result-item"><div class="result-lbl">NextStep <span style="font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--text3);">${nsMonths} mo × $${settings.nsFee}</span></div><div class="result-val orange">${fmt(nsProj)}</div></div>
     <div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:3px;"></span> To Code 310 (${projInputs.splitPct310}%)</div><div class="result-val" style="color:${to310>0?'#1e40af':'var(--text3)'};">${fmt(to310)}</div></div>
     <div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:3px;"></span> To Code 320 (${100-projInputs.splitPct310}%)</div><div class="result-val green">${fmt(to320)}</div></div>
     <div class="result-item"><div class="result-lbl">Days remaining to Nov 30</div><div class="result-val">${daysLeft} days</div></div>
     <div style="margin-top:14px;">
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:'IBM Plex Mono',monospace;"><span>Confirmed spent</span><span style="color:var(--blue);font-weight:700;">${fmt(confirmedSpent)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:IBM Plex Mono,monospace;"><span>Confirmed spent</span><span style="color:var(--blue);font-weight:700;">${fmt(confirmedSpent)}</span></div>
       <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;"><div style="height:100%;border-radius:100px;background:var(--blue);width:${Math.min(100,(confirmedSpent/totalBudget()*100)).toFixed(1)}%;"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin:6px 0 4px;font-family:'IBM Plex Mono',monospace;"><span>Confirmed + projected</span><span style="color:var(--green);font-weight:700;">${fmt(projGrandTotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin:6px 0 4px;font-family:IBM Plex Mono,monospace;"><span>Confirmed + projected</span><span style="color:var(--green);font-weight:700;">${fmt(projGrandTotal)}</span></div>
       <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;display:flex;">
         <div style="height:100%;background:var(--blue);width:${Math.min(100,(confirmedSpent/totalBudget()*100)).toFixed(1)}%;border-radius:100px 0 0 100px;"></div>
         <div style="height:100%;background:var(--green);opacity:.65;width:${Math.min(100,(projTotal/totalBudget()*100)).toFixed(1)}%;border-radius:0 100px 100px 0;"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;font-family:'IBM Plex Mono',monospace;">
-        <span>■ Confirmed &nbsp; ■ Projected</span>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;font-family:IBM Plex Mono,monospace;">
+        <span>■ Confirmed   ■ Projected</span>
         <span>Balance at Nov 30: <strong style="color:${projBalance>=0?'var(--green)':'var(--red)'};">${fmt(projBalance)}</strong></span>
       </div>
     </div>`;
@@ -1568,10 +1681,10 @@ function renderProjection() {
     const colors={'310':'#3b82f6','320':'#16a34a','331':'#f59e0b','ite':'#ef4444'};
     return `<div class="bal-card">
       <span class="badge b${code}" style="margin-bottom:8px;display:inline-block;">${code.toUpperCase()}</span>
-      <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:6px;">Projected balance at Nov 30, 2026</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:500;color:${projBal>=0?'var(--green)':'var(--red)'};margin-bottom:10px;">${fmt(projBal)}</div>
+      <div style="font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;margin-bottom:6px;">Projected balance at Nov 30, 2026</div>
+      <div style="font-family:IBM Plex Mono,monospace;font-size:28px;font-weight:500;color:${projBal>=0?'var(--green)':'var(--red)'};margin-bottom:10px;">${fmt(projBal)}</div>
       <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;"><div style="width:${pu.toFixed(1)}%;height:100%;border-radius:100px;background:${colors[code]||'#888'};"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;font-family:'IBM Plex Mono',monospace;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;font-family:IBM Plex Mono,monospace;">
         <span>Budget: ${fmt(bud)}</span><span>${pu.toFixed(1)}% used (proj.)</span>
       </div>
     </div>`;
@@ -1713,343 +1826,375 @@ function openCustomSplitKp(){kpMode='split';openKp('Code 310 Split %', { mainLbl
 // ══════════════════════════════════════
 // RENDER RECONCILE
 // ══════════════════════════════════════
-function renderReconcile() {
-  const cyclPeriods = periods
-    .filter(p => (p.cycleId||'2025-26') === currentCycle)
-    .slice().reverse();
 
-  // Steps indicator
-  const stepDefs = [
-    { label:'Upload Statement',  sub: recState.step > 1 ? 'PDF processed' : 'Upload Premier PDF' },
-    { label:'Select Period',     sub: recState.periodId ? recState.periodId : 'Select pay period' },
-    { label:'Review Comparison', sub: recState.step === 3 ? 'Review flags' : 'Pending' },
-    { label:'Approve & Mark',    sub: recState.step === 4 ? 'Complete' : 'Pending' },
-  ];
-  document.getElementById('rec-steps').innerHTML = stepDefs.map((s, i) => {
-    const n = i + 1;
-    const cls = recState.step > n ? 'done' : recState.step === n ? 'active' : 'todo';
-    return '<div class="step ' + cls + '"><div class="step-num">' + (cls==='done'?'✓':n) + '</div>' +
-      '<div><div class="step-lbl">' + s.label + '</div><div class="step-sub">' + s.sub + '</div></div></div>';
-  }).join('');
-
-  // Show/hide panels
-  document.getElementById('rec-step1').style.display      = recState.step === 1 ? 'block' : 'none';
-  document.getElementById('rec-step2plus').style.display  = recState.step >= 2 ? 'block' : 'none';
-  document.getElementById('rec-approve-card').style.display = recState.step >= 3 ? 'block' : 'none';
-
-  if (recState.step >= 2 && recState.periodId) {
-    const p = periods.find(x => x.id === recState.periodId);
-    if (p) {
-      document.getElementById('rec-period-badge').textContent = p.id + ' · ' + p.label;
-      document.getElementById('rec-table-title').textContent  = 'Comparison — ' + p.id + ' · ' + p.label;
-    }
+function getPeriodDailyHrs(p, emp) {
+  // Get array of daily hours from clock log for this period
+  // p.label format: "5/1/26 - 5/15/26"
+  if (!p.label) return [];
+  var parts = p.label.split(' - ');
+  if (parts.length < 2) return [];
+  var parseDateStr = function(s) {
+    var m = s.trim().match(/(\d+)\/(\d+)\/(\d+)/);
+    if (!m) return null;
+    var yr = parseInt(m[3]); if (yr < 100) yr += 2000;
+    return new Date(yr, parseInt(m[1])-1, parseInt(m[2]));
+  };
+  var start = parseDateStr(parts[0]);
+  var end   = parseDateStr(parts[1]);
+  if (!start || !end) return [];
+  var daily = [];
+  var d = new Date(start.getTime());
+  while (d <= end) {
+    var iso   = isoFromDate(d);
+    var entry = timesheet[iso] && timesheet[iso][emp];
+    daily.push(entry ? +((entry.s1||0) + (entry.s2||0)).toFixed(4) : 0);
+    d.setDate(d.getDate() + 1);
   }
+  return daily;
+}
 
-  if (recState.step === 3) renderReconcileComparison();
+function calcEmpPeriodOT(p, emp) {
+  // Returns {reg, ot15, ot2, total, gross} using CA OT rules from clock log
+  var daily = getPeriodDailyHrs(p, emp);
+  var rate  = getRate(emp, p.label ? p.label.slice(0,8) : todayStr());
+  if (daily.length === 0 || daily.every(function(h){return h===0;})) {
+    // Fall back to stored hours with flat rate (no daily detail)
+    var storedHrs = p.hrs ? (p.hrs[emp] || 0) : 0;
+    return { reg: storedHrs, ot15: 0, ot2: 0, total: storedHrs,
+             gross: +(storedHrs * rate.reg).toFixed(2), estimated: true };
+  }
+  var ot    = calcOT(daily);
+  var gross = +(ot.reg * rate.reg + ot.ot15 * rate.ot + ot.ot2 * rate.ot2).toFixed(2);
+  return { reg: ot.reg, ot15: ot.ot15, ot2: ot.ot2,
+           total: +(ot.reg + ot.ot15 + ot.ot2).toFixed(2),
+           gross: gross, estimated: false };
+}
+
+function calcPeriodGross(p) {
+  // Sum gross for all active employees using CA OT from clock log
+  var total = 0;
+  ALL_EMPS.forEach(function(e) {
+    var hrs = p.hrs ? (p.hrs[e] || 0) : 0;
+    if (hrs === 0) return;
+    total += calcEmpPeriodOT(p, e).gross;
+  });
+  if (total === 0 && p.gross > 0) total = p.gross;
+  return +total.toFixed(2);
+}
+
+function getLastCumTax(code) {
+  // Get the most recent cumulative tax for this service code
+  var hist = taxHistory.filter(function(h){ return h.code === code; })
+    .sort(function(a,b){ return b.date.localeCompare(a.date); });
+  return hist.length > 0 ? hist[0].cumulative : 0;
+}
+
+function saveTaxHistory(entry) {
+  // entry = {date, code, cumulative, periodId}
+  taxHistory.push(entry);
+  saveS('sdp_taxhist_v1', taxHistory);
+  // Sync to Supabase settings
+  bgSaveSettings();
+}
+
+
+// ── Phase III Reconcile State ──────────────────────────────
+
+function renderReconcile() {
+  var cyclPeriods = periods
+    .filter(function(p){ return (p.cycleId||'2025-26') === currentCycle; })
+    .slice()
+    .sort(function(a,b){
+      // Sort by numeric period ID descending (pp13 > pp12 > ... > pp1)
+      var na = parseInt((a.id||'').replace(/\D/g,'')) || 0;
+      var nb = parseInt((b.id||'').replace(/\D/g,'')) || 0;
+      return nb - na;
+    });
   renderRecHistory(cyclPeriods);
+  var formCard = document.getElementById('rec-form-card');
+  if (!formCard) return;
+  if (!recP3.periodId) { formCard.style.display = 'none'; return; }
+  var p = periods.find(function(x){return x.id===recP3.periodId;});
+  if (p) {
+    document.getElementById('rec-form-title').textContent = 'Reconcile '+p.id+' · '+p.label;
+    updateRecStepUI();
+    if (recP3.step===1) renderRecStep1();
+    if (recP3.step===2) renderRecStep2();
+    if (recP3.step===3) renderRecStep3();
+    formCard.style.display = 'block';
+  }
 }
 
 function renderRecHistory(cyclPeriods) {
-  const el = document.getElementById('rec-history-tbody');
+  var el = document.getElementById('rec-history-tbody');
   if (!el) return;
-  el.innerHTML = cyclPeriods.map(p =>
-    '<tr><td class="mono" style="font-weight:700;">' + p.id + '</td>' +
-    '<td style="font-size:12px;">' + p.label + '</td>' +
-    '<td>' + (p.reconciled
-      ? '<div style="display:flex;align-items:center;gap:8px;"><span class="rec-badge">✓ Reconciled</span>' +
-        '<button class="btn btn-ghost btn-sm" onclick="startManualRec(\'' + p.id + '\')">Re-run</button></div>'
-      : '<button class="btn btn-blue btn-sm" onclick="startManualRec(\'' + p.id + '\')">▶ Reconcile</button>'
-    ) + '</td></tr>'
-  ).join('');
-}
-
-function startManualRec(id) {
-  recState = { step: 2, periodId: id, extracted: {}, pdfFilename: '' };
-  renderReconcile();
-}
-
-function resetReconcile() {
-  recState = { step: 1, periodId: null, extracted: {}, pdfFilename: '' };
-  renderReconcile();
-}
-
-// ── PDF Upload & Text Extraction ──
-function handlePdfUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  showToast('Reading PDF…');
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      // Extract raw text from PDF data
-      const raw = e.target.result;
-      // Convert binary to string for text search
-      let text = '';
-      if (typeof raw === 'string') {
-        text = raw;
-      } else {
-        // ArrayBuffer → string
-        const bytes = new Uint8Array(raw);
-        for (let i = 0; i < Math.min(bytes.length, 500000); i++) {
-          if (bytes[i] > 31 && bytes[i] < 127) text += String.fromCharCode(bytes[i]);
-          else if (bytes[i] === 10 || bytes[i] === 13) text += '\n';
-          else text += ' ';
-        }
-      }
-      const extracted = parsePremierPDF(text, file.name);
-      recState.pdfFilename = file.name;
-      recState.extracted   = extracted;
-      recState.step        = 2;
-
-      const banner = document.getElementById('rec-extracted-banner');
-      if (banner) {
-        banner.style.display = 'flex';
-        const empCount = Object.keys(extracted).filter(k => k.endsWith('Gross')).length;
-        banner.innerHTML = '<span>✓</span> Extracted from: <strong>' + file.name + '</strong> · ' +
-          (empCount > 0 ? empCount + ' employees found · PDF discarded' : 'Select period to enter manually · PDF discarded');
-      }
-      renderReconcile();
-      showToast(empCount > 0 ? 'PDF extracted — ' + empCount + ' employees found ✓' : 'PDF read — select period to reconcile');
-    } catch(err) {
-      console.warn('PDF parse error:', err);
-      recState.step = 2;
-      showToast('PDF loaded — select a period to reconcile');
-      renderReconcile();
-    }
-    event.target.value = '';
+  el.innerHTML = cyclPeriods.map(function(p) {
+    var total = (p.gross||0)+(p.tax||0);
+    var badge = p.reconciled
+      ? '<span class="rec-badge">✓ Reconciled</span>'
+      : '<span class="badge" style="background:#e0f0ff;color:var(--blue);cursor:pointer;">▶ Reconcile</span>';
+    return '<tr data-pid="'+p.id+'" style="cursor:pointer;">'+
+      '<td class="mono" style="font-weight:700;">'+p.id+'</td>'+
+      '<td style="font-size:12px;">'+p.label+'</td>'+
+      '<td><span class="badge b'+p.code+'">'+p.code+'</span></td>'+
+      '<td class="mono right">'+(p.gross?fmt(p.gross):'—')+'</td>'+
+      '<td class="mono right">'+(p.tax?fmt(p.tax):'—')+'</td>'+
+      '<td class="mono right" style="font-weight:700;">'+(total>0?fmt(total):'—')+'</td>'+
+      '<td>'+badge+'</td>'+
+    '</tr>';
+  }).join('');
+  el.onclick = function(ev) {
+    var tr = ev.target.closest('tr[data-pid]');
+    if (tr) startRec(tr.getAttribute('data-pid'));
   };
-  reader.readAsArrayBuffer(file);
 }
 
-// ── Premier PDF Parser ──
-function parsePremierPDF(text, filename) {
-  const result = {};
-
-  // Name mapping: Premier uses "LastName, FirstName" format
-  const nameMap = {
-    'nguyen, cordelia':   'cor',
-    'cordelia':           'cor',
-    'gerber, maverick':   'mav',
-    'maverick':           'mav',
-    'bouhamouda, rafi':   'raf',
-    'rafi':               'raf',
-    'dungey, nicholas':   'nic',
-    'nicholas':           'nic',
-  };
-
-  // Clean up text
-  text = text.replace(/\s+/g, ' ');
-
-  // Find employer taxes - look for pattern "Employer Taxes $X,XXX.XX"
-  const taxMatch = text.match(/Employer\s+Taxes\s+\$?([\d,]+\.?\d*)/i);
-  if (taxMatch) {
-    result.totalTax = parseFloat(taxMatch[1].replace(/,/g, ''));
-  }
-
-  // Find total usage - "Total Usage in Report Period $X,XXX.XX"
-  const totalMatch = text.match(/Total\s+Usage\s+in\s+Report\s+Period\s+\$?([\d,]+\.?\d*)/i);
-  if (totalMatch) {
-    result.grandTotal = parseFloat(totalMatch[1].replace(/,/g, ''));
-  }
-
-  // Find employee gross amounts
-  // Pattern: employee name appears, then rate, hours, usage
-  // We accumulate usage per employee
-  const empTotals = {};
-
-  // Match patterns like: "Nguyen, Cordelia -- date $31.11 22.00 $684.42"
-  // or just "$31.11 22.00 $684.42" after an employee name line
-  const lines = text.split(/[\n\r]+/);
-  let currentEmp = null;
-
-  lines.forEach(function(line) {
-    const lower = line.toLowerCase().trim();
-
-    // Check if line contains a known employee name
-    Object.keys(nameMap).forEach(function(name) {
-      if (lower.includes(name)) {
-        currentEmp = nameMap[name];
-        if (!empTotals[currentEmp]) empTotals[currentEmp] = 0;
-      }
-    });
-
-    // Match dollar amounts that look like usage: $X,XXX.XX at end of line
-    // Pattern: rate hours usage → we want the usage (last dollar amount)
-    const usageMatch = line.match(/\$([\d,]+\.\d{2})\s*(?:\d+\.?\d*)?\s*\$([\d,]+\.\d{2})/);
-    if (usageMatch && currentEmp) {
-      // Second dollar amount is the usage for this rate tier
-      const usage = parseFloat(usageMatch[2].replace(/,/g, ''));
-      if (usage > 0 && usage < 50000) { // sanity check
-        empTotals[currentEmp] = (empTotals[currentEmp] || 0) + usage;
-      }
-    }
-
-    // Also match simpler: just "$X,XXX.XX" as usage after hours
-    const simpleMatch = line.match(/(\d+\.?\d*)\s+\$([\d,]+\.\d{2})\s*$/);
-    if (simpleMatch && currentEmp) {
-      const usage = parseFloat(simpleMatch[2].replace(/,/g, ''));
-      if (usage > 0 && usage < 20000) {
-        empTotals[currentEmp] = (empTotals[currentEmp] || 0) + usage;
-      }
-    }
-  });
-
-  // Map to result keys
-  Object.keys(empTotals).forEach(function(emp) {
-    result[emp + 'Gross'] = empTotals[emp];
-  });
-
-  // Find hours per employee per rate tier
-  // Pattern: $XX.XX HH.HH $X,XXX.XX
-  const hrsPerEmp = {};
-  currentEmp = null;
-
-  lines.forEach(function(line) {
-    const lower = line.toLowerCase().trim();
-    Object.keys(nameMap).forEach(function(name) {
-      if (lower.includes(name)) currentEmp = nameMap[name];
-    });
-    // Match: rate hours usage pattern
-    const hrsMatch = line.match(/\$[\d.]+\s+([\d.]+)\s+\$/);
-    if (hrsMatch && currentEmp) {
-      const hrs = parseFloat(hrsMatch[1]);
-      if (hrs > 0 && hrs < 300) {
-        hrsPerEmp[currentEmp] = (hrsPerEmp[currentEmp] || 0) + hrs;
-      }
-    }
-  });
-
-  Object.keys(hrsPerEmp).forEach(function(emp) {
-    result[emp + 'Hrs'] = hrsPerEmp[emp];
-  });
-
-  console.log('Premier PDF parsed:', result);
-  return result;
-}
-
-function renderReconcileComparison() {
-  const p = periods.find(x => x.id === recState.periodId);
+function startRec(id) {
+  var p = periods.find(function(x){return x.id===id;});
   if (!p) return;
-  const ext = recState.extracted || {};
-  let rows = '', flags = [], hasErr = false;
-
-  const BADGE = {'310':'b310','320':'b320','331':'b331','ite':'bite'};
-
-  ACTIVE_EMPS.forEach(function(e) {
-    const emp      = employees[e] || EMP_DEFS[e];
-    const ourHrs   = p.hrs?.[e] || 0;
-    const extHrs   = ext[e + 'Hrs'] || null;
-    const extGross = ext[e + 'Gross'] || null;
-    if (ourHrs === 0 && !extHrs && !extGross) return;
-
-    const rate     = getRate(e, p.date || '2025-12-01');
-    const ourGross = ourHrs > 0 ? +(ourHrs * rate.reg).toFixed(2) : 0;
-    const premHrs  = extHrs   !== null ? extHrs   : ourHrs;
-    const premGross= extGross !== null ? extGross : ourGross;
-    const diffHrs  = +(ourHrs - premHrs).toFixed(2);
-    const diffGross= +(ourGross - premGross).toFixed(2);
-    const hrsMatch = Math.abs(diffHrs) < 0.01;
-    const grossMatch = Math.abs(diffGross) < 0.10;
-    const roundOnly  = hrsMatch && !grossMatch && Math.abs(diffGross) < 1.00;
-    if (!hrsMatch || (!grossMatch && !roundOnly)) hasErr = true;
-
-    rows += '<tr class="tbl-section"><td colspan="6">' + emp.name + '</td></tr>';
-    rows += '<tr class="' + (!hrsMatch ? 'row-mismatch' : '') + '">' +
-      '<td><strong>' + emp.name + '</strong></td><td>Total hours</td>' +
-      '<td class="mono center">' + ourHrs.toFixed(2) + ' hrs</td>' +
-      '<td class="mono center">' + premHrs.toFixed(2) + ' hrs</td>' +
-      '<td class="' + (diffHrs !== 0 ? 'amber' : 'green') + ' center">' + (diffHrs !== 0 ? (diffHrs > 0 ? '+' : '') + diffHrs.toFixed(2) + ' hrs' : '—') + '</td>' +
-      '<td class="center"><span class="flag ' + (hrsMatch ? 'flag-ok' : 'flag-err') + '">' + (hrsMatch ? '✓ Match' : '✗ Mismatch') + '</span></td></tr>';
-
-    rows += '<tr class="' + (!grossMatch && !roundOnly ? 'row-mismatch' : '') + '">' +
-      '<td></td><td>Gross wages</td>' +
-      '<td class="mono center">' + fmt(ourGross) + '</td>' +
-      '<td class="mono center">' + fmt(premGross) + '</td>' +
-      '<td class="' + (Math.abs(diffGross) > 0.10 ? 'red' : 'green') + ' center">' + (Math.abs(diffGross) > 0.01 ? (diffGross > 0 ? '+' : '') + fmt(diffGross) : '—') + '</td>' +
-      '<td class="center"><span class="flag ' + (grossMatch ? 'flag-ok' : roundOnly ? 'flag-warn' : 'flag-err') + '">' + (grossMatch ? '✓ Match' : roundOnly ? '⚠ Rounding' : '✗ Mismatch') + '</span></td></tr>';
-
-    if (!hrsMatch) flags.push({ emp: emp.name, diffHrs: diffHrs, diffGross: diffGross });
-  });
-
-  // Employer tax
-  const ourTax  = p.tax || 0;
-  const premTax = ext.totalTax || null;
-  const taxDiff = premTax !== null ? +(ourTax - premTax).toFixed(2) : 0;
-  rows += '<tr class="tbl-section"><td colspan="6">Employer Burden</td></tr>';
-  rows += '<tr class="' + (Math.abs(taxDiff) > 1 ? 'row-warn' : '') + '">' +
-    '<td colspan="2">Total employer tax</td>' +
-    '<td class="mono center">' + fmt(ourTax) + '<br><span style="font-size:10px;color:var(--text3);">your calc</span></td>' +
-    '<td class="mono center">' + (premTax !== null ? fmt(premTax) : '<span style="color:var(--text3);">not extracted</span>') + '</td>' +
-    '<td class="' + (Math.abs(taxDiff) > 1 ? 'amber' : 'green') + ' center">' + (premTax !== null && Math.abs(taxDiff) > 0.01 ? (taxDiff > 0 ? '+' : '') + fmt(taxDiff) : '—') + '</td>' +
-    '<td class="center"><span class="flag flag-info">? Review</span></td></tr>';
-
-  // Totals
-  const ourTotal  = (p.gross || 0) + (p.tax || 0);
-  const premTotal = ext.grandTotal || null;
-  const totalDiff = premTotal !== null ? +(ourTotal - premTotal).toFixed(2) : 0;
-  rows += '<tr class="tot-row">' +
-    '<td colspan="2"><strong>Period Total</strong></td>' +
-    '<td class="mono center"><strong>' + fmt(ourTotal) + '</strong></td>' +
-    '<td class="mono center"><strong>' + (premTotal !== null ? fmt(premTotal) : '—') + '</strong></td>' +
-    '<td class="' + (Math.abs(totalDiff) > 0.50 ? 'red' : 'green') + ' center"><strong>' + (premTotal !== null && Math.abs(totalDiff) > 0.01 ? (totalDiff > 0 ? '+' : '') + fmt(totalDiff) : '—') + '</strong></td>' +
-    '<td class="center"><span class="flag ' + (premTotal === null ? 'flag-info' : Math.abs(totalDiff) <= 0.50 ? 'flag-ok' : 'flag-err') + '">' + (premTotal === null ? '? Manual' : Math.abs(totalDiff) <= 0.50 ? '✓ Match' : '✗ Mismatch') + '</span></td></tr>';
-
-  document.getElementById('rec-tbody').innerHTML = rows;
-
-  // Result panel
-  let resultHtml = '<div style="border-radius:14px;padding:16px 18px;margin-bottom:14px;border:2px solid;' +
-    (hasErr ? 'background:var(--red-lt);border-color:#fca5a5;' : 'background:var(--green-lt);border-color:#6ee7b7;') + '">' +
-    '<div style="font-size:18px;font-weight:800;color:' + (hasErr ? 'var(--red-dk)' : 'var(--green-dk)') + ';">' +
-    (hasErr ? '✗ ' + flags.length + ' Issue' + (flags.length > 1 ? 's' : '') + ' Found' : '✓ Looks Good') + '</div>' +
-    '<div style="font-size:12px;font-family:\'IBM Plex Mono\',monospace;color:' + (hasErr ? 'var(--red)' : 'var(--green)') + ';">Period ' + recState.periodId + '</div></div>';
-
-  flags.forEach(function(f) {
-    resultHtml += '<div class="mismatch-item"><div style="font-size:16px;">✗</div>' +
-      '<div><div style="font-size:13px;font-weight:700;color:var(--red-dk);">' + f.emp + ' — Hours Mismatch</div>' +
-      '<div style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:var(--red);">' +
-      'Hour diff: ' + (f.diffHrs > 0 ? '+' : '') + f.diffHrs.toFixed(2) +
-      ' · Gross diff: ' + (f.diffGross > 0 ? '+' : '') + fmt(f.diffGross) + '</div></div></div>';
-  });
-
-  if (Math.abs(taxDiff) > 1 && premTax !== null) {
-    resultHtml += '<div class="warn-item"><div style="font-size:16px;">⚠</div>' +
-      '<div><div style="font-size:13px;font-weight:700;color:var(--orange);">Employer Tax — Review</div>' +
-      '<div style="font-size:11px;font-family:\'IBM Plex Mono\',monospace;color:#9a3412;">Diff: ' + fmt(taxDiff) + ' · Premier allocates differently per employee.</div></div></div>';
-  }
-
-  if (Object.keys(ext).length === 0) {
-    resultHtml += '<div class="alert info"><span>ℹ</span> No data extracted from PDF. Select a period and the comparison will use your tracked figures.</div>';
-  }
-
-  document.getElementById('rec-result-body').innerHTML = resultHtml;
-
-  // Approve summary
-  const approveEl = document.getElementById('rec-approve-summary');
-  if (approveEl) {
-    approveEl.innerHTML =
-      '<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span>Our tracked total</span><span style="font-family:\'IBM Plex Mono\',monospace;">' + fmt(ourTotal) + '</span></div>' +
-      (premTotal !== null ? '<div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:12px;"><span>Premier statement total</span><span style="font-family:\'IBM Plex Mono\',monospace;">' + fmt(premTotal) + '</span></div>' : '') +
-      '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--gray-bdr);padding-top:8px;font-size:12px;"><span>Variance</span><span style="font-family:\'IBM Plex Mono\',monospace;color:' + (Math.abs(totalDiff) <= 0.50 ? 'var(--green)' : 'var(--orange)') + ';">' + (premTotal !== null ? fmt(totalDiff) : 'N/A') + '</span></div>';
-  }
+  recP3.periodId      = id;
+  recP3.step          = 1;
+  recP3.bal310        = recP3.lastBal310;
+  recP3.bal320        = recP3.lastBal320;
+  recP3.bal331        = recP3.lastBal331;
+  recP3.cumTax310     = null;
+  recP3.cumTax320     = null;
+  recP3.discrepancies = [];
+  renderReconcile();
+  document.getElementById('rec-form-card').scrollIntoView({behavior:'smooth'});
 }
 
-function approveReconcile() {
-  const p = periods.find(x => x.id === recState.periodId);
+function cancelRec() {
+  recP3.periodId = null;
+  var fc = document.getElementById('rec-form-card');
+  if (fc) fc.style.display = 'none';
+}
+
+function updateRecStepUI() {
+  ['rec-stp1','rec-stp2','rec-stp3'].forEach(function(id,i) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.background = (i===recP3.step-1) ? 'var(--blue)' : 'var(--gray-bg)';
+    el.style.color      = (i===recP3.step-1) ? '#fff'        : 'var(--text3)';
+  });
+  ['rec-step1-panel','rec-step2-panel','rec-step3-panel'].forEach(function(id,i) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = (i===recP3.step-1) ? 'block' : 'none';
+  });
+}
+
+// ── Step 1: Enter statement balances ──
+function renderRecStep1() {
+  var p = periods.find(function(x){return x.id===recP3.periodId;});
+  if (!p) return;
+  var el = document.getElementById('rec-step1-panel');
+  if (!el) return;
+
+  function balRow(code, field, label, val) {
+    var display = val!==null ? fmt(val) : '<span style="color:var(--text3);">tap to enter</span>';
+    return '<div style="background:var(--gray-bg);border-radius:12px;padding:14px;margin-bottom:10px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+        '<div><div style="font-size:13px;font-weight:700;">Code '+code+' · '+label+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);">Current Balance from statement</div></div>'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+          '<span style="font-family:IBM Plex Mono,monospace;font-size:15px;font-weight:700;" id="r3-'+field+'">'+display+'</span>'+
+          '<button class="btn btn-ghost btn-sm" data-f="'+field+'" onclick="openR3Kp(this.dataset.f)">Edit</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function ctxRow(code, val, lastVal) {
+    var periodTax = val!==null ? Math.max(0,+(val-lastVal).toFixed(2)) : null;
+    return '<div style="padding:6px 0;border-bottom:1px solid rgba(245,200,66,.4);">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+        '<div><div style="font-size:12px;font-weight:700;">Code '+code+'</div>'+
+          '<div style="font-size:10px;color:#7a5800;">Last: '+fmt(lastVal)+
+            (periodTax!==null?' → This period: '+fmt(periodTax):' → ?')+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:8px;">'+
+          '<span style="font-family:IBM Plex Mono,monospace;font-size:14px;font-weight:700;" id="r3-ctx'+code+'">'+
+            (val!==null?fmt(val):'<span style="color:#7a5800;">tap</span>')+'</span>'+
+          '<button class="btn btn-ghost btn-sm" data-f="ctx'+code+'" onclick="openR3Kp(this.dataset.f)">Edit</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  el.innerHTML =
+    '<div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Enter the <strong>Current Balance</strong> for each Code from the Premier statement.</div>'+
+    balRow('310','bal310','Respite Services', recP3.bal310)+
+    balRow('320','bal320','Community Living Support', recP3.bal320)+
+    balRow('331','bal331','Community Integration / NextStep', recP3.bal331)+
+    '<div style="background:#fff8dc;border:1.5px solid var(--yellow);border-radius:12px;padding:14px;margin-bottom:14px;">'+
+      '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7a5800;margin-bottom:10px;">Accumulated Employer Tax · From Statement</div>'+
+      ctxRow('310', recP3.cumTax310, recP3.lastCumTax310)+
+      ctxRow('320', recP3.cumTax320, recP3.lastCumTax320)+
+    '</div>'+
+    '<button class="btn btn-blue" style="width:100%;" onclick="recP3GoStep2()">Next: Review Discrepancies →</button>';
+}
+
+// ── Step 2: Compare ──
+function recP3GoStep2() {
+  if (recP3.bal310!==null) saveS('sdp_rec_bal310', recP3.bal310);
+  if (recP3.bal320!==null) saveS('sdp_rec_bal320', recP3.bal320);
+  if (recP3.bal331!==null) saveS('sdp_rec_bal331', recP3.bal331);
+  recP3.step = 2;
+  renderReconcile();
+}
+
+function renderRecStep2() {
+  var p = periods.find(function(x){return x.id===recP3.periodId;});
+  if (!p) return;
+  var el = document.getElementById('rec-step2-panel');
+  if (!el) return;
+
+  var cats   = cycleCats();
+  var bud310 = cats['310'] ? cats['310'].origBudget : 0;
+  var bud320 = cats['320'] ? cats['320'].origBudget : 0;
+  var bud331 = cats['331'] ? cats['331'].origBudget : 0;
+  var mySpent310 = catSpentReconciled('310');
+  var mySpent320 = catSpentReconciled('320');
+  var mySpent331 = catSpentReconciled('331') + settings.nsFee;
+  var stmtSpent310 = recP3.bal310!==null ? +(bud310-recP3.bal310).toFixed(2) : null;
+  var stmtSpent320 = recP3.bal320!==null ? +(bud320-recP3.bal320).toFixed(2) : null;
+  var stmtSpent331 = recP3.bal331!==null ? +(bud331-recP3.bal331).toFixed(2) : null;
+
+  recP3.discrepancies = [];
+
+  function discRow(code, mySpent, stmtSpent, label) {
+    if (stmtSpent===null) return '';
+    var diff  = +(stmtSpent - mySpent).toFixed(2);
+    var match = Math.abs(diff) < 0.50;
+    if (!match) recP3.discrepancies.push({code:code, diff:diff});
+    return '<div style="background:var(--gray-bg);border-radius:10px;padding:12px 14px;margin-bottom:8px;border-left:4px solid '+(match?'var(--green)':'var(--orange)')+';">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">'+
+        '<span style="font-size:13px;font-weight:700;">Code '+code+' · '+label+'</span>'+
+        '<span class="badge b'+code+'">'+code+'</span>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px;">'+
+        '<div><div style="color:var(--text3);font-size:10px;text-transform:uppercase;">My calc</div>'+
+          '<div style="font-family:IBM Plex Mono,monospace;font-weight:700;">'+fmt(mySpent)+'</div></div>'+
+        '<div><div style="color:var(--text3);font-size:10px;text-transform:uppercase;">Statement</div>'+
+          '<div style="font-family:IBM Plex Mono,monospace;font-weight:700;">'+fmt(stmtSpent)+'</div></div>'+
+        '<div><div style="color:var(--text3);font-size:10px;text-transform:uppercase;">Diff</div>'+
+          '<div style="font-family:IBM Plex Mono,monospace;font-weight:700;color:'+(match?'var(--green)':diff>0?'var(--blue)':'var(--red)')+';">'+
+            (match?'✓ Match':(diff>0?'+':'')+fmt(diff))+'</div></div>'+
+      '</div>'+
+      (!match?'<div style="display:flex;gap:8px;margin-top:8px;">'+
+        '<button class="btn btn-green btn-sm" data-code="'+code+'" data-diff="'+diff+'" onclick="acceptDisc(this.dataset.code,parseFloat(this.dataset.diff))">Accept</button>'+
+        '<button class="btn btn-ghost btn-sm" data-code="'+code+'" onclick="ignoreDisc(this.dataset.code)">Ignore</button>'+
+      '</div>':'')+
+    '</div>';
+  }
+
+  el.innerHTML =
+    '<div style="font-size:12px;color:var(--text2);margin-bottom:14px;">Comparing your Clock Log totals vs the Premier statement.</div>'+
+    discRow('310', mySpent310, stmtSpent310, 'Respite Services')+
+    discRow('320', mySpent320, stmtSpent320, 'Community Living')+
+    discRow('331', mySpent331, stmtSpent331, 'NextStep / Community Integration')+
+    '<div style="display:flex;gap:10px;margin-top:14px;">'+
+      '<button class="btn btn-ghost" style="flex:1;" onclick="recP3.step=1;renderReconcile();">← Back</button>'+
+      '<button class="btn btn-blue" style="flex:2;" onclick="recP3GoStep3()">Next: Finalize →</button>'+
+    '</div>';
+}
+
+function catSpentReconciled(code) {
+  var ppTotal = periods.filter(function(p){
+    return (p.cycleId||'2025-26')===currentCycle && p.code===code;
+  }).reduce(function(s,p){return s+(p.gross||0)+(p.tax||0);},0);
+  var adjTotal = adjs.filter(function(a){
+    return (a.cycleId||'2025-26')===currentCycle && a.code===code;
+  }).reduce(function(s,a){return s+a.amt;},0);
+  return +(ppTotal+adjTotal).toFixed(2);
+}
+
+function acceptDisc(code, diff) {
+  var newAdj = {id:'adj'+(nextAdjId++),date:todayStr(),code:code,amt:+diff.toFixed(2),
+    note:'Reconciliation adjustment',cycleId:currentCycle};
+  adjs.push(newAdj); saveS('sdp_adjs_v2',adjs); bgAddAdj(newAdj);
+  showToast('Adjustment logged: '+(diff>0?'+':'')+fmt(diff)+' to Code '+code+' ✓');
+  renderRecStep2();
+}
+
+function ignoreDisc(code) {
+  showToast('Discrepancy for Code '+code+' ignored');
+  renderRecStep2();
+}
+
+// ── Step 3: Finalize ──
+function recP3GoStep3() {
+  recP3.step = 3;
+  renderReconcile();
+}
+
+function renderRecStep3() {
+  var p = periods.find(function(x){return x.id===recP3.periodId;});
+  if (!p) return;
+  var el = document.getElementById('rec-step3-panel');
+  if (!el) return;
+
+  var tax310 = recP3.cumTax310!==null ? Math.max(0,+(recP3.cumTax310-recP3.lastCumTax310).toFixed(2)) : 0;
+  var tax320 = recP3.cumTax320!==null ? Math.max(0,+(recP3.cumTax320-recP3.lastCumTax320).toFixed(2)) : (p.tax||0);
+  var totalTax = +(tax310+tax320).toFixed(2);
+  var myGross  = calcPeriodGross(p);
+
+  el.innerHTML =
+    '<div style="background:var(--green-lt);border:1.5px solid #6ee7b7;border-radius:12px;padding:14px;margin-bottom:14px;">'+
+      '<div style="font-size:16px;font-weight:800;color:var(--green-dk);">✓ Ready to Mark Reconciled</div>'+
+      '<div style="font-size:12px;color:var(--green-dk);">'+p.id+' · '+p.label+'</div>'+
+    '</div>'+
+    '<div style="background:var(--gray-bg);border-radius:12px;padding:14px;margin-bottom:14px;">'+
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;">'+
+        '<span style="color:var(--text2);">Gross wages (Clock Log)</span>'+
+        '<span style="font-family:IBM Plex Mono,monospace;">'+fmt(myGross)+'</span></div>'+
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;">'+
+        '<span style="color:var(--text2);">Employer tax (this period)</span>'+
+        '<span style="font-family:IBM Plex Mono,monospace;">'+fmt(totalTax)+'</span></div>'+
+      (recP3.discrepancies.length>0?'<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;">'+
+        '<span style="color:var(--orange);">Unresolved discrepancies</span>'+
+        '<span style="font-family:IBM Plex Mono,monospace;color:var(--orange);">'+recP3.discrepancies.length+'</span></div>':'')+
+    '</div>'+
+    '<div style="display:flex;gap:10px;">'+
+      '<button class="btn btn-ghost" style="flex:1;" onclick="recP3.step=2;renderReconcile();">← Back</button>'+
+      '<button class="btn btn-green" style="flex:2;" onclick="finalizeRec('+totalTax+')">'+
+        (recP3.discrepancies.length?'⚠ Finalize with discrepancies':'✓ Mark Reconciled')+'</button>'+
+    '</div>';
+}
+
+function finalizeRec(totalTax) {
+  var p = periods.find(function(x){return x.id===recP3.periodId;});
   if (!p) return;
   p.reconciled = true;
-  if (recState.extracted && recState.extracted.totalTax) p.premierTax = recState.extracted.totalTax;
+  p.locked     = true;
+  if (totalTax>0) p.tax = totalTax;
+  var activeEmps = ALL_EMPS.filter(function(e){return (p.hrs||{})[e]>0;});
+  var totalGross = activeEmps.reduce(function(s,e){return s+calcEmpPeriodOT(p,e).gross;},0);
+  p.empTax = {};
+  activeEmps.forEach(function(e){
+    p.empTax[e] = totalGross>0 ? +(totalTax*(calcEmpPeriodOT(p,e).gross)/totalGross).toFixed(2) : 0;
+  });
+  if (recP3.cumTax310!==null) { saveS('sdp_rec_ctx310',recP3.cumTax310); recP3.lastCumTax310=recP3.cumTax310; }
+  if (recP3.cumTax320!==null) { saveS('sdp_rec_ctx320',recP3.cumTax320); recP3.lastCumTax320=recP3.cumTax320; }
   saveS('sdp_periods_v2', periods);
-  // Sync to Supabase
   if (syncReady) {
-    supaDelete('pay_periods', 'id=eq.' + p.id)
-      .then(() => supaPost('pay_periods', periodToDb(p)))
-      .catch(e => console.warn('sync reconcile:', e));
+    supaDelete('pay_periods','id=eq.'+p.id)
+      .then(function(){return supaPost('pay_periods',periodToDb(p));})
+      .catch(function(e){console.warn('sync:',e);});
   }
-  recState = { step: 1, periodId: null, extracted: {}, pdfFilename: '' };
-  showToast('Period ' + p.id + ' marked reconciled ✓ — hours transferred to Timesheet');
-  renderReconcile();
-  renderTimesheet();
+  cancelRec();
+  showToast(p.id+' reconciled ✓');
+  renderReconcile(); renderPeriods(); renderBudget();
+}
+
+function openR3Kp(field) {
+  if (field==='310'||field==='320') field='ctx'+field;
+  kpMode  = 'r3field';
+  kpField = field;
+  var labels = {
+    bal310:'Code 310 Current Balance', bal320:'Code 320 Current Balance',
+    bal331:'Code 331 Current Balance', ctx310:'Code 310 Cumulative Tax', ctx320:'Code 320 Cumulative Tax'
+  };
+  openKp(labels[field]||field, {mainLbl:'Amount ($)', confirmLabel:'SET AMOUNT'});
 }
 
 
@@ -2057,31 +2202,33 @@ function approveReconcile() {
 // RENDER SETTINGS
 // ══════════════════════════════════════
 function renderSettings(){
+  try {
   // Employee list with rate history
   var empHtml = '';
   Object.entries(employees).forEach(function(entry) {
     var key = entry[0];
     var emp = entry[1];
     var rate = getRate(key, todayStr());
-    var sortedRates = (emp.rates||[]).slice().sort(function(a,b){ return b.from.localeCompare(a.from); });
+    var empData = (emp.rates && emp.rates.length) ? emp : (EMP_DEFS[key] || emp);
+    var sortedRates = (empData.rates||[]).slice().sort(function(a,b){ return b.from.localeCompare(a.from); });
     var rateRowsHtml = sortedRates.map(function(r) {
       var ot1 = (r.reg * 1.5).toFixed(2);
       var ot2 = (r.reg * 2).toFixed(2);
       return '<tr>' +
         '<td style="font-size:11px;padding:5px 10px;color:var(--text3);font-family:IBM Plex Mono,monospace;">' + fmtDateUS(r.from) + '</td>' +
         '<td style="font-size:12px;padding:5px 10px;font-weight:700;font-family:IBM Plex Mono,monospace;">$' + r.reg + '/hr</td>' +
-        '<td style="font-size:11px;padding:5px 10px;color:var(--text3);font-family:IBM Plex Mono,monospace;">OT $' + ot1 + ' &middot; 2&times; $' + ot2 + '</td>' +
+        '<td style="font-size:11px;padding:5px 10px;color:var(--text3);font-family:IBM Plex Mono,monospace;">OT $' + ot1 + ' · 2× $' + ot2 + '</td>' +
       '</tr>';
     }).join('');
 
     var activeStyle = emp.active ? '' : 'text-decoration:line-through;color:var(--text3);';
     var endedHtml   = emp.endDate ? '<div style="font-size:10px;color:var(--orange);">Ended ' + fmtDateUS(emp.endDate) + '</div>' : '';
-    var startHtml   = emp.startDate ? ' &middot; Since ' + fmtDateUS(emp.startDate) : '';
+    var startHtml   = emp.startDate ? ' · Since ' + fmtDateUS(emp.startDate) : '';
     var actionHtml  = emp.active
-      ? '<button class="btn btn-ghost btn-sm" onclick="openEditEmpModal(&quot;' + key + '&quot;)">+ Rate</button>' +
-        '<button class="btn btn-red btn-sm" onclick="toggleEmpActive(&quot;' + key + '&quot;)">End</button>'
-      : '<button class="btn btn-ghost btn-sm" onclick="openEditEmpModal(&quot;' + key + '&quot;)">+ Rate</button>' +
-        '<button class="btn btn-ghost btn-sm" onclick="toggleEmpActive(&quot;' + key + '&quot;)">Reactivate</button>';
+      ? '<button class="btn btn-ghost btn-sm" onclick="openEditEmpModal(\'' + key + '\')">+ Rate</button>' +
+        '<button class="btn btn-red btn-sm" onclick="toggleEmpActive(\'' + key + '\')">End</button>'
+      : '<button class="btn btn-ghost btn-sm" onclick="openEditEmpModal(\'' + key + '\')">+ Rate</button>' +
+        '<button class="btn btn-ghost btn-sm" onclick="toggleEmpActive(\'' + key + '\')">Reactivate</button>';
 
     empHtml +=
       '<div style="padding:14px 0;border-bottom:1px solid rgba(221,227,236,.5);">' +
@@ -2089,7 +2236,7 @@ function renderSettings(){
           '<div class="emp-avatar" style="background:' + (emp.color||'#888') + ';opacity:' + (emp.active?'1':'0.4') + ';">' + ((emp.name||'?')[0]) + '</div>' +
           '<div style="flex:1;">' +
             '<div style="font-size:14px;font-weight:700;' + activeStyle + '">' + (emp.name||key) + '</div>' +
-            '<div style="font-size:11px;color:var(--text3);">Current: $' + rate.reg + '/hr REG &middot; $' + rate.ot + '/hr OT &middot; $' + rate.ot2 + '/hr 2&times;' + startHtml + '</div>' +
+            '<div style="font-size:11px;color:var(--text3);">Current: $' + rate.reg + '/hr REG · $' + rate.ot + '/hr OT · $' + rate.ot2 + '/hr 2×' + startHtml + '</div>' +
             endedHtml +
           '</div>' +
           '<div style="display:flex;gap:6px;">' + actionHtml + '</div>' +
@@ -2113,7 +2260,7 @@ function renderSettings(){
     return '<tr>' +
       '<td class="mono">' + fmtDateUS(t.date) + '</td>' +
       '<td class="mono">' + (t.rate*100).toFixed(2) + '%</td>' +
-      '<td><button class="btn btn-red btn-sm" onclick="deleteTaxRate(&quot;' + t.date + '&quot;)">&#x2715;</button></td>' +
+      '<td><button class="btn btn-red btn-sm" onclick="deleteTaxRate(\'' + t.date + '\')">✕</button></td>' +
     '</tr>';
   }).join('');
   document.getElementById('tax-rate-tbody').innerHTML = taxHtml;
@@ -2122,6 +2269,7 @@ function renderSettings(){
   document.getElementById('ns-fee-tbody').innerHTML =
     '<tr><td class="mono">' + fmtDateUS(settings.nsFeeStart||'2025-12-01') + '</td>' +
     '<td class="mono">' + fmt(settings.nsFee) + '/mo</td><td></td></tr>';
+  } catch(e) { console.error('renderSettings error:', e); }
 }
 
 function toggleEmpActive(key){
@@ -2183,6 +2331,8 @@ var kpCode   = '320';
 var kpEmp    = '';
 var kpShift  = 1;   // 1 or 2
 var kpS1     = 0;   // shift 1 stored value
+var kpS1Code = '320'; // code for shift 1
+var lastUsedCode = loadS('sdp_lastcode_v1','320');
 
 function _kpEl(id) { return document.getElementById(id); }
 function _show(id)  { var el=_kpEl(id); if(el) el.style.display='flex';  }
@@ -2244,6 +2394,8 @@ function openClockKp(date, emp) {
   kpDate  = date;
   kpValue = '';
   kpS1    = 0;
+  kpCode  = lastUsedCode;
+  kpS1Code= lastUsedCode;
 
   var empObj = employees[emp] || EMP_DEFS[emp];
 
@@ -2257,6 +2409,7 @@ function openClockKp(date, emp) {
   _show('kp-stats-row');
   _showB('kp-format-hint');
   _show('kp-weekly-bar');
+  _show('kp-code-wrap'); selectCode(kpCode);
 
   _text('kp-title', empObj.name + ' · ' + fmtDateUS(date));
   _text('kp-box-main-lbl', 'Shift 1 (HHMM)');
@@ -2369,6 +2522,8 @@ function addShift2() {
   kpShift = 2;
   kpMode  = 'clock2';
   kpValue = '';
+  kpCode  = lastUsedCode;
+  selectCode(kpCode);
   _hide('kp-add-shift-wrap');
   _text('kp-box-main-lbl', 'Shift 2 (HHMM)');
   _text('kp-box-main-val', '——:——');
@@ -2457,9 +2612,13 @@ function kpConfirm() {
         return;
       }
       kpS1 = rounded;
+      kpS1Code = kpCode;
+      lastUsedCode = kpCode;
+      saveS('sdp_lastcode_v1', kpCode);
       timesheet[kpDate][kpEmp].s1 = rounded;
+      timesheet[kpDate][kpEmp].s1code = kpCode;
       saveS('sdp_ts_v2', timesheet);
-      bgSaveTs(kpDate, kpEmp, rounded, timesheet[kpDate][kpEmp].s2 || 0);
+      bgSaveTs(kpDate, kpEmp, rounded, timesheet[kpDate][kpEmp].s2 || 0, kpCode, timesheet[kpDate][kpEmp].s2code||kpCode);
 
       // Show shift 1 confirmed state
       _show('kp-shift1-confirmed');
@@ -2480,8 +2639,11 @@ function kpConfirm() {
     } else {
       // Shift 2
       timesheet[kpDate][kpEmp].s2 = rounded;
+      timesheet[kpDate][kpEmp].s2code = kpCode;
+      lastUsedCode = kpCode;
+      saveS('sdp_lastcode_v1', kpCode);
       saveS('sdp_ts_v2', timesheet);
-      bgSaveTs(kpDate, kpEmp, timesheet[kpDate][kpEmp].s1 || kpS1, rounded);
+      bgSaveTs(kpDate, kpEmp, timesheet[kpDate][kpEmp].s1 || kpS1, rounded, timesheet[kpDate][kpEmp].s1code||kpCode, kpCode);
       closeKp();
       renderClockLog();
       var total = +((timesheet[kpDate][kpEmp].s1 || kpS1) + rounded).toFixed(2);
@@ -2532,6 +2694,17 @@ function kpConfirm() {
   } else if (kpMode === 'projrate') {
     projInputs[kpField + 'AdjRate'] = +val.toFixed(2);
     closeKp(); renderProjection();
+
+
+
+  } else if (kpMode === 'r3field') {
+    var v = +val.toFixed(2);
+    if      (kpField==='bal310') recP3.bal310 = v;
+    else if (kpField==='bal320') recP3.bal320 = v;
+    else if (kpField==='bal331') recP3.bal331 = v;
+    else if (kpField==='ctx310') recP3.cumTax310 = v;
+    else if (kpField==='ctx320') recP3.cumTax320 = v;
+    closeKp(); renderRecStep1();
 
   } else if (kpMode === 'split') {
     projInputs.splitPct310 = Math.min(100, Math.max(0, Math.round(val)));
@@ -2667,7 +2840,7 @@ function openNewCycleModal(){
     <div style="display:flex;align-items:center;gap:12px;">
       <span class="badge b${code}" style="min-width:36px;text-align:center;">${code.toUpperCase()}</span>
       <span style="flex:1;font-size:12px;color:var(--text2);">${cat.label}</span>
-      <input type="number" id="cyc-bud-${code}" step="0.01" value="${cat.origBudget.toFixed(2)}" style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:8px;padding:6px 10px;font-size:13px;font-family:'IBM Plex Mono',monospace;width:130px;outline:none;" placeholder="Budget $">
+      <input type="number" id="cyc-bud-${code}" step="0.01" value="${cat.origBudget.toFixed(2)}" style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:8px;padding:6px 10px;font-size:13px;font-family:IBM Plex Mono,monospace;width:130px;outline:none;" placeholder="Budget $">
     </div>`).join('');
   document.getElementById('cycle-modal').classList.add('open');
 }
@@ -2721,7 +2894,7 @@ function openNewPeriodModal(){
   const allEmps=ACTIVE_EMPS.concat(employees.nic?.active===false?['nic']:[]);
   document.getElementById('pp-hrs-grid').innerHTML=allEmps.map(e=>`
     <div><div class="modal-lbl">${(employees[e]||EMP_DEFS[e]).name}</div>
-    <div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'IBM Plex Mono',monospace;cursor:pointer;color:var(--text1);" id="pp-hrs-${e}" onclick="openPpHrsKp('${e}')">—</div></div>`).join('');
+    <div style="background:#f4f6f9;border:1.5px solid var(--gray-bdr);border-radius:10px;padding:9px 13px;font-size:13px;font-family:IBM Plex Mono,monospace;cursor:pointer;color:var(--text1);" id="pp-hrs-${e}" onclick="openPpHrsKp('${e}')">—</div></div>`).join('');
   setPpCode('320');
   document.getElementById('pp-modal').classList.add('open');
 }
