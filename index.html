@@ -746,24 +746,24 @@ function supaHdrs(prefer) {
   if(prefer) h['Prefer'] = prefer;
   return h;
 }
-async async function supaGet(table, q) {
+async function supaGet(table, q) {
   const r = await fetch(SUPA_URL+'/rest/v1/'+table+(q ? ('?'+q) : ''),{headers:supaHdrs()});
   if(!r.ok) throw new Error(await r.text());
   return r.json();
 }
-async async function supaPost(table, body) {
+async function supaPost(table, body) {
   const r = await fetch(SUPA_URL+'/rest/v1/'+table,{method:'POST',headers:supaHdrs('return=minimal'),body:JSON.stringify(body)});
   if(!r.ok) throw new Error(await r.text());
 }
-async async function supaDelete(table, q) {
+async function supaDelete(table, q) {
   const r = await fetch(SUPA_URL+'/rest/v1/'+table+'?'+q,{method:'DELETE',headers:supaHdrs()});
   if(!r.ok) throw new Error(await r.text());
 }
-async async function supaGetSetting(key) {
+async function supaGetSetting(key) {
   const rows = await supaGet('app_settings','key=eq.sdp_'+key);
   return rows&&rows.length ? JSON.parse(rows[0].value) : null;
 }
-async async function supaSetSetting(key, val) {
+async function supaSetSetting(key, val) {
   await supaDelete('app_settings','key=eq.sdp_'+key).catch(()=>{});
   await supaPost('app_settings',{key:'sdp_'+key, value:JSON.stringify(val)});
 }
