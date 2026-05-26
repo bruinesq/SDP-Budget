@@ -803,10 +803,11 @@ var _tsSaveQueue = []; // pending saves before sync ready
 function bgSaveTs(date, emp, s1, s2, s1code, s2code) {
   var payload = {date:date, emp:emp, s1:s1||0, s2:s2||0,
     s1code:s1code||'320', s2code:s2code||s1code||'320'};
+  showToast('bgSaveTs: syncReady=' + syncReady + ' s1=' + s1 + ' emp=' + emp);
   if (!syncReady) {
-    // Queue it - will flush when initDB completes
     _tsSaveQueue = _tsSaveQueue.filter(function(q){ return !(q.date===date&&q.emp===emp); });
     _tsSaveQueue.push(payload);
+    showToast('Queued (not connected yet)');
     return;
   }
   _flushTsSave(payload);
@@ -821,9 +822,9 @@ function _flushTsSave(p) {
     hrs:      +((p.s1||0)+(p.s2||0)).toFixed(4),
     cycle_id: currentCycle
   };
-  // Delete existing row first, then insert fresh
+  showToast('Syncing ' + p.emp + ' ' + p.date + '...');
   supaDelete('timesheet', 'date=eq.'+p.date+'&emp=eq.'+p.emp)
-    .catch(function(){})
+    .catch(function(e){ showToast('Del error: '+e.message); })
     .then(function(){
       return fetch(SUPA_URL+'/rest/v1/timesheet', {
         method: 'POST',
@@ -832,14 +833,16 @@ function _flushTsSave(p) {
       });
     })
     .then(function(r){
-      if (r && !r.ok) {
+      if (!r) { showToast('⚠ No response from server'); return; }
+      if (!r.ok) {
         r.text().then(function(t){
-          console.error('TS insert failed:', r.status, t);
-          showToast('⚠ Sync error '+r.status);
+          showToast('⚠ Save failed '+r.status+': '+t.slice(0,60));
         });
+      } else {
+        showToast('✓ Synced ' + p.emp + ' ' + p.date);
       }
     })
-    .catch(function(e){ console.warn('TS save error:', e); });
+    .catch(function(e){ showToast('⚠ Network: '+e.message); });
 }
 
 function _flushTsQueue() {
