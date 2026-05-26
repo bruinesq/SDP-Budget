@@ -567,7 +567,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 </div>
 
 <!-- ═══ KEYPAD OVERLAY ═══ -->
-<div id="kp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center;">
+<div id="kp-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center;padding-bottom:60px;">
   <div id="kp-sheet" style="width:100%;max-width:520px;background:#003c6e;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom);">
     <div style="width:36px;height:4px;background:rgba(255,255,255,.3);border-radius:2px;margin:10px auto 6px;"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 8px;">
@@ -651,10 +651,11 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
       <button type="button" onclick="kpKey('7')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">7</button>
       <button type="button" onclick="kpKey('8')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">8</button>
       <button type="button" onclick="kpKey('9')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">9</button>
-      <button type="button" onclick="kpKey('C')" style="background:rgba(0,0,0,.18);padding:18px 0;font-size:20px;font-weight:600;color:#fff;border:none;cursor:pointer;">C</button>
+      <button type="button" id="kp-dot-btn" onclick="kpKey('.')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:28px;font-weight:700;color:#fff;border:none;cursor:pointer;">.</button>
       <button type="button" onclick="kpKey('0')" style="background:rgba(255,255,255,.07);padding:18px 0;font-size:24px;font-weight:600;color:#fff;border:none;cursor:pointer;">0</button>
-      <button type="button" onclick="kpKey('back')" style="background:rgba(0,0,0,.18);padding:18px 0;font-size:20px;font-weight:600;color:#fff;border:none;cursor:pointer;">⌫</button>
-      <button type="button" id="kp-confirm-btn" onclick="kpConfirm()" style="grid-column:span 3;background:#f5c842;color:#003f63;padding:17px;font-size:15px;font-weight:800;font-family:'Syne',sans-serif;border:none;cursor:pointer;letter-spacing:.04em;">CONFIRM</button>
+      <button type="button" onclick="kpKey('back')" style="background:rgba(0,0,0,.18);padding:18px 0;font-size:20px;font-weight:600;color:#fff;border:none;cursor:pointer;">&#x232B;</button>
+      <button type="button" onclick="kpKey('C')" style="background:rgba(220,60,60,.25);padding:16px 0;font-size:16px;font-weight:700;color:#ffaaaa;border:none;cursor:pointer;letter-spacing:.05em;">CLEAR</button>
+      <button type="button" id="kp-confirm-btn" onclick="kpConfirm()" style="grid-column:span 2;background:#f5c842;color:#003f63;padding:16px;font-size:15px;font-weight:800;font-family:'Syne',sans-serif;border:none;cursor:pointer;letter-spacing:.04em;">CONFIRM</button>
     </div>
   </div>
 </div>
@@ -2422,6 +2423,9 @@ function openKp(title, opts) {
     selectedDate = kpDate;
     _text('kp-date-lbl', 'Date: ' + fmtDateUS(kpDate));
   }
+  // Show decimal point for amount entry
+  var dotBtn = _kpEl('kp-dot-btn');
+  if (dotBtn) dotBtn.style.visibility = 'visible';
   var ov = _kpEl('kp-overlay');
   ov.style.display = 'flex';
 }
@@ -2497,6 +2501,9 @@ function openClockKp(date, emp) {
   // Weekly context
   try { updateWeeklyBar(); } catch(e) { console.error('updateWeeklyBar failed:', e); }
   try { updateClockStats(); } catch(e) { console.error('updateClockStats failed:', e); }
+  // Hide decimal point in clock mode (4-digit HHMM format)
+  var dotBtn = _kpEl('kp-dot-btn');
+  if (dotBtn) dotBtn.style.visibility = 'hidden';
   var ov = _kpEl('kp-overlay');
   ov.style.display = 'flex';
 
