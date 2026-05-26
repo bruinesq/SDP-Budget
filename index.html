@@ -3056,8 +3056,7 @@ renderCycleMenu();
       return parseInt(a.id.replace(/\D/g,'')) - parseInt(b.id.replace(/\D/g,'')); 
     });
     saveS('sdp_periods_v2', periods);
-    console.log('Migration: added missing seed periods');
-  }
+    }
 })();
 
 renderBudget();
