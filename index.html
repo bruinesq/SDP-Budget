@@ -1062,7 +1062,7 @@ function getRate(empKey, dateStr){
   return{reg:r.reg,ot:+(r.reg*1.5).toFixed(2),ot2:+(r.reg*2).toFixed(2)};
 }
 
-// OT calc for a list of daily hours (Sun-Sat)
+// OT calc for a list of daily hours (Sun-Sat) - daily rules only
 function calcOT(dailyHrs){
   let reg=0,ot15=0,ot2=0;
   dailyHrs.forEach(h=>{
@@ -1071,6 +1071,52 @@ function calcOT(dailyHrs){
     ot2  +=Math.max(0,h-12);
   });
   return{reg:+reg.toFixed(4),ot15:+ot15.toFixed(4),ot2:+ot2.toFixed(4)};
+}
+
+// CA OT calculated week-by-week across a date range
+// dailyMap: { 'YYYY-MM-DD': hours }
+function calcCAOTWeekly(dailyMap, startDate, endDate) {
+  var reg = 0, ot15 = 0, ot2 = 0;
+  // Walk week by week (Sun-Sat)
+  var d = new Date(startDate.getTime());
+  // Go back to Sunday of the week containing startDate
+  d.setDate(d.getDate() - d.getDay());
+
+  while (d <= endDate) {
+    // Collect 7 days for this week
+    var weekHrs = [];
+    for (var i = 0; i < 7; i++) {
+      var iso = isoFromDate(d);
+      var hrs = (d >= startDate && d <= endDate) ? (dailyMap[iso] || 0) : 0;
+      weekHrs.push(hrs);
+      d.setDate(d.getDate() + 1);
+    }
+
+    // Apply CA daily OT rules
+    var wkReg = 0, wkOT15 = 0, wkOT2 = 0;
+    weekHrs.forEach(function(h) {
+      wkReg  += Math.min(h, 8);
+      wkOT15 += Math.max(0, Math.min(h, 12) - 8);
+      wkOT2  += Math.max(0, h - 12);
+    });
+
+    // Apply CA weekly OT: hours over 40 in the week become 1.5x
+    var wkTotal = weekHrs.reduce(function(s,h){return s+h;}, 0);
+    var wkOver40 = Math.max(0, wkTotal - 40);
+    // Weekly OT comes out of regular hours
+    wkReg  = Math.max(0, wkReg - wkOver40);
+    wkOT15 = wkOT15 + wkOver40;
+
+    reg  += wkReg;
+    ot15 += wkOT15;
+    ot2  += wkOT2;
+  }
+
+  return {
+    reg:  +reg.toFixed(4),
+    ot15: +ot15.toFixed(4),
+    ot2:  +ot2.toFixed(4)
+  };
 }
 
 // Budget calcs
@@ -1303,7 +1349,6 @@ function renderSidePanel(id) {
   var p = periods.find(function(x){ return x.id === id; });
   if (!p) return;
 
-  // Update header fields
   var spId    = document.getElementById('sp-period-id');
   var spDates = document.getElementById('sp-period-dates');
   var spBadge = document.getElementById('sp-code-badge');
@@ -1315,44 +1360,24 @@ function renderSidePanel(id) {
   if (spId)    spId.textContent    = p.id;
   if (spDates) spDates.textContent = p.label;
   if (spBadge) { spBadge.textContent = p.code; spBadge.className = 'badge b'+p.code; }
-  if (spLabel) spLabel.textContent = (p.reconciled ? '✓ Reconciled' : p.locked ? '🔒 Locked' : 'Pending');
+  if (spLabel) spLabel.textContent = (p.reconciled ? '✓ Reconciled' :
+                                      p.locked ? '🔒 Locked' : 'Pending');
 
-  var taxRate  = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
+  var taxRate    = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
   var activeEmps = ALL_EMPS.filter(function(e){ return p.hrs && p.hrs[e] > 0; });
-
-  var totalGross = 0;
-  var totalTax   = 0;
+  var totalGross = 0, totalTax = 0;
   var html = '';
 
   activeEmps.forEach(function(e) {
     var emp  = employees[e] || EMP_DEFS[e];
-    var rate = getRate(e, p.label ? p.label.slice(0,8) : todayStr());
     var col  = EMP_COL[e] || {accent:'#0077b6'};
-
-    // Get hours from clock log
-    var daily     = getPeriodDailyHrs(p, e);
-    var hasClock  = daily.length > 0 && daily.some(function(h){ return h > 0; });
-    var reg = 0, ot15 = 0, ot2 = 0, gross = 0, estimated = false;
-
-    if (hasClock) {
-      var ot    = calcOT(daily);
-      // Apply weekly OT: hours over 40 reclassified 1.5x
-      var total = ot.reg + ot.ot15 + ot.ot2;
-      var over40 = Math.max(0, total - 40);
-      reg  = Math.max(0, ot.reg - over40);
-      ot15 = ot.ot15 + over40;
-      ot2  = ot.ot2;
-      gross = +(reg * rate.reg + ot15 * rate.ot + ot2 * rate.ot2).toFixed(2);
-    } else {
-      reg       = p.hrs[e] || 0;
-      gross     = +(reg * rate.reg).toFixed(2);
-      estimated = true;
-    }
-
-    var empTax   = +(gross * taxRate).toFixed(2);
-    var empTotal = +(gross + empTax).toFixed(2);
-    totalGross  += gross;
-    totalTax    += empTax;
+    // Use week-by-week CA OT via calcEmpPeriodOT
+    var ot   = calcEmpPeriodOT(p, e);
+    var rate = getRate(e, p.label ? p.label.slice(0,8) : todayStr());
+    var empTax   = +(ot.gross * taxRate).toFixed(2);
+    var empTotal = +(ot.gross + empTax).toFixed(2);
+    totalGross += ot.gross;
+    totalTax   += empTax;
 
     html +=
       '<div style="padding:14px 20px;border-bottom:1px solid var(--gray-bdr);">' +
@@ -1361,32 +1386,32 @@ function renderSidePanel(id) {
           '<span style="font-size:17px;font-weight:800;font-family:IBM Plex Mono,monospace;">'+fmt(empTotal)+'</span>' +
         '</div>' +
         '<div style="font-size:13px;font-family:IBM Plex Mono,monospace;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">' +
-          '<div><span style="color:var(--text3);">Reg </span>'+reg.toFixed(2)+' hrs</div>' +
-          '<div><span style="color:var(--text3);">@ $</span>'+rate.reg+'<span style="color:var(--text3);"> = </span>'+fmt(reg*rate.reg)+'</div>' +
-          (ot15 > 0
-            ? '<div><span style="color:var(--orange);">1.5× </span>'+ot15.toFixed(2)+' hrs</div>' +
-              '<div><span style="color:var(--text3);">@ $</span>'+rate.ot+'<span style="color:var(--text3);"> = </span><span style="color:var(--orange);">'+fmt(ot15*rate.ot)+'</span></div>'
+          '<div><span style="color:var(--text3);">Reg  </span>'+ot.reg.toFixed(2)+' hrs</div>' +
+          '<div><span style="color:var(--text3);">@ $</span>'+rate.reg+'<span style="color:var(--text3);"> = </span>'+fmt(ot.reg*rate.reg)+'</div>' +
+          (ot.ot15 > 0
+            ? '<div><span style="color:var(--orange);">1.5× </span>'+ot.ot15.toFixed(2)+' hrs</div>' +
+              '<div><span style="color:var(--text3);">@ $</span>'+rate.ot+'<span style="color:var(--text3);"> = </span><span style="color:var(--orange);">'+fmt(ot.ot15*rate.ot)+'</span></div>'
             : '<div style="color:var(--text3);">1.5×  —</div><div></div>') +
-          (ot2 > 0
-            ? '<div><span style="color:var(--red);">2×   </span>'+ot2.toFixed(2)+' hrs</div>' +
-              '<div><span style="color:var(--text3);">@ $</span>'+rate.ot2+'<span style="color:var(--text3);"> = </span><span style="color:var(--red);">'+fmt(ot2*rate.ot2)+'</span></div>'
+          (ot.ot2 > 0
+            ? '<div><span style="color:var(--red);">2×   </span>'+ot.ot2.toFixed(2)+' hrs</div>' +
+              '<div><span style="color:var(--text3);">@ $</span>'+rate.ot2+'<span style="color:var(--text3);"> = </span><span style="color:var(--red);">'+fmt(ot.ot2*rate.ot2)+'</span></div>'
             : '<div style="color:var(--text3);">2×    —</div><div></div>') +
-          '<div style="border-top:1px solid var(--gray-bdr);padding-top:4px;margin-top:2px;"><span style="color:var(--text3);">Gross</span></div>' +
-          '<div style="border-top:1px solid var(--gray-bdr);padding-top:4px;margin-top:2px;font-weight:700;">'+fmt(gross)+'</div>' +
-          '<div><span style="color:var(--text3);">Tax '+((taxRate*100).toFixed(2))+'%</span></div>' +
-          '<div style="color:var(--text2);">'+fmt(empTax)+'</div>' +
+          '<div style="border-top:1px solid var(--gray-bdr);padding-top:4px;margin-top:2px;color:var(--text3);">Gross</div>' +
+          '<div style="border-top:1px solid var(--gray-bdr);padding-top:4px;margin-top:2px;font-weight:700;">'+fmt(ot.gross)+'</div>' +
+          '<div style="color:var(--text3);">Tax '+((taxRate*100).toFixed(2))+'%</div>' +
+          '<div>'+fmt(empTax)+'</div>' +
         '</div>' +
-        (estimated ? '<div style="font-size:11px;color:var(--orange);margin-top:6px;">⚠ No clock log — using stored hrs at reg rate</div>' : '') +
+        (ot.estimated
+          ? '<div style="font-size:11px;color:var(--orange);margin-top:6px;">⚠ No clock log — stored hrs at reg rate</div>'
+          : '') +
       '</div>';
   });
 
-  if (activeEmps.length === 0) {
+  if (activeEmps.length === 0)
     html = '<div style="padding:20px;color:var(--text3);">No hours recorded.</div>';
-  }
 
   spBody.innerHTML = html;
 
-  // Footer totals
   var grandTotal = +(totalGross + totalTax).toFixed(2);
   if (spFoot) spFoot.innerHTML =
     '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">' +
@@ -1558,10 +1583,14 @@ function renderClockLog() {
     var wkOT15 = weekData[e].reduce(function(s,x){return s+x.ot15;},0);
     var wkOT2  = weekData[e].reduce(function(s,x){return s+x.ot2; },0);
     var wkTot  = weekData[e].reduce(function(s,x){return s+x.total;},0);
-    var isWkOT = wkTot > 40;
-    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';border-left:2px solid '+col.hdr+';">'+(wkReg>0?wkReg.toFixed(1):'—')+'</div>';
-    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(wkOT15>0||isWkOT?'color:var(--orange);font-weight:700;':'')+';">'+(wkOT15>0||isWkOT?'+'+(wkOT15+Math.max(0,wkTot-40)).toFixed(1):'—')+'</div>';
-    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(wkOT2>0?'color:var(--red);font-weight:700;':'')+';">'+(wkOT2>0?wkOT2.toFixed(1):'—')+'</div>';
+    // Weekly OT: hours over 40 come from regular pool only
+    var wkOver40  = Math.max(0, wkTot - 40);
+    var adjWkReg  = Math.max(0, wkReg - wkOver40);
+    var adjWkOT15 = wkOT15 + wkOver40;
+    var hasOT     = adjWkOT15 > 0;
+    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';border-left:2px solid '+col.hdr+';">'+(adjWkReg>0?adjWkReg.toFixed(1):'—')+'</div>';
+    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(hasOT?'color:var(--orange);font-weight:700;':'')+'">'+(hasOT?'+'+adjWkOT15.toFixed(1):'—')+'</div>';
+    grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(wkOT2>0?'color:var(--red);font-weight:700;':'')+'">'+(wkOT2>0?wkOT2.toFixed(1):'—')+'</div>';
   });
 
   grid += '</div>';
@@ -1586,7 +1615,7 @@ function renderClockLog() {
     var wkOT15 = weekData[e].reduce(function(s,x){return s+x.ot15;},0);
     var wkOT2  = weekData[e].reduce(function(s,x){return s+x.ot2; },0);
     var wkTot  = weekData[e].reduce(function(s,x){return s+x.total;},0);
-    // Apply weekly OT rule: hours over 40 become 1.5x
+    // Weekly OT: only from regular hours, not from daily OT hours already classified
     var wkOver40 = Math.max(0, wkTot - 40);
     var adjReg   = Math.max(0, wkReg - wkOver40);
     var adjOT15  = wkOT15 + wkOver40;
@@ -1938,20 +1967,56 @@ function getPeriodDailyHrs(p, emp) {
 }
 
 function calcEmpPeriodOT(p, emp) {
-  // Returns {reg, ot15, ot2, total, gross} using CA OT rules from clock log
-  var daily = getPeriodDailyHrs(p, emp);
-  var rate  = getRate(emp, p.label ? p.label.slice(0,8) : todayStr());
-  if (daily.length === 0 || daily.every(function(h){return h===0;})) {
-    // Fall back to stored hours with flat rate (no daily detail)
+  // Returns {reg, ot15, ot2, total, gross} using CA OT rules week-by-week
+  var rate = getRate(emp, p.label ? p.label.slice(0,8) : todayStr());
+
+  // Parse period date range
+  var parts = p.label ? p.label.split(' - ') : [];
+  if (parts.length < 2) {
     var storedHrs = p.hrs ? (p.hrs[emp] || 0) : 0;
-    return { reg: storedHrs, ot15: 0, ot2: 0, total: storedHrs,
-             gross: +(storedHrs * rate.reg).toFixed(2), estimated: true };
+    return {reg:storedHrs, ot15:0, ot2:0, total:storedHrs,
+            gross:+(storedHrs*rate.reg).toFixed(2), estimated:true};
   }
-  var ot    = calcOT(daily);
-  var gross = +(ot.reg * rate.reg + ot.ot15 * rate.ot + ot.ot2 * rate.ot2).toFixed(2);
-  return { reg: ot.reg, ot15: ot.ot15, ot2: ot.ot2,
-           total: +(ot.reg + ot.ot15 + ot.ot2).toFixed(2),
-           gross: gross, estimated: false };
+  var parseD = function(s) {
+    var m = s.trim().match(/(\d+)\/(\d+)\/(\d+)/);
+    if (!m) return null;
+    var yr = parseInt(m[3]); if (yr < 100) yr += 2000;
+    return new Date(yr, parseInt(m[1])-1, parseInt(m[2]));
+  };
+  var startD = parseD(parts[0]);
+  var endD   = parseD(parts[1]);
+  if (!startD || !endD) {
+    var storedHrs = p.hrs ? (p.hrs[emp] || 0) : 0;
+    return {reg:storedHrs, ot15:0, ot2:0, total:storedHrs,
+            gross:+(storedHrs*rate.reg).toFixed(2), estimated:true};
+  }
+
+  // Build daily map from clock log
+  var dailyMap = {};
+  var hasAny = false;
+  var d = new Date(startD.getTime());
+  while (d <= endD) {
+    var iso   = isoFromDate(d);
+    var entry = timesheet[iso] && timesheet[iso][emp];
+    if (entry) {
+      dailyMap[iso] = +((entry.s1||0) + (entry.s2||0)).toFixed(4);
+      if (dailyMap[iso] > 0) hasAny = true;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+
+  if (!hasAny) {
+    var storedHrs = p.hrs ? (p.hrs[emp] || 0) : 0;
+    return {reg:storedHrs, ot15:0, ot2:0, total:storedHrs,
+            gross:+(storedHrs*rate.reg).toFixed(2), estimated:true};
+  }
+
+  // Week-by-week CA OT
+  var ot    = calcCAOTWeekly(dailyMap, startD, endD);
+  var gross = +(ot.reg*rate.reg + ot.ot15*rate.ot + ot.ot2*rate.ot2).toFixed(2);
+  return {reg:ot.reg, ot15:ot.ot15, ot2:ot.ot2,
+          total:+(ot.reg+ot.ot15+ot.ot2).toFixed(2),
+          gross:gross, estimated:false};
 }
 
 function calcPeriodGross(p) {
