@@ -1302,70 +1302,114 @@ function closeSidePanel() {
 function renderSidePanel(id) {
   var p = periods.find(function(x){ return x.id === id; });
   if (!p) return;
-  var panel = document.getElementById('side-panel');
-  if (!panel) return;
-  panel.classList.add('open');
+  var body = document.getElementById('side-panel-body');
+  if (!body) return;
 
-  var activeEmps = ALL_EMPS.filter(function(e){ return (p.hrs||{})[e] > 0; });
-  var totalGross = 0;
-  var empRows = '';
+  // Date range from period label e.g. "5/1/26 - 5/15/26"
+  var taxRate = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
+
+  // Active employees for this period (have stored hours)
+  var activeEmps = ALL_EMPS.filter(function(e) {
+    return (p.hrs && p.hrs[e] > 0);
+  });
+
+  var periodTotalGross = 0;
+  var periodTotalTax   = 0;
+  var empRowsHtml = '';
 
   activeEmps.forEach(function(e) {
     var emp  = employees[e] || EMP_DEFS[e];
     var rate = getRate(e, p.label ? p.label.slice(0,8) : todayStr());
-    var ot   = calcEmpPeriodOT(p, e);
-    totalGross += ot.gross;
 
-    // Employer tax: use stored empTax if reconciled, else proportional estimate
-    var empTax = 0;
-    if (p.empTax && p.empTax[e] != null) {
-      empTax = p.empTax[e];
+    // Get daily hours from clock log for this period
+    var daily = getPeriodDailyHrs(p, e);
+    var hasClockLog = daily.length > 0 && daily.some(function(h){ return h > 0; });
+
+    var reg = 0, ot15 = 0, ot2 = 0, gross = 0;
+    var estimated = false;
+
+    if (hasClockLog) {
+      // CA OT: daily rules applied
+      var ot = calcOT(daily);
+      reg  = ot.reg;
+      ot15 = ot.ot15;
+      ot2  = ot.ot2;
+      // Weekly OT: hours over 40/week become 1.5x
+      var wkTotal = reg + ot15 + ot2;
+      var wkOver40 = Math.max(0, wkTotal - 40);
+      reg  = Math.max(0, reg - wkOver40);
+      ot15 = ot15 + wkOver40;
+      gross = +(reg * rate.reg + ot15 * rate.ot + ot2 * rate.ot2).toFixed(2);
     } else {
-      var taxRate = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
-      empTax = +(ot.gross * taxRate).toFixed(2);
+      // Fall back to stored total hours at regular rate
+      var storedHrs = p.hrs[e] || 0;
+      reg       = storedHrs;
+      gross     = +(storedHrs * rate.reg).toFixed(2);
+      estimated = true;
     }
-    var total = +(ot.gross + empTax).toFixed(2);
 
-    empRows +=
-      '<div style="padding:10px 0;border-bottom:1px solid var(--gray-bdr);">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
-          '<div style="font-size:13px;font-weight:700;color:var(--text1);">' + emp.name + '</div>' +
-          '<div style="font-size:14px;font-family:IBM Plex Mono,monospace;font-weight:700;color:var(--blue);">' + fmt(total) + '</div>' +
+    var empTax   = +(gross * taxRate).toFixed(2);
+    var empTotal = +(gross + empTax).toFixed(2);
+    periodTotalGross += gross;
+    periodTotalTax   += empTax;
+
+    var col = EMP_COL[e] || {accent:'#0077b6'};
+
+    empRowsHtml +=
+      '<div style="padding:12px 0;border-bottom:1px solid var(--gray-bdr);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">' +
+          '<div style="font-size:15px;font-weight:700;color:'+col.accent+';">'+emp.name+'</div>' +
+          '<div style="font-size:16px;font-weight:800;font-family:IBM Plex Mono,monospace;color:var(--text1);">'+fmt(empTotal)+'</div>' +
         '</div>' +
-        '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;color:var(--text3);">' +
-          (ot.estimated
-            ? ot.total.toFixed(2) + ' hrs (est.) × $' + rate.reg + ' = ' + fmt(ot.gross)
-            : 'Reg ' + ot.reg.toFixed(2) + '@$' + rate.reg +
-              (ot.ot15>0 ? ' · OT ' + ot.ot15.toFixed(2) + '@$' + rate.ot : '') +
-              (ot.ot2>0  ? ' · 2× ' + ot.ot2.toFixed(2)  + '@$' + rate.ot2 : '') +
-              ' = ' + fmt(ot.gross)) +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:12px;font-family:IBM Plex Mono,monospace;margin-bottom:4px;">' +
+          '<div style="color:var(--text3);">Reg: <span style="color:var(--text1);font-weight:600;">'+reg.toFixed(2)+' hrs × $'+rate.reg+'</span></div>' +
+          '<div style="color:var(--text3);">Gross: <span style="color:var(--text1);font-weight:600;">'+fmt(gross)+'</span></div>' +
+          (ot15 > 0
+            ? '<div style="color:var(--text3);">1.5×: <span style="color:var(--orange);font-weight:600;">'+ot15.toFixed(2)+' hrs × $'+rate.ot+'</span></div>'
+            : '<div style="color:var(--text3);">1.5×: <span style="color:var(--text3);">0</span></div>') +
+          '<div style="color:var(--text3);">Tax '+((taxRate*100).toFixed(2))+'%: <span style="color:var(--text1);font-weight:600;">'+fmt(empTax)+'</span></div>' +
+          (ot2 > 0
+            ? '<div style="color:var(--text3);">2×: <span style="color:var(--red);font-weight:600;">'+ot2.toFixed(2)+' hrs × $'+rate.ot2+'</span></div>'
+            : '<div style="color:var(--text3);">2×: <span style="color:var(--text3);">0</span></div>') +
+          '<div style="color:var(--text3);">Total: <span style="color:var(--blue);font-weight:700;">'+fmt(empTotal)+'</span></div>' +
         '</div>' +
-        '<div style="font-size:11px;font-family:IBM Plex Mono,monospace;color:var(--text3);">Tax: ' + fmt(empTax) + '</div>' +
+        (estimated ? '<div style="font-size:10px;color:var(--orange);">⚠ No daily clock log — using stored hours at reg rate</div>' : '') +
       '</div>';
   });
 
-  var totalTax = p.tax || 0;
-  var grandTotal = +(totalGross + totalTax).toFixed(2);
+  if (activeEmps.length === 0) {
+    empRowsHtml = '<div style="color:var(--text3);font-size:13px;padding:12px 0;">No hours recorded for this period.</div>';
+  }
+
+  var periodTotal = +(periodTotalGross + periodTotalTax).toFixed(2);
 
   var html =
-    '<div style="font-size:16px;font-weight:800;margin-bottom:2px;">' + p.id + ' — ' + p.label + '</div>' +
-    '<div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Code ' + p.code +
-      (p.reconciled ? ' · <span style="color:var(--green);">✓ Reconciled</span>' :
-       p.locked     ? ' · <span style="color:var(--orange);">🔒 Locked</span>' : '') +
+    '<div style="font-size:18px;font-weight:800;margin-bottom:2px;color:var(--text1);">'+p.id+'</div>' +
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:4px;">'+p.label+'</div>' +
+    '<div style="display:flex;gap:6px;align-items:center;margin-bottom:14px;">' +
+      '<span class="badge b'+p.code+'">'+p.code+'</span>' +
+      (p.reconciled ? '<span class="rec-badge">✓ Reconciled</span>' :
+       p.locked     ? '<span style="color:var(--orange);font-size:11px;">🔒 Locked</span>' :
+                      '<span style="color:var(--text3);font-size:11px;">Pending</span>') +
+      '<span style="font-size:10px;color:var(--text3);margin-left:4px;">Tax rate: '+(taxRate*100).toFixed(2)+'%</span>' +
     '</div>' +
-    empRows +
-    '<div style="display:flex;justify-content:space-between;padding:10px 0 4px;font-size:13px;">' +
-      '<span style="color:var(--text2);">Total gross wages</span>' +
-      '<span style="font-family:IBM Plex Mono,monospace;">' + fmt(totalGross) + '</span></div>' +
-    '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;">' +
-      '<span style="color:var(--text2);">Employer tax</span>' +
-      '<span style="font-family:IBM Plex Mono,monospace;">' + fmt(totalTax) + (p.empTax ? '' : ' <span style="font-size:10px;color:var(--text3);">(est.)</span>') + '</span></div>' +
-    '<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:15px;font-weight:700;border-top:2px solid var(--gray-bdr);">' +
-      '<span>Period Total</span>' +
-      '<span style="font-family:IBM Plex Mono,monospace;color:var(--blue);">' + fmt(grandTotal) + '</span></div>';
+    empRowsHtml +
+    '<div style="margin-top:10px;padding-top:10px;border-top:2px solid var(--gray-bdr);">' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">' +
+        '<span style="color:var(--text2);">Total gross wages</span>' +
+        '<span style="font-family:IBM Plex Mono,monospace;font-weight:600;">'+fmt(periodTotalGross)+'</span>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">' +
+        '<span style="color:var(--text2);">Employer tax</span>' +
+        '<span style="font-family:IBM Plex Mono,monospace;font-weight:600;">'+fmt(periodTotalTax)+'</span>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;">' +
+        '<span>Period Total</span>' +
+        '<span style="font-family:IBM Plex Mono,monospace;color:var(--blue);">'+fmt(periodTotal)+'</span>' +
+      '</div>' +
+    '</div>';
 
-  var body = document.getElementById('side-panel-body');
-  if (body) body.innerHTML = html;
+  body.innerHTML = html;
 }
 
 // ══════════════════════════════════════
