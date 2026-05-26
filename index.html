@@ -140,7 +140,7 @@ tbody tr.selected td{background:rgba(0,119,182,.08)!important;}
 .ot2-chip{font-size:9px;background:var(--red-lt);color:var(--red-dk);padding:2px 7px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-weight:700;}
 /* CLOCK LOG GRID */
 .clk-grid{display:grid;width:100%;}
-.clk-hdr{padding:9px 14px;background:rgba(232,244,251,.8);border-bottom:1px solid var(--gray-bdr);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
+.clk-hdr{padding:9px 14px;background:rgba(232,244,251,.8);border-bottom:1px solid var(--gray-bdr);font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);font-family:'IBM Plex Mono',monospace;}
 .clk-cell{padding:11px 14px;border-bottom:1px solid rgba(240,242,245,.8);font-size:15px;font-family:'IBM Plex Mono',monospace;color:var(--text1);cursor:pointer;}
 .clk-cell:hover{background:rgba(0,119,182,.06);}
 .clk-cell.ot{color:var(--orange);font-weight:700;}
@@ -278,12 +278,12 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 
 
 .clk-grid{display:grid;gap:0;}
-.clk-hdr{padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);background:rgba(240,244,248,.9);border-bottom:1px solid var(--gray-bdr);}
-.clk-subhdr{padding:5px 6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-align:center;border-bottom:2px solid rgba(0,0,0,.08);}
-.clk-cell{padding:10px 6px;border-bottom:1px solid rgba(220,230,240,.6);font-size:12px;font-family:IBM Plex Mono,monospace;display:flex;align-items:center;color:var(--text1);}
-.clk-ot-cell{justify-content:center;text-align:center;cursor:pointer;border:none;font-family:IBM Plex Mono,monospace;font-size:13px;}
+.clk-hdr{padding:8px 10px;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);background:rgba(240,244,248,.9);border-bottom:1px solid var(--gray-bdr);}
+.clk-subhdr{padding:6px 8px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-align:center;border-bottom:2px solid rgba(0,0,0,.08);}
+.clk-cell{padding:12px 8px;border-bottom:1px solid rgba(220,230,240,.6);font-size:17px;font-family:IBM Plex Mono,monospace;display:flex;align-items:center;color:var(--text1);}
+.clk-ot-cell{justify-content:center;text-align:center;cursor:pointer;border:none;font-family:IBM Plex Mono,monospace;font-size:18px;}
 .clk-ot-cell:active{opacity:.7;}
-.clk-tot{padding:8px 8px;font-size:12px;font-family:IBM Plex Mono,monospace;background:rgba(240,244,248,.6);border-top:2px solid var(--gray-bdr);}
+.clk-tot{padding:10px 8px;font-size:17px;font-family:IBM Plex Mono,monospace;background:rgba(240,244,248,.6);border-top:2px solid var(--gray-bdr);}
 .today-row{background:rgba(0,119,182,.04);}
 </style>
 </head>
@@ -1475,7 +1475,7 @@ function renderClockLog() {
       ? 'font-weight:700;color:var(--blue);'
       : 'color:var(--text1);';
     var dateLbl = DOW[di]+' '+MON[d.getMonth()]+' '+d.getDate();
-    if (isToday) dateLbl += ' <span style="font-size:9px;background:var(--blue);color:#fff;padding:1px 5px;border-radius:4px;margin-left:3px;">TODAY</span>';
+    if (isToday) dateLbl += ' <span style="font-size:11px;background:var(--blue);color:#fff;padding:2px 6px;border-radius:4px;margin-left:3px;">TODAY</span>';
 
     grid += '<div class="clk-cell" style="'+dateStyle+'">'+dateLbl+'</div>';
 
@@ -1485,27 +1485,27 @@ function renderClockLog() {
       var bg   = col.bg;
 
       // Reg cell
-      var regLbl = day.reg > 0 ? day.reg.toFixed(2) : '<span style="color:var(--text3);font-size:11px;">—</span>';
+      var regLbl = day.reg > 0 ? day.reg.toFixed(2) : '<span style="color:var(--text3);font-size:15px;">—</span>';
       var regCls = 'clk-cell clk-ot-cell';
       var regCls = 'clk-cell clk-ot-cell';
       grid += '<button type="button" class="'+regCls+'" data-iso="'+iso+'" data-emp="'+e+'"' +
         ' onclick="openClockKp(this.dataset.iso,this.dataset.emp)"' +
-        ' style="width:100%;text-align:center;background:'+bg+';border-left:2px solid '+col.hdr+';border:none;font-family:IBM Plex Mono,monospace;font-size:13px;padding:10px 0;cursor:pointer;">'+regLbl+'</button>';
+        ' style="width:100%;text-align:center;background:'+bg+';border-left:2px solid '+col.hdr+';border:none;font-family:IBM Plex Mono,monospace;font-size:18px;padding:12px 0;cursor:pointer;">'+regLbl+'</button>';
       // OT 1.5x cell
       var ot15Lbl = day.ot15 > 0
         ? '<span style="color:var(--orange);font-weight:700;">'+day.ot15.toFixed(2)+'</span>'
-        : '<span style="color:var(--text3);font-size:11px;">—</span>';
+        : '<span style="color:var(--text3);font-size:15px;">—</span>';
       grid += '<button type="button" class="clk-cell clk-ot-cell" data-iso="'+iso+'" data-emp="'+e+'"' +
         ' onclick="openClockKp(this.dataset.iso,this.dataset.emp)"' +
-        ' style="width:100%;text-align:center;background:'+bg+';border:none;font-family:IBM Plex Mono,monospace;font-size:13px;padding:10px 0;cursor:pointer;">'+ot15Lbl+'</button>';
+        ' style="width:100%;text-align:center;background:'+bg+';border:none;font-family:IBM Plex Mono,monospace;font-size:18px;padding:12px 0;cursor:pointer;">'+ot15Lbl+'</button>';
 
       // OT 2x cell
       var ot2Lbl = day.ot2 > 0
         ? '<span style="color:var(--red);font-weight:700;">'+day.ot2.toFixed(2)+'</span>'
-        : '<span style="color:var(--text3);font-size:11px;">—</span>';
+        : '<span style="color:var(--text3);font-size:15px;">—</span>';
       grid += '<button type="button" class="clk-cell clk-ot-cell" data-iso="'+iso+'" data-emp="'+e+'"' +
         ' onclick="openClockKp(this.dataset.iso,this.dataset.emp)"' +
-        ' style="width:100%;text-align:center;background:'+bg+';border:none;font-family:IBM Plex Mono,monospace;font-size:13px;padding:10px 0;cursor:pointer;">'+ot2Lbl+'</button>';
+        ' style="width:100%;text-align:center;background:'+bg+';border:none;font-family:IBM Plex Mono,monospace;font-size:18px;padding:12px 0;cursor:pointer;">'+ot2Lbl+'</button>';
       // Weekly OT check
       if (di === 6) {
         var wkTotal = weekData[e].reduce(function(s,x){return s+x.total;},0);
@@ -1559,8 +1559,8 @@ function renderClockLog() {
     var col   = EMP_COL[e] || EMP_COL.cor;
 
     el.innerHTML =
-      '<div style="font-size:14px;font-weight:700;color:'+col.accent+';margin-bottom:8px;">'+emp.name+'</div>'+
-      '<div style="font-size:13px;font-family:IBM Plex Mono,monospace;display:flex;flex-direction:column;gap:5px;">'+
+      '<div style="font-size:20px;font-weight:700;color:'+col.accent+';margin-bottom:10px;">'+emp.name+'</div>'+
+      '<div style="font-size:18px;font-family:IBM Plex Mono,monospace;display:flex;flex-direction:column;gap:7px;">'+
         '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">Reg hrs</span><span>'+adjReg.toFixed(2)+'</span></div>'+
         '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 1.5× hrs</span><span style="color:'+(adjOT15>0?'var(--orange)':'var(--text3)')+';">'+adjOT15.toFixed(2)+'</span></div>'+
         '<div style="display:flex;justify-content:space-between;"><span style="color:var(--text3);">OT 2× hrs</span><span style="color:'+(wkOT2>0?'var(--red)':'var(--text3)')+';">'+wkOT2.toFixed(2)+'</span></div>'+
