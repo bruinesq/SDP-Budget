@@ -285,6 +285,16 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 .clk-ot-cell:active{opacity:.7;}
 .clk-tot{padding:10px 8px;font-size:17px;font-family:IBM Plex Mono,monospace;background:rgba(240,244,248,.6);border-top:2px solid var(--gray-bdr);}
 .today-row{background:rgba(0,119,182,.04);}
+
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:transparent;transition:background .15s;}
+.pin-dot.filled{background:#fff;border-color:#fff;}
+.pin-dot-dark{width:14px;height:14px;border-radius:50%;border:2px solid var(--gray-bdr);background:transparent;transition:background .15s;}
+.pin-dot-dark.filled{background:var(--blue);border-color:var(--blue);}
+.pin-key{padding:16px;font-size:22px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);border:none;border-radius:12px;cursor:pointer;font-family:IBM Plex Mono,monospace;transition:background .1s;}
+.pin-key:active{background:rgba(255,255,255,.28);}
+.pin-key-del{background:rgba(0,0,0,.15);}
+.pin-key-dk{padding:14px;font-size:20px;font-weight:600;color:var(--text1);background:var(--gray-bg);border:1px solid var(--gray-bdr);border-radius:10px;cursor:pointer;font-family:IBM Plex Mono,monospace;transition:background .1s;}
+.pin-key-dk:active{background:var(--gray-bdr);}
 </style>
 </head>
 <body>
@@ -544,6 +554,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
   <div class="main">
     <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
       <button class="btn btn-blue" onclick="openNewCycleModal()">🔄 Start New Cycle (12/1/26)</button>
+      <button class="btn btn-ghost btn-sm" onclick="openPinSetup()" style="font-size:12px;">🔒 PIN Settings</button>
     </div>
     <div class="g2">
       <!-- Employees -->
@@ -3168,9 +3179,251 @@ renderCycleMenu();
     }
 })();
 
+
+// ── PIN SYSTEM ──────────────────────────────────────────────────────
+var _pinEntry   = '';
+var _pinCorrect = '';
+var _pinSetupEntry = '';
+var _pinSetupPhase = 1; // 1=enter new, 2=confirm
+var _pinSetupFirst = '';
+
+async function initPIN() {
+  // Load PIN from Supabase settings
+  try {
+    var stored = await supaGetSetting('appPin');
+    _pinCorrect = stored || '';
+  } catch(e) { _pinCorrect = ''; }
+
+  // Check if this device already authenticated
+  var auth = localStorage.getItem('sdp_pin_auth_v1');
+  if (!_pinCorrect) {
+    // No PIN set - open normally
+    hidePinOverlay();
+    return;
+  }
+  if (auth === _pinCorrect) {
+    // Device already authenticated with this PIN
+    hidePinOverlay();
+    return;
+  }
+  // Show PIN screen
+  showPinOverlay();
+}
+
+function showPinOverlay() {
+  var el = document.getElementById('pin-overlay');
+  if (el) { el.style.display = 'flex'; }
+  _pinEntry = '';
+  updatePinDots('pin-dots', _pinEntry);
+}
+
+function hidePinOverlay() {
+  var el = document.getElementById('pin-overlay');
+  if (el) el.style.display = 'none';
+}
+
+function pinKey(k) {
+  if (k === 'del') {
+    _pinEntry = _pinEntry.slice(0,-1);
+  } else if (k === 'clr') {
+    _pinEntry = '';
+  } else if (_pinEntry.length < 5) {
+    _pinEntry += k;
+  }
+  updatePinDots('pin-dots', _pinEntry);
+  document.getElementById('pin-error').textContent = '';
+
+  if (_pinEntry.length === 5) {
+    setTimeout(function() { checkPIN(); }, 120);
+  }
+}
+
+function checkPIN() {
+  if (_pinEntry === _pinCorrect) {
+    // Remember on this device
+    localStorage.setItem('sdp_pin_auth_v1', _pinCorrect);
+    hidePinOverlay();
+  } else {
+    document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.';
+    _pinEntry = '';
+    updatePinDots('pin-dots', _pinEntry);
+    // Shake animation
+    var dots = document.getElementById('pin-dots');
+    if (dots) {
+      dots.style.transform = 'translateX(10px)';
+      setTimeout(function(){ dots.style.transform = 'translateX(-10px)'; }, 80);
+      setTimeout(function(){ dots.style.transform = 'translateX(6px)'; }, 160);
+      setTimeout(function(){ dots.style.transform = 'translateX(0)'; }, 240);
+    }
+  }
+}
+
+function updatePinDots(containerId, entry) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var dots = container.querySelectorAll('.pin-dot, .pin-dot-dark');
+  dots.forEach(function(dot, i) {
+    if (i < entry.length) dot.classList.add('filled');
+    else dot.classList.remove('filled');
+  });
+}
+
+// ── PIN SETUP (in Settings) ──────────────────────────────────────────
+function openPinSetup() {
+  _pinSetupEntry = '';
+  _pinSetupPhase = 1;
+  _pinSetupFirst = '';
+  document.getElementById('pin-setup-title').textContent = _pinCorrect ? 'Change PIN' : 'Set PIN';
+  document.getElementById('pin-setup-sub').textContent   = 'Enter a new 5-digit PIN.';
+  document.getElementById('pin-setup-error').textContent = '';
+  updatePinDots('pin-setup-dots', '');
+  var removeBtn = document.getElementById('pin-setup-remove');
+  if (removeBtn) removeBtn.style.display = _pinCorrect ? 'block' : 'none';
+  var modal = document.getElementById('pin-setup-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closePinSetup() {
+  var modal = document.getElementById('pin-setup-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function pinSetupKey(k) {
+  if (k === 'del') {
+    _pinSetupEntry = _pinSetupEntry.slice(0,-1);
+  } else if (k === 'clr') {
+    _pinSetupEntry = '';
+  } else if (_pinSetupEntry.length < 5) {
+    _pinSetupEntry += k;
+  }
+  updatePinDots('pin-setup-dots', _pinSetupEntry);
+  document.getElementById('pin-setup-error').textContent = '';
+
+  if (_pinSetupEntry.length === 5) {
+    setTimeout(function() { pinSetupConfirm(); }, 120);
+  }
+}
+
+function pinSetupConfirm() {
+  if (_pinSetupPhase === 1) {
+    _pinSetupFirst = _pinSetupEntry;
+    _pinSetupEntry = '';
+    _pinSetupPhase = 2;
+    document.getElementById('pin-setup-sub').textContent = 'Re-enter PIN to confirm.';
+    updatePinDots('pin-setup-dots', '');
+  } else {
+    if (_pinSetupEntry === _pinSetupFirst) {
+      // Save PIN
+      savePIN(_pinSetupEntry);
+    } else {
+      document.getElementById('pin-setup-error').textContent = 'PINs do not match. Try again.';
+      _pinSetupEntry = '';
+      _pinSetupPhase = 1;
+      _pinSetupFirst = '';
+      document.getElementById('pin-setup-sub').textContent = 'Enter a new 5-digit PIN.';
+      updatePinDots('pin-setup-dots', '');
+    }
+  }
+}
+
+async function savePIN(pin) {
+  _pinCorrect = pin;
+  localStorage.setItem('sdp_pin_auth_v1', pin); // authenticate this device
+  try {
+    await supaSetSetting('appPin', pin);
+    showToast('\u2713 PIN set successfully');
+  } catch(e) {
+    showToast('\u26a0 PIN saved locally only');
+  }
+  closePinSetup();
+  renderSettings();
+}
+
+async function removePIN() {
+  if (!confirm('Remove PIN protection? Anyone with the link can access the app.')) return;
+  _pinCorrect = '';
+  localStorage.removeItem('sdp_pin_auth_v1');
+  try {
+    await supaSetSetting('appPin', '');
+    showToast('PIN removed');
+  } catch(e) {
+    showToast('PIN removed locally');
+  }
+  closePinSetup();
+  renderSettings();
+}
+
 renderBudget();
 initDB();
+initPIN();
 
 </script>
+
+<!-- ═══ PIN OVERLAY ═══ -->
+<div id="pin-overlay" style="display:none;position:fixed;inset:0;z-index:99999;
+  background:linear-gradient(170deg,#003f63 0%,#0077b6 40%,#c8dff0 100%);
+  flex-direction:column;align-items:center;justify-content:center;">
+  <div style="text-align:center;margin-bottom:32px;">
+    <div style="font-size:32px;font-weight:800;color:#fff;font-family:Syne,sans-serif;letter-spacing:-.02em;">SDSEP Budget Tracker</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.6);margin-top:6px;">Ryan Nguyen · Harbor Regional Center</div>
+  </div>
+  <div style="background:rgba(255,255,255,.12);backdrop-filter:blur(10px);border-radius:20px;padding:32px 40px;width:320px;text-align:center;">
+    <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.7);margin-bottom:20px;">Enter PIN</div>
+    <!-- PIN dots -->
+    <div style="display:flex;justify-content:center;gap:14px;margin-bottom:28px;" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div id="pin-error" style="color:#ffaaaa;font-size:13px;margin-bottom:12px;min-height:18px;"></div>
+    <!-- PIN keypad -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key pin-key-del" onclick="pinKey('del')" style="font-size:20px;">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="pinKey('clr')" style="font-size:13px;font-weight:700;">CLR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PIN SETUP MODAL ═══ -->
+<div id="pin-setup-modal" style="display:none;position:fixed;inset:0;z-index:99998;
+  background:rgba(0,0,0,.6);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:20px;padding:28px 32px;width:340px;max-width:90vw;">
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px;" id="pin-setup-title">Set PIN</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:20px;" id="pin-setup-sub">Choose a 5-digit PIN to protect this app.</div>
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:16px;" id="pin-setup-dots">
+      <div class="pin-dot pin-dot-dark"></div><div class="pin-dot pin-dot-dark"></div>
+      <div class="pin-dot pin-dot-dark"></div><div class="pin-dot pin-dot-dark"></div>
+      <div class="pin-dot pin-dot-dark"></div>
+    </div>
+    <div id="pin-setup-error" style="color:var(--red);font-size:12px;margin-bottom:10px;min-height:16px;text-align:center;"></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;">
+      <button class="pin-key-dk" onclick="pinSetupKey('1')">1</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('2')">2</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('3')">3</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('4')">4</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('5')">5</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('6')">6</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('7')">7</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('8')">8</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('9')">9</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('del')" style="font-size:18px;">⌫</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('0')">0</button>
+      <button class="pin-key-dk" onclick="pinSetupKey('clr')" style="font-size:11px;font-weight:700;">CLR</button>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="closePinSetup()">Cancel</button>
+      <button id="pin-setup-remove" class="btn btn-red" style="flex:1;display:none;" onclick="removePIN()">Remove PIN</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
