@@ -2561,6 +2561,7 @@ function renderSettings(){
       '<td class="mono" style="color:var(--text3);">' + fmt(h.fee) + '/mo</td><td><span style="font-size:10px;color:var(--text3);">Historical</span></td></tr>';
   });
   document.getElementById('ns-fee-tbody').innerHTML = nsFeeRows;
+  } catch(e) { console.error('renderSettings error:', e); }
 }
 
 function toggleEmpActive(key){
