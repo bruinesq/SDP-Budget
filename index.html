@@ -378,7 +378,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div>
           <div style="font-size:13px;color:rgba(255,255,255,.9);font-weight:700;">Click any row for employee breakdown →</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:2px;">Pay periods are generated from Clock Log entries · Use "Add Manually" for corrections only</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:2px;">⚡ Periods are auto-generated from Clock Log data · 🔒 Locked = reconciled against statement · Use "Add Manually" for corrections only</div>
         </div>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-yellow" onclick="openNewPeriodModal()">+ Add Manually</button>
@@ -1240,6 +1240,8 @@ function switchTab(tab) {
 // RENDER BUDGET
 // ══════════════════════════════════════
 function renderBudget() {
+  // Keep periods in sync with clock log before computing budget totals
+  syncPeriodsFromClockLog();
   const tb=totalBudget(), ts=totalSpent(), tr=tb-ts;
   const pct=tb>0?(ts/tb*100):0;
   const ppCount=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle).length;
@@ -1320,11 +1322,154 @@ function renderBudget() {
 }
 
 // ══════════════════════════════════════
+// AUTO-SYNC PERIODS FROM CLOCK LOG
+// ══════════════════════════════════════
+// Scans the timesheet for any entries that fall outside all existing period
+// date ranges and auto-creates period records for them, grouped by the
+// standard semi-monthly schedule (1st–15th, 16th–end of month).
+// Auto-created periods are marked autoGen:true so they can be identified.
+// Called before every renderPeriods() so the tab is always current.
+
+function parsePeriodDates(p) {
+  // Returns {start: Date, end: Date} or null
+  if (!p.label) return null;
+  var parts = p.label.split(' - ');
+  if (parts.length < 2) return null;
+  var pD = function(s) {
+    var m = s.trim().match(/(\d+)\/(\d+)\/(\d+)/);
+    if (!m) return null;
+    var yr = parseInt(m[3]); if (yr < 100) yr += 2000;
+    return new Date(yr, parseInt(m[1])-1, parseInt(m[2]));
+  };
+  var s = pD(parts[0]), e = pD(parts[1]);
+  return (s && e) ? {start: s, end: e} : null;
+}
+
+function syncPeriodsFromClockLog() {
+  var cyclePeriods = periods.filter(function(p){ return (p.cycleId||'2025-26') === currentCycle; });
+
+  // Build set of all ISO dates already covered by existing periods
+  var coveredDates = {};
+  cyclePeriods.forEach(function(p) {
+    var range = parsePeriodDates(p);
+    if (!range) return;
+    var d = new Date(range.start);
+    while (d <= range.end) {
+      coveredDates[isoFromDate(d)] = true;
+      d.setDate(d.getDate() + 1);
+    }
+  });
+
+  // Find all timesheet dates in this cycle that have entries for any active emp
+  var cycleObj = cycles.find(function(c){ return c.id === currentCycle; });
+  var cycleStart = cycleObj ? new Date(cycleObj.start) : new Date(2025, 11, 1);
+  var cycleEnd   = cycleObj ? new Date(cycleObj.end)   : new Date(2026, 10, 30);
+
+  var uncoveredByPeriod = {}; // YYYY-MM-DD → true, only dates with actual hours
+
+  Object.keys(timesheet).forEach(function(iso) {
+    if (coveredDates[iso]) return;                  // already in a period
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return;
+    if (d < cycleStart || d > cycleEnd) return;     // outside cycle
+    // Check that at least one active employee has hours on this date
+    var hasHours = ACTIVE_EMPS.some(function(e) {
+      var entry = timesheet[iso] && timesheet[iso][e];
+      return entry && ((entry.s1||0) + (entry.s2||0)) > 0;
+    });
+    if (hasHours) uncoveredByPeriod[iso] = true;
+  });
+
+  if (Object.keys(uncoveredByPeriod).length === 0) return; // nothing to do
+
+  // Group uncovered dates into semi-monthly buckets: {YYYY-M-half} → [iso, ...]
+  // half: 0 = 1st–15th, 1 = 16th–end
+  var buckets = {};
+  Object.keys(uncoveredByPeriod).forEach(function(iso) {
+    var d = new Date(iso);
+    var half = d.getDate() <= 15 ? 0 : 1;
+    var key  = d.getFullYear() + '-' + d.getMonth() + '-' + half;
+    if (!buckets[key]) buckets[key] = { year: d.getFullYear(), month: d.getMonth(), half: half };
+  });
+
+  // For each bucket, determine the canonical start/end and create a period if not duplicate
+  var added = false;
+  Object.keys(buckets).sort().forEach(function(key) {
+    var b    = buckets[key];
+    var yr   = b.year, mo = b.month, half = b.half;
+    var startDay = half === 0 ? 1 : 16;
+    var endDay   = half === 0 ? 15 : new Date(yr, mo + 1, 0).getDate(); // last day of month
+    var startD   = new Date(yr, mo, startDay);
+    var endD     = new Date(yr, mo, endDay);
+
+    // Make sure this bucket isn't already covered (edge case: partial overlap)
+    var startIso = isoFromDate(startD);
+    if (coveredDates[startIso]) return;
+
+    // Build label: M/D/YY - M/D/YY
+    var fmt2 = function(d) { return (d.getMonth()+1)+'/'+d.getDate()+'/'+(String(d.getFullYear()).slice(2)); };
+    var label = fmt2(startD) + ' - ' + fmt2(endD);
+
+    // Determine the default code from the most recent locked period, or 320
+    var lastCode = '320';
+    var sortedPs = cyclePeriods.slice().sort(function(a,b){
+      var ra = parsePeriodDates(a), rb = parsePeriodDates(b);
+      if (!ra || !rb) return 0;
+      return rb.start - ra.start;
+    });
+    if (sortedPs.length > 0 && sortedPs[0].code) lastCode = sortedPs[0].code;
+
+    var newId = 'pp' + (nextPpId++);
+    var newPp = {
+      id: newId, label: label, code: lastCode,
+      gross: 0, tax: 0,
+      locked: false, reconciled: false,
+      note: 'Auto-generated from Clock Log',
+      cycleId: currentCycle,
+      autoGen: true,
+      hrs: { cor: 0, mav: 0, raf: 0, nic: 0 }
+    };
+
+    // Pre-populate hrs from timesheet for display purposes
+    ACTIVE_EMPS.forEach(function(e) {
+      var total = 0;
+      var d2 = new Date(startD);
+      while (d2 <= endD) {
+        var iso2  = isoFromDate(d2);
+        var entry = timesheet[iso2] && timesheet[iso2][e];
+        if (entry) total += (entry.s1||0) + (entry.s2||0);
+        d2.setDate(d2.getDate() + 1);
+      }
+      newPp.hrs[e] = +total.toFixed(4);
+    });
+
+    periods.push(newPp);
+    saveS('sdp_periods_v2', periods);
+    if (syncReady) bgAddPeriod(newPp);
+    added = true;
+
+    // Mark these dates as now covered so subsequent buckets don't re-add
+    var dc = new Date(startD);
+    while (dc <= endD) { coveredDates[isoFromDate(dc)] = true; dc.setDate(dc.getDate()+1); }
+  });
+
+  if (added) {
+    // Recompute nextPpId in case it lagged
+    nextPpId = Math.max(nextPpId,
+      Math.max.apply(null, periods.map(function(p){ return parseInt(p.id.replace(/\D/g,''))||0; })) + 1
+    );
+  }
+}
+
+// ══════════════════════════════════════
 // RENDER PAY PERIODS + SIDE PANEL
 // ══════════════════════════════════════
 let selectedPpId = null;
 
 function renderPeriods() {
+  // Auto-detect clock log entries not yet covered by any period
+  syncPeriodsFromClockLog();
+
   const BADGE={'310':'b310','320':'b320','331':'b331','ite':'bite'};
   const cyclPeriods=periods
     .filter(p=>(p.cycleId||'2025-26')===currentCycle)
@@ -1380,7 +1525,7 @@ function renderPeriods() {
       <td class="mono">${fmt(liveGross)}</td>
       <td class="mono">${fmt(liveTax)}</td>
       <td class="mono"><strong>${fmt(total)}</strong></td>
-      <td>${p.locked?'<span class="locked">🔒 Locked</span>':p.reconciled?'<span class="rec-badge">✓ Rec</span>':'<button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Del</button>'}</td>
+      <td>${p.locked?'<span class="locked">🔒 Locked</span>':p.reconciled?'<span class="rec-badge">✓ Rec</span>':p.autoGen?'<span style="font-size:9px;background:#e0f0ff;color:var(--blue);padding:2px 8px;border-radius:4px;font-weight:700;font-family:IBM Plex Mono,monospace;cursor:pointer;" onclick="deletePeriod(\''+p.id+'\')" title="Auto-generated from Clock Log — click to remove">⚡ Auto</span>':'<button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Del</button>'}</td>
     </tr>`;
   });
   const totalGross=cyclPeriods.reduce((s,p)=>{
