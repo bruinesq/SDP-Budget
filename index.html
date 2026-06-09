@@ -550,9 +550,10 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 
 <div class="panel" id="panel-settings">
   <div class="main">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-      <button class="btn btn-blue" onclick="openNewCycleModal()">🔄 Start New Cycle (12/1/26)</button>
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:14px;">
+      <span id="pin-status-badge" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:4px 10px;border-radius:6px;"></span>
       <button class="btn btn-ghost btn-sm" onclick="openPinSetup()" style="font-size:12px;">🔒 PIN Settings</button>
+      <button class="btn btn-blue" onclick="openNewCycleModal()">🔄 Start New Cycle (12/1/26)</button>
     </div>
     <div class="g2">
       <!-- Employees -->
@@ -2635,6 +2636,21 @@ function openR3Kp(field) {
 // ══════════════════════════════════════
 function renderSettings(){
   try {
+  // PIN status badge
+  var pinBadge = document.getElementById('pin-status-badge');
+  if (pinBadge) {
+    if (_pinCorrect) {
+      pinBadge.textContent = '🔒 PIN Active';
+      pinBadge.style.background = 'rgba(13,158,110,.15)';
+      pinBadge.style.color      = 'var(--green-dk)';
+      pinBadge.style.border     = '1px solid #6ee7b7';
+    } else {
+      pinBadge.textContent = '🔓 No PIN Set';
+      pinBadge.style.background = 'rgba(214,59,59,.08)';
+      pinBadge.style.color      = 'var(--red)';
+      pinBadge.style.border     = '1px solid rgba(214,59,59,.3)';
+    }
+  }
   // Employee list with rate history
   var empHtml = '';
   Object.entries(employees).forEach(function(entry) {
@@ -3678,9 +3694,11 @@ async function removePIN() {
   renderSettings();
 }
 
-renderBudget();
-initDB();
-initPIN();
+window.addEventListener('DOMContentLoaded', function() {
+  renderBudget();
+  initDB();
+  initPIN();
+});
 
 </script>
 
