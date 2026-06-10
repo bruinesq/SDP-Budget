@@ -797,7 +797,7 @@ function periodToDb(p) {
   return {
     id: p.id, label: p.label, code: p.code,
     gross: p.gross||0, tax: p.tax||0,
-    locked: p.locked||false, note: p.note||'',
+    locked: p.locked||p.confirmed||false, note: p.note||'',
     reconciled: p.reconciled||false,
     premier_tax: p.premierTax||null,
     cycle_id: p.cycleId||currentCycle,
@@ -1241,8 +1241,8 @@ function switchTab(tab) {
 // RENDER BUDGET
 // ══════════════════════════════════════
 function renderBudget() {
-  // Keep periods in sync with clock log before computing budget totals
   syncPeriodsFromClockLog();
+  refreshPeriodWages();
   const tb=totalBudget(), ts=totalSpent(), tr=tb-ts;
   const pct=tb>0?(ts/tb*100):0;
   const ppCount=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle).length;
@@ -1321,7 +1321,30 @@ function renderBudget() {
       }).join('')
     : '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:14px;">No manual adjustments. Use "+ Add" to record monthly expenses or manual corrections.</td></tr>';
 }
-
+// ══════════════════════════════════════
+// REFRESH PERIOD WAGES FROM CLOCK LOG
+// ══════════════════════════════════════
+function refreshPeriodWages() {
+  var changed = false;
+  periods.forEach(function(p) {
+    if (p.locked || p.confirmed) return; // never touch confirmed/locked periods
+    if ((p.cycleId || '2025-26') !== currentCycle) return;
+    var newGross = 0;
+    ALL_EMPS.forEach(function(e) {
+      newGross += calcEmpPeriodOT(p, e).gross;
+    });
+    newGross = +newGross.toFixed(2);
+    if (newGross === 0) return; // no clock log data yet, leave as-is
+    var taxR = taxRateForDate(p.label ? p.label.slice(0, 8) : todayStr());
+    var newTax = +(newGross * taxR).toFixed(2);
+    if (p.gross !== newGross || p.tax !== newTax) {
+      p.gross = newGross;
+      p.tax   = newTax;
+      changed = true;
+    }
+  });
+  if (changed) saveS('sdp_periods_v2', periods);
+}
 // ══════════════════════════════════════
 // AUTO-SYNC PERIODS FROM CLOCK LOG
 // ══════════════════════════════════════
@@ -1526,7 +1549,7 @@ function renderPeriods() {
       <td class="mono">${fmt(liveGross)}</td>
       <td class="mono">${fmt(liveTax)}</td>
       <td class="mono"><strong>${fmt(total)}</strong></td>
-      <td>${p.locked?'<span class="locked">🔒 Locked</span>':p.reconciled?'<span class="rec-badge">✓ Rec</span>':p.autoGen?'<span style="font-size:9px;background:#e0f0ff;color:var(--blue);padding:2px 8px;border-radius:4px;font-weight:700;font-family:IBM Plex Mono,monospace;cursor:pointer;" onclick="deletePeriod(\''+p.id+'\')" title="Auto-generated from Clock Log — click to remove">⚡ Auto</span>':'<button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Del</button>'}</td>
+      <td style="white-space:nowrap;">${(p.confirmed||p.locked)?'<span style="font-size:9px;background:var(--green-lt);color:var(--green-dk);padding:2px 8px;border-radius:4px;font-weight:700;border:1px solid #6ee7b7;font-family:IBM Plex Mono,monospace;">✓ Confirmed</span>':p.autoGen?'<span style="font-size:9px;background:#e0f0ff;color:var(--blue);padding:2px 8px;border-radius:4px;font-weight:700;font-family:IBM Plex Mono,monospace;cursor:pointer;" onclick="deletePeriod(\''+p.id+'\')" title="Auto-generated — click to remove">⚡ Auto</span>':'<div style="display:flex;gap:4px;"><button class="btn btn-green btn-sm" onclick="confirmPeriod(\''+p.id+'\')" title="Freeze wages as paid">✓</button><button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Del</button></div>'}</td>
     </tr>`;
   });
   const totalGross=cyclPeriods.reduce((s,p)=>{
@@ -3105,6 +3128,7 @@ function kpConfirm() {
       bgSaveTs(kpDate, kpEmp, timesheet[kpDate][kpEmp].s1 || kpS1, rounded, timesheet[kpDate][kpEmp].s1code||kpCode, kpCode);
       closeKp();
       renderClockLog();
+      refreashPeriodWages();
       var total = +((timesheet[kpDate][kpEmp].s1 || kpS1) + rounded).toFixed(2);
       showToast('Day saved: ' + total.toFixed(2) + ' hrs for ' + (employees[kpEmp] || EMP_DEFS[kpEmp]).name + ' ✓');
       // Refresh budget/periods if on those tabs (clock log changes affect displayed totals)
@@ -3427,6 +3451,22 @@ function savePeriod(){
   renderPeriods();
   if(currentTab==='budget')renderBudget();
   showToast('Pay period '+newPp.id+' added ✓');
+}
+function confirmPeriod(id) {
+  var p = periods.find(function(x){ return x.id === id; });
+  if (!p) return;
+  if (!confirm('Mark ' + p.id + ' (' + p.label + ') as Confirmed?\n\nThis freezes the gross and tax values so they will not be recalculated from the Clock Log.')) return;
+  refreshPeriodWages(); // store latest computed values first
+  p.confirmed = true;
+  saveS('sdp_periods_v2', periods);
+  if (syncReady) {
+    supaDelete('pay_periods', 'id=eq.' + p.id)
+      .then(function(){ return supaPost('pay_periods', periodToDb(p)); })
+      .catch(function(e){ console.warn('sync confirmPeriod:', e); });
+  }
+  renderPeriods();
+  renderBudget();
+  showToast(p.id + ' confirmed ✓  wages frozen at ' + fmt((p.gross||0)+(p.tax||0)));
 }
 function deletePeriod(id){
   if(!confirm('Delete this pay period?'))return;
