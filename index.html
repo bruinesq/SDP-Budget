@@ -328,7 +328,9 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
   <div class="tab active" id="tab-budget"    onclick="switchTab('budget')">Budget</div>
   <div class="tab"        id="tab-periods"   onclick="switchTab('periods')">Pay Periods</div>
   <div class="tab"        id="tab-clocklog"  onclick="switchTab('clocklog')">Clock Log</div>
+  <div class="tab"        id="tab-timesheet" onclick="switchTab('timesheet')">Timesheet</div>
   <div class="tab"        id="tab-projection"onclick="switchTab('projection')">Projection</div>
+  <div class="tab"        id="tab-reconcile" onclick="switchTab('reconcile')">Reconcile</div>
   <div class="tab"        id="tab-settings"  onclick="switchTab('settings')">Settings</div>
 </div>
 
@@ -359,8 +361,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
           </div>
         </div>
         <div class="card" style="flex:1;">
-          <div class="card-hdr"><div class="card-title">Manual Adjustments</div><button class="btn btn-yellow btn-sm" onclick="openAdjKp()">+ Add</button></div>
-          <div style="padding:8px 14px 4px;font-size:11px;color:var(--text3);">Enter manual expenses (e.g. monthly non-wage costs) per service code. These reduce the available balance for that code.</div>
+          <div class="card-hdr"><div class="card-title">Budget Adjustments</div><button class="btn btn-yellow btn-sm" onclick="openAdjKp()">+ Add</button></div>
           <div class="t-wrap"><table><thead><tr><th>Date</th><th>Code</th><th>Amount</th><th>Note</th><th></th></tr></thead><tbody id="adj-tbody"></tbody></table></div>
         </div>
         <div style="display:flex;gap:10px;">
@@ -378,9 +379,10 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div>
           <div style="font-size:13px;color:rgba(255,255,255,.9);font-weight:700;">Click any row for employee breakdown →</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:2px;">⚡ Periods are auto-generated from Clock Log data · 🔒 Locked = reconciled against statement · Use "Add Manually" for corrections only</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;margin-top:2px;">Pay periods are added automatically from the Reconcile tab · Use "Add Manually" for corrections only</div>
         </div>
         <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="switchTab('reconcile')" style="color:#fff;border-color:rgba(255,255,255,.3);">⬆ Upload Statement</button>
           <button class="btn btn-yellow" onclick="openNewPeriodModal()">+ Add Manually</button>
         </div>
       </div>
@@ -469,7 +471,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;">Future Code Split (Wages Only)</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="split-pills-wrap"></div>
           <div id="split-bar-wrap" style="margin-bottom:8px;"></div>
-          <div id="proj-ns-hint" style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:7px 12px;background:rgba(0,0,0,.03);border-radius:8px;">NextStep fee → Code 331 always. ITE billed separately.</div>
+          <div style="font-size:10px;color:var(--text3);font-family:'IBM Plex Mono',monospace;padding:7px 12px;background:rgba(0,0,0,.03);border-radius:8px;">NextStep ($375/mo) → Code 331 always. ITE billed separately.</div>
         </div>
       </div>
       <!-- Results -->
@@ -550,10 +552,9 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
 
 <div class="panel" id="panel-settings">
   <div class="main">
-    <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:14px;">
-      <span id="pin-status-badge" style="font-size:11px;font-family:'IBM Plex Mono',monospace;padding:4px 10px;border-radius:6px;"></span>
-      <button class="btn btn-ghost btn-sm" onclick="openPinSetup()" style="font-size:12px;">🔒 PIN Settings</button>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
       <button class="btn btn-blue" onclick="openNewCycleModal()">🔄 Start New Cycle (12/1/26)</button>
+      <button class="btn btn-ghost btn-sm" onclick="openPinSetup()" style="font-size:12px;">🔒 PIN Settings</button>
     </div>
     <div class="g2">
       <!-- Employees -->
@@ -797,7 +798,7 @@ function periodToDb(p) {
   return {
     id: p.id, label: p.label, code: p.code,
     gross: p.gross||0, tax: p.tax||0,
-    locked: p.locked||p.confirmed||false, note: p.note||'',
+    locked: p.locked||false, note: p.note||'',
     reconciled: p.reconciled||false,
     premier_tax: p.premierTax||null,
     cycle_id: p.cycleId||currentCycle,
@@ -949,7 +950,10 @@ const SEED_PERIODS = [
   {id:'pp12',label:'4/16/26 - 4/30/26',  code:'320',gross:9219.94, tax:1903.01,locked:true,reconciled:true,note:'Cor:$33/$49.50 · Mav:$33/$49.50/$66 · Raf:$28/$42',cycleId:'2025-26',hrs:{cor:89.50,mav:96.00,raf:52.00,nic:0}},
   {id:'pp13',label:'5/1/26 - 5/15/26',    code:'320',gross:7154.04, tax:1476.39,locked:false,reconciled:false,note:'Cor:$33/$49.50 · Mav:$33/$49.50 · Raf:$28/$42',cycleId:'2025-26',hrs:{cor:98.25,mav:74.50,raf:35.25,nic:0}},
 ];
-const SEED_ADJS = [];
+const SEED_ADJS = [
+  {id:'adj1',date:'2026-04-08',code:'320',amt:59452.65,note:'Harbor RC budget increase'},
+  {id:'adj2',date:'2026-04-08',code:'310',amt:2921.60, note:'Harbor RC budget increase'},
+];
 
 const CATS_BASE = {
   '310':{label:'Respite Services',           color:'#3b82f6',origBudget:14452.80},
@@ -1107,12 +1111,11 @@ function calcCAOTWeekly(dailyMap, startDate, endDate) {
       wkOT2  += Math.max(0, h - 12);
     });
 
-    // Apply CA weekly OT: hours over 40 in the week become 1.5x
-    var wkTotal = weekHrs.reduce(function(s,h){return s+h;}, 0);
-    var wkOver40 = Math.max(0, wkTotal - 40);
-    // Weekly OT comes out of regular hours
-    wkReg  = Math.max(0, wkReg - wkOver40);
-    wkOT15 = wkOT15 + wkOver40;
+    // CA weekly OT: only REG hours count toward 40-hr threshold
+    // Daily OT hours already classified don't trigger additional weekly OT
+    var wkRegOver40 = Math.max(0, wkReg - 40);
+    wkReg  = Math.max(0, wkReg - wkRegOver40);
+    wkOT15 = wkOT15 + wkRegOver40;
 
     reg  += wkReg;
     ot15 += wkOT15;
@@ -1134,29 +1137,19 @@ function cycleCats(){
 function catBudget(code){
   const cats=cycleCats();
   let b=cats[code]?cats[code].origBudget:0;
-  // Only positive adjustments (credits/increases) affect the budget ceiling
-  adjs.filter(a=>a.code===code&&(a.cycleId||'2025-26')===currentCycle&&a.amt>0).forEach(a=>b+=a.amt);
+  adjs.filter(a=>a.code===code&&(a.cycleId||'2025-26')===currentCycle).forEach(a=>b+=a.amt);
   return b;
 }
 function catSpent(code){
   var ppSpent = periods.filter(p=>(p.cycleId||'2025-26')===currentCycle&&p.code===code)
     .reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);
-  // Add negative manual adjustments (expenses that reduce available balance)
-  var expenseAdjs = adjs.filter(a=>a.code===code&&(a.cycleId||'2025-26')===currentCycle&&a.amt<0)
-    .reduce((s,a)=>s+Math.abs(a.amt),0);
-  ppSpent += expenseAdjs;
-  // Add NextStep fees: count complete months from nsFeeStart through end of last completed month
   if (code==='331') {
-    var feeStart = new Date(settings.nsFeeStart || '2025-12-01');
-    var cycleObj  = cycles.find(c=>c.id===currentCycle);
-    var cycleEnd  = cycleObj ? new Date(cycleObj.end) : new Date(2026,10,30);
-    var countTo   = TODAY < cycleEnd ? TODAY : cycleEnd;
-    var months = (countTo.getFullYear()-feeStart.getFullYear())*12 +
-                 (countTo.getMonth()-feeStart.getMonth());
-    if (countTo.getDate() >= feeStart.getDate()) months += 1;
-    months = Math.max(0, months);
-    var cycleMonths = (cycleEnd.getFullYear()-feeStart.getFullYear())*12+(cycleEnd.getMonth()-feeStart.getMonth())+1;
-    months = Math.min(months, cycleMonths);
+    // Add NextStep fees: count months from budget start through today
+    var budgetStart = new Date(2025,11,1); // Dec 1 2025
+    var now = TODAY;
+    var months = (now.getFullYear()-budgetStart.getFullYear())*12 +
+                 (now.getMonth()-budgetStart.getMonth()) + 1;
+    months = Math.max(0, Math.min(months, 24)); // cap at budget length
     ppSpent += +(settings.nsFee * months).toFixed(2);
   }
   return ppSpent;
@@ -1165,34 +1158,17 @@ function totalBudget(){return Object.keys(cycleCats()).reduce((s,c)=>s+catBudget
 function totalSpent(){
   var ppTotal = periods.filter(p=>(p.cycleId||'2025-26')===currentCycle)
     .reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);
-  // Add manual expense adjustments (negative amounts) for all codes
-  var expAdjs = adjs.filter(a=>(a.cycleId||'2025-26')===currentCycle&&a.amt<0)
-    .reduce((s,a)=>s+Math.abs(a.amt),0);
-  ppTotal += expAdjs;
   // Add NextStep fees (Code 331) - paid monthly, not via pay periods
-  var feeStart = new Date(settings.nsFeeStart || '2025-12-01');
-  var cycleObj  = cycles.find(c=>c.id===currentCycle);
-  var cycleEnd  = cycleObj ? new Date(cycleObj.end) : new Date(2026,10,30);
-  var countTo   = TODAY < cycleEnd ? TODAY : cycleEnd;
-  var months = (countTo.getFullYear()-feeStart.getFullYear())*12 +
-               (countTo.getMonth()-feeStart.getMonth());
-  if (countTo.getDate() >= feeStart.getDate()) months += 1;
-  months = Math.max(0, months);
-  var cycleMonths = (cycleEnd.getFullYear()-feeStart.getFullYear())*12+(cycleEnd.getMonth()-feeStart.getMonth())+1;
-  months = Math.min(months, cycleMonths);
+  var budgetStart = new Date(2025,11,1);
+  var months = (TODAY.getFullYear()-budgetStart.getFullYear())*12 +
+               (TODAY.getMonth()-budgetStart.getMonth()) + 1;
+  months = Math.max(0, Math.min(months, 24));
   var nsTotal = +(settings.nsFee * months).toFixed(2);
   return ppTotal + nsTotal;
 }
 function nsFeeSpent(){
   const start=new Date(settings.nsFeeStart||'2025-12-01');
-  var cycleObj  = cycles.find(c=>c.id===currentCycle);
-  var cycleEnd  = cycleObj ? new Date(cycleObj.end) : new Date(2026,10,30);
-  var countTo   = TODAY < cycleEnd ? TODAY : cycleEnd;
-  var m = (countTo.getFullYear()-start.getFullYear())*12+(countTo.getMonth()-start.getMonth());
-  if (countTo.getDate() >= start.getDate()) m += 1;
-  m = Math.max(0, m);
-  var cycleMonths = (cycleEnd.getFullYear()-start.getFullYear())*12+(cycleEnd.getMonth()-start.getMonth())+1;
-  m = Math.min(m, cycleMonths);
+  let m=(TODAY.getFullYear()-start.getFullYear())*12+(TODAY.getMonth()-start.getMonth())+1;
   return m*settings.nsFee;
 }
 
@@ -1230,7 +1206,7 @@ function switchTab(tab) {
   window.scrollTo({top:0, behavior:'smooth'});
 
   currentTab = tab;
-  const renders = {budget:renderBudget,periods:renderPeriods,clocklog:renderClockLog,projection:renderProjection,settings:renderSettings};
+  const renders = {budget:renderBudget,periods:renderPeriods,clocklog:renderClockLog,timesheet:renderTimesheet,projection:renderProjection,reconcile:renderReconcile,settings:renderSettings};
   if(renders[tab]) renders[tab]();
 }
 
@@ -1238,8 +1214,6 @@ function switchTab(tab) {
 // RENDER BUDGET
 // ══════════════════════════════════════
 function renderBudget() {
-  syncPeriodsFromClockLog();
-  refreshPeriodWages();
   const tb=totalBudget(), ts=totalSpent(), tr=tb-ts;
   const pct=tb>0?(ts/tb*100):0;
   const ppCount=periods.filter(p=>(p.cycleId||'2025-26')===currentCycle).length;
@@ -1299,187 +1273,15 @@ function renderBudget() {
   // NextStep
   const nsSpent=nsFeeSpent(), nsBudget=catBudget('331');
   const nsMos=Math.round(nsSpent/settings.nsFee);
-  // Compute total months in THIS cycle for the remaining calculation
-  var cycleObjBudget = cycles.find(c=>c.id===currentCycle);
-  var cycleEndBudget = cycleObjBudget ? new Date(cycleObjBudget.end) : new Date(2026,10,30);
-  var feeStartBudget = new Date(settings.nsFeeStart||'2025-12-01');
-  var totalCycleMonths = (cycleEndBudget.getFullYear()-feeStartBudget.getFullYear())*12+(cycleEndBudget.getMonth()-feeStartBudget.getMonth())+1;
-  var moRemaining = Math.max(0, totalCycleMonths - nsMos);
   document.getElementById('ns-fee-display').textContent=fmt(settings.nsFee)+'/mo';
-  document.getElementById('ns-months-paid').textContent=nsMos+' of '+totalCycleMonths+' months paid · '+moRemaining+' months remaining';
+  document.getElementById('ns-months-paid').textContent=nsMos+' months paid · '+(Math.floor(nsBudget/settings.nsFee)-nsMos)+' months budget remaining';
   document.getElementById('ns-summary').textContent=fmt(nsSpent)+' paid · '+fmt(Math.max(0,nsBudget-nsSpent))+' budget left';
 
-  // Manual Adjustments
+  // Adjustments
   const cyclAdjs=adjs.filter(a=>(a.cycleId||'2025-26')===currentCycle);
   document.getElementById('adj-tbody').innerHTML=cyclAdjs.length
-    ? cyclAdjs.map(a=>{
-        var signLabel = a.amt < 0 ? '<span style="color:var(--red);font-size:9px;font-weight:700;font-family:IBM Plex Mono,monospace;">EXPENSE</span>' : '<span style="color:var(--green);font-size:9px;font-weight:700;font-family:IBM Plex Mono,monospace;">CREDIT</span>';
-        return `<tr><td class="mono">${fmtDateUS(a.date)}</td><td><span class="badge ${BAR_BADGE[a.code]||'b320'}">${(a.code||'').toUpperCase()}</span></td><td class="${a.amt<=0?'red':'green'}">${a.amt<0?'-':'+'}${fmt(Math.abs(a.amt))} ${signLabel}</td><td style="font-size:12px;">${a.note||''}</td><td style="white-space:nowrap;"><button class="btn btn-ghost btn-sm" onclick="openEditAdjKp('${a.id}')" style="margin-right:4px;">✎ Edit</button><button class="btn btn-red btn-sm" onclick="deleteAdj('${a.id}')">✕</button></td></tr>`;
-      }).join('')
-    : '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:14px;">No manual adjustments. Use "+ Add" to record monthly expenses or manual corrections.</td></tr>';
-}
-// ══════════════════════════════════════
-// REFRESH PERIOD WAGES FROM CLOCK LOG
-// ══════════════════════════════════════
-function refreshPeriodWages() {
-  var changed = false;
-  periods.forEach(function(p) {
-    if (p.locked || p.confirmed) return; // never touch confirmed/locked periods
-    if ((p.cycleId || '2025-26') !== currentCycle) return;
-    var newGross = 0;
-    ALL_EMPS.forEach(function(e) {
-      newGross += calcEmpPeriodOT(p, e).gross;
-    });
-    newGross = +newGross.toFixed(2);
-    if (newGross === 0) return; // no clock log data yet, leave as-is
-    var taxR = taxRateForDate(p.label ? p.label.slice(0, 8) : todayStr());
-    var newTax = +(newGross * taxR).toFixed(2);
-    if (p.gross !== newGross || p.tax !== newTax) {
-      p.gross = newGross;
-      p.tax   = newTax;
-      changed = true;
-    }
-  });
-  if (changed) saveS('sdp_periods_v2', periods);
-}
-// ══════════════════════════════════════
-// AUTO-SYNC PERIODS FROM CLOCK LOG
-// ══════════════════════════════════════
-// Scans the timesheet for any entries that fall outside all existing period
-// date ranges and auto-creates period records for them, grouped by the
-// standard semi-monthly schedule (1st–15th, 16th–end of month).
-// Auto-created periods are marked autoGen:true so they can be identified.
-// Called before every renderPeriods() so the tab is always current.
-
-function parsePeriodDates(p) {
-  // Returns {start: Date, end: Date} or null
-  if (!p.label) return null;
-  var parts = p.label.split(' - ');
-  if (parts.length < 2) return null;
-  var pD = function(s) {
-    var m = s.trim().match(/(\d+)\/(\d+)\/(\d+)/);
-    if (!m) return null;
-    var yr = parseInt(m[3]); if (yr < 100) yr += 2000;
-    return new Date(yr, parseInt(m[1])-1, parseInt(m[2]));
-  };
-  var s = pD(parts[0]), e = pD(parts[1]);
-  return (s && e) ? {start: s, end: e} : null;
-}
-
-function syncPeriodsFromClockLog() {
-  var cyclePeriods = periods.filter(function(p){ return (p.cycleId||'2025-26') === currentCycle; });
-
-  // Build set of all ISO dates already covered by existing periods
-  var coveredDates = {};
-  cyclePeriods.forEach(function(p) {
-    var range = parsePeriodDates(p);
-    if (!range) return;
-    var d = new Date(range.start);
-    while (d <= range.end) {
-      coveredDates[isoFromDate(d)] = true;
-      d.setDate(d.getDate() + 1);
-    }
-  });
-
-  // Find all timesheet dates in this cycle that have entries for any active emp
-  var cycleObj = cycles.find(function(c){ return c.id === currentCycle; });
-  var cycleStart = cycleObj ? new Date(cycleObj.start) : new Date(2025, 11, 1);
-  var cycleEnd   = cycleObj ? new Date(cycleObj.end)   : new Date(2026, 10, 30);
-
-  var uncoveredByPeriod = {}; // YYYY-MM-DD → true, only dates with actual hours
-
-  Object.keys(timesheet).forEach(function(iso) {
-    if (coveredDates[iso]) return;                  // already in a period
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return;
-    if (d < cycleStart || d > cycleEnd) return;     // outside cycle
-    // Check that at least one active employee has hours on this date
-    var hasHours = ACTIVE_EMPS.some(function(e) {
-      var entry = timesheet[iso] && timesheet[iso][e];
-      return entry && ((entry.s1||0) + (entry.s2||0)) > 0;
-    });
-    if (hasHours) uncoveredByPeriod[iso] = true;
-  });
-
-  if (Object.keys(uncoveredByPeriod).length === 0) return; // nothing to do
-
-  // Group uncovered dates into semi-monthly buckets: {YYYY-M-half} → [iso, ...]
-  // half: 0 = 1st–15th, 1 = 16th–end
-  var buckets = {};
-  Object.keys(uncoveredByPeriod).forEach(function(iso) {
-    var d = new Date(iso);
-    var half = d.getDate() <= 15 ? 0 : 1;
-    var key  = d.getFullYear() + '-' + d.getMonth() + '-' + half;
-    if (!buckets[key]) buckets[key] = { year: d.getFullYear(), month: d.getMonth(), half: half };
-  });
-
-  // For each bucket, determine the canonical start/end and create a period if not duplicate
-  var added = false;
-  Object.keys(buckets).sort().forEach(function(key) {
-    var b    = buckets[key];
-    var yr   = b.year, mo = b.month, half = b.half;
-    var startDay = half === 0 ? 1 : 16;
-    var endDay   = half === 0 ? 15 : new Date(yr, mo + 1, 0).getDate(); // last day of month
-    var startD   = new Date(yr, mo, startDay);
-    var endD     = new Date(yr, mo, endDay);
-
-    // Make sure this bucket isn't already covered (edge case: partial overlap)
-    var startIso = isoFromDate(startD);
-    if (coveredDates[startIso]) return;
-
-    // Build label: M/D/YY - M/D/YY
-    var fmt2 = function(d) { return (d.getMonth()+1)+'/'+d.getDate()+'/'+(String(d.getFullYear()).slice(2)); };
-    var label = fmt2(startD) + ' - ' + fmt2(endD);
-
-    // Determine the default code from the most recent locked period, or 320
-    var lastCode = '320';
-    var sortedPs = cyclePeriods.slice().sort(function(a,b){
-      var ra = parsePeriodDates(a), rb = parsePeriodDates(b);
-      if (!ra || !rb) return 0;
-      return rb.start - ra.start;
-    });
-    if (sortedPs.length > 0 && sortedPs[0].code) lastCode = sortedPs[0].code;
-
-    var newId = 'pp' + (nextPpId++);
-    var newPp = {
-      id: newId, label: label, code: lastCode,
-      gross: 0, tax: 0,
-      locked: false, reconciled: false,
-      note: 'Auto-generated from Clock Log',
-      cycleId: currentCycle,
-      autoGen: true,
-      hrs: { cor: 0, mav: 0, raf: 0, nic: 0 }
-    };
-
-    // Pre-populate hrs from timesheet for display purposes
-    ACTIVE_EMPS.forEach(function(e) {
-      var total = 0;
-      var d2 = new Date(startD);
-      while (d2 <= endD) {
-        var iso2  = isoFromDate(d2);
-        var entry = timesheet[iso2] && timesheet[iso2][e];
-        if (entry) total += (entry.s1||0) + (entry.s2||0);
-        d2.setDate(d2.getDate() + 1);
-      }
-      newPp.hrs[e] = +total.toFixed(4);
-    });
-
-    periods.push(newPp);
-    saveS('sdp_periods_v2', periods);
-    if (syncReady) bgAddPeriod(newPp);
-    added = true;
-
-    // Mark these dates as now covered so subsequent buckets don't re-add
-    var dc = new Date(startD);
-    while (dc <= endD) { coveredDates[isoFromDate(dc)] = true; dc.setDate(dc.getDate()+1); }
-  });
-
-  if (added) {
-    // Recompute nextPpId in case it lagged
-    nextPpId = Math.max(nextPpId,
-      Math.max.apply(null, periods.map(function(p){ return parseInt(p.id.replace(/\D/g,''))||0; })) + 1
-    );
-  }
+    ? cyclAdjs.map(a=>`<tr><td class="mono">${fmtDateUS(a.date)}</td><td><span class="badge ${BAR_BADGE[a.code]||'b320'}">${(a.code||'').toUpperCase()}</span></td><td class="${a.amt>=0?'green':'red'}">${a.amt>=0?'+':''}${fmt(a.amt)}</td><td>${a.note||''}</td><td><button class="btn btn-red btn-sm" onclick="deleteAdj('${a.id}')">✕</button></td></tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:14px;">No adjustments</td></tr>';
 }
 
 // ══════════════════════════════════════
@@ -1488,77 +1290,48 @@ function syncPeriodsFromClockLog() {
 let selectedPpId = null;
 
 function renderPeriods() {
-  // Auto-detect clock log entries not yet covered by any period
-  syncPeriodsFromClockLog();
-
   const BADGE={'310':'b310','320':'b320','331':'b331','ite':'bite'};
   const cyclPeriods=periods
     .filter(p=>(p.cycleId||'2025-26')===currentCycle)
     .slice()
     .sort(function(a,b){
-      // Sort by period start date descending (most recent on top)
-      // Parse label like "5/1/26 - 5/15/26"
-      var parseLabel = function(lbl) {
-        if (!lbl) return 0;
-        var m = lbl.match(/^(\d+)\/(\d+)\/(\d+)/);
-        if (!m) {
-          var n = parseInt((lbl||'').replace(/\D/g,''))||0;
-          return n;
-        }
-        var yr = parseInt(m[3]); if(yr<100) yr+=2000;
-        return yr*10000+parseInt(m[1])*100+parseInt(m[2]);
-      };
-      return parseLabel(b.label) - parseLabel(a.label);
+      var na=parseInt((a.id||'').replace(/\D/g,''))||0;
+      var nb=parseInt((b.id||'').replace(/\D/g,''))||0;
+      return nb-na;
     });
+
+  // Populate rec dropdown
+  const recSel=document.getElementById('rec-history-tbody');
+  if(recSel){
+    recSel.innerHTML=cyclPeriods.map(p=>{
+      const total=(p.gross||0)+(p.tax||0);
+      return `<tr><td class="mono">${p.id}</td><td>${p.label}</td>
+        <td>${p.reconciled?'<span class="rec-badge">✓ Reconciled</span>':'<span style="color:var(--text3);font-size:11px;">Pending</span>'}</td>
+        <td><button class="btn btn-blue btn-sm" onclick="startManualRec('${p.id}')">Reconcile</button></td></tr>`;
+    }).join('');
+  }
 
   let runTotal=0;
   const rows=cyclPeriods.map(p=>{
-    // Compute live hours from clock log if available, else use stored hrs
-    var liveHrs = {};
-    ALL_EMPS.forEach(function(e){
-      var ot = calcEmpPeriodOT(p, e);
-      liveHrs[e] = ot.total;
-    });
-    // Compute live gross/tax from clock log
-    var liveGross = 0;
-    ALL_EMPS.forEach(function(e){
-      if(liveHrs[e]>0) liveGross += calcEmpPeriodOT(p,e).gross;
-    });
-    if(liveGross===0) liveGross = p.gross||0;
-    var taxRate = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
-    var liveTax = liveGross>0 ? +(liveGross*taxRate).toFixed(2) : (p.tax||0);
-    var total = +(liveGross + liveTax).toFixed(2);
+    const total=(p.gross||0)+(p.tax||0);
     runTotal+=total;
     const isSel=p.id===selectedPpId;
-    // Display hours: prefer clock log totals, fall back to stored
-    var displayHrs = function(e) {
-      var h = liveHrs[e]>0 ? liveHrs[e] : (p.hrs&&p.hrs[e]>0?p.hrs[e]:0);
-      return h>0 ? fmtH(h) : '—';
-    };
     return `<tr onclick="selectPeriodRow('${p.id}')" class="${isSel?'selected':''}">
       <td><span class="chevron" id="chev-${p.id}" style="color:var(--blue);font-size:14px;font-weight:700;transition:transform .2s;${isSel?'display:inline-block;transform:rotate(90deg)':''}">›</span></td>
       <td class="mono">${p.id}</td><td>${p.label}</td>
       <td><span class="badge ${BADGE[p.code]||'b320'}">${(p.code||'').toUpperCase()}</span></td>
-      <td class="mono">${displayHrs('cor')}</td>
-      <td class="mono">${displayHrs('mav')}</td>
-      <td class="mono">${displayHrs('raf')}</td>
-      <td class="mono">${displayHrs('nic')}</td>
-      <td class="mono">${fmt(liveGross)}</td>
-      <td class="mono">${fmt(liveTax)}</td>
+      <td class="mono">${fmtH(p.hrs?.cor||0)}</td>
+      <td class="mono">${fmtH(p.hrs?.mav||0)}</td>
+      <td class="mono">${fmtH(p.hrs?.raf||0)}</td>
+      <td class="mono">${fmtH(p.hrs?.nic||0)}</td>
+      <td class="mono">${fmt(p.gross||0)}</td>
+      <td class="mono">${fmt(p.tax||0)}</td>
       <td class="mono"><strong>${fmt(total)}</strong></td>
-      <td style="white-space:nowrap;">${(p.confirmed||p.locked)?'<span style="font-size:9px;background:var(--green-lt);color:var(--green-dk);padding:2px 8px;border-radius:4px;font-weight:700;border:1px solid #6ee7b7;font-family:IBM Plex Mono,monospace;">✓ Confirmed</span>':p.autoGen?'<span style="font-size:9px;background:#e0f0ff;color:var(--blue);padding:2px 8px;border-radius:4px;font-weight:700;font-family:IBM Plex Mono,monospace;cursor:pointer;" onclick="deletePeriod(\''+p.id+'\')" title="Auto-generated — click to remove">⚡ Auto</span>':'<div style="display:flex;gap:4px;"><button class="btn btn-green btn-sm" onclick="confirmPeriod(\''+p.id+'\')" title="Freeze wages as paid">✓</button><button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Del</button></div>'}</td>
+      <td>${p.locked?'<span class="locked">🔒 Locked</span>':p.reconciled?'<span class="rec-badge">✓ Rec</span>':'<button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Del</button>'}</td>
     </tr>`;
   });
-  const totalGross=cyclPeriods.reduce((s,p)=>{
-    var lg=0;ALL_EMPS.forEach(function(e){lg+=calcEmpPeriodOT(p,e).gross;});
-    if(lg===0)lg=p.gross||0;return s+lg;
-  },0);
-  const totalTax=cyclPeriods.reduce((s,p)=>{
-    var lg=0;ALL_EMPS.forEach(function(e){lg+=calcEmpPeriodOT(p,e).gross;});
-    if(lg===0)lg=p.gross||0;
-    var tr=taxRateForDate(p.label?p.label.slice(0,10):todayStr());
-    return s+(lg>0?+(lg*tr).toFixed(2):(p.tax||0));
-  },0);
+  const totalGross=cyclPeriods.reduce((s,p)=>s+(p.gross||0),0);
+  const totalTax  =cyclPeriods.reduce((s,p)=>s+(p.tax||0),0);
   rows.push(`<tr class="tot-row"><td colspan="8"><strong>TOTAL (${cyclPeriods.length} periods)</strong></td>
     <td class="mono">${fmt(totalGross)}</td><td class="mono">${fmt(totalTax)}</td>
     <td class="mono"><strong>${fmt(totalGross+totalTax)}</strong></td><td></td></tr>`);
@@ -1601,7 +1374,13 @@ function renderSidePanel(id) {
                                       p.locked ? '🔒 Locked' : 'Pending');
 
   var taxRate    = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
-  var activeEmps = ALL_EMPS.filter(function(e){ return p.hrs && p.hrs[e] > 0; });
+  // Include employee if stored hrs > 0 OR has clock log entries for this period
+  var activeEmps = ALL_EMPS.filter(function(e) {
+    if (p.hrs && p.hrs[e] > 0) return true;
+    // Also check clock log directly
+    var daily = getPeriodDailyHrs(p, e);
+    return daily.some(function(h){ return h > 0; });
+  });
   var totalGross = 0, totalTax = 0;
   var html = '';
 
@@ -1805,8 +1584,15 @@ function renderClockLog() {
         ' style="width:100%;text-align:center;background:'+bg+';border:none;font-family:IBM Plex Mono,monospace;font-size:18px;padding:12px 0;cursor:pointer;">'+ot2Lbl+'</button>';
       // Weekly OT check
       if (di === 6) {
-        var wkTotal = weekData[e].reduce(function(s,x){return s+x.total;},0);
-        if (wkTotal > 40) warnings.push((employees[e]||EMP_DEFS[e]).name+': '+wkTotal.toFixed(1)+' hrs week OT');
+        var wkTotal  = weekData[e].reduce(function(s,x){return s+x.total;},0);
+        var wkRegTot = weekData[e].reduce(function(s,x){return s+x.reg;},0);
+        var wkOT15t  = weekData[e].reduce(function(s,x){return s+x.ot15;},0);
+        var regOver40 = Math.max(0, wkRegTot - 40);
+        var totalOT   = wkOT15t + regOver40;
+        if (totalOT > 0 || wkTotal > 40) {
+          warnings.push((employees[e]||EMP_DEFS[e]).name+': '+wkTotal.toFixed(1)+
+            ' hrs total · '+totalOT.toFixed(2)+' hrs OT');
+        }
       }
     });
   });
@@ -1820,11 +1606,12 @@ function renderClockLog() {
     var wkOT15 = weekData[e].reduce(function(s,x){return s+x.ot15;},0);
     var wkOT2  = weekData[e].reduce(function(s,x){return s+x.ot2; },0);
     var wkTot  = weekData[e].reduce(function(s,x){return s+x.total;},0);
-    // Weekly OT: hours over 40 come from regular pool only
-    var wkOver40  = Math.max(0, wkTot - 40);
-    var adjWkReg  = Math.max(0, wkReg - wkOver40);
-    var adjWkOT15 = wkOT15 + wkOver40;
-    var hasOT     = adjWkOT15 > 0;
+    // CA weekly OT: only REG hours count toward the 40-hr weekly threshold
+    // Daily OT hours (already classified) do NOT trigger additional weekly OT
+    var wkRegOver40 = Math.max(0, wkReg - 40);
+    var adjWkReg    = Math.max(0, wkReg - wkRegOver40);
+    var adjWkOT15   = wkOT15 + wkRegOver40;
+    var hasOT       = adjWkOT15 > 0;
     grid += '<div class="clk-cell clk-tot" style="background:'+bg+';border-left:2px solid '+col.hdr+';">'+(adjWkReg>0?adjWkReg.toFixed(1):'—')+'</div>';
     grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(hasOT?'color:var(--orange);font-weight:700;':'')+'">'+(hasOT?'+'+adjWkOT15.toFixed(1):'—')+'</div>';
     grid += '<div class="clk-cell clk-tot" style="background:'+bg+';'+(wkOT2>0?'color:var(--red);font-weight:700;':'')+'">'+(wkOT2>0?wkOT2.toFixed(1):'—')+'</div>';
@@ -1852,8 +1639,8 @@ function renderClockLog() {
     var wkOT15 = weekData[e].reduce(function(s,x){return s+x.ot15;},0);
     var wkOT2  = weekData[e].reduce(function(s,x){return s+x.ot2; },0);
     var wkTot  = weekData[e].reduce(function(s,x){return s+x.total;},0);
-    // Weekly OT: only from regular hours, not from daily OT hours already classified
-    var wkOver40 = Math.max(0, wkTot - 40);
+    // CA weekly OT: only REG hours count toward the 40-hr threshold
+    var wkOver40 = Math.max(0, wkReg - 40);
     var adjReg   = Math.max(0, wkReg - wkOver40);
     var adjOT15  = wkOT15 + wkOver40;
     var gross = +(adjReg*rate.reg + adjOT15*rate.ot + wkOT2*rate.ot2).toFixed(2);
@@ -1896,312 +1683,232 @@ function renderTimesheet() {
 // RENDER PROJECTION
 // ══════════════════════════════════════
 function renderProjection() {
-  // ── 1. Time context ──────────────────────────────────────────────────────
-  var daysLeft = Math.max(0, Math.round((BUDGET_END - TODAY) / 86400000));
-  var taxR     = taxRateForDate(todayStr());
+  const daysLeft=Math.max(0,Math.round((BUDGET_END-TODAY)/86400000));
+  const weeksLeft=daysLeft/7;
+  document.getElementById('proj-days-label').textContent=daysLeft+' days remaining · as of '+fmtDateUS(todayStr());
 
-  // Working days remaining = daysLeft × (daysPerWeek / 7)
-  var workDaysLeft = Math.round(daysLeft * projInputs.daysPerWeek / 7);
+  // Alert
+  const tb=totalBudget(),ts=totalSpent();
+  const rem=tb-ts;
+  const alertEl=document.getElementById('proj-alert');
+  const pct310=catBudget('310')>0?catSpent('310')/catBudget('310')*100:0;
+  if(pct310>90) alertEl.innerHTML=`<div class="alert warn"><span>⚠</span> Code 310 ${pct310.toFixed(0)}% used — ${fmt(catBudget('310')-catSpent('310'))} remaining. Consider shifting future hours to Code 320.</div>`;
+  else alertEl.innerHTML=`<div class="alert good"><span>✓</span> Budget on track · ${daysLeft} days remaining to Nov 30, 2026</div>`;
 
-  // ── 2. NS fee remaining months (unpaid, forward-looking only) ────────────
-  var cycleObjP   = cycles.find(function(c){ return c.id === currentCycle; });
-  var cycleEndP   = cycleObjP ? new Date(cycleObjP.end) : new Date(2026, 10, 30);
-  var feeStartP   = new Date(settings.nsFeeStart || '2025-12-01');
-  // Total months in cycle
-  var totalCycMos = (cycleEndP.getFullYear()-feeStartP.getFullYear())*12 +
-                    (cycleEndP.getMonth()-feeStartP.getMonth()) + 1;
-  // Months already paid (same logic as nsFeeSpent)
-  var countToP    = TODAY < cycleEndP ? TODAY : cycleEndP;
-  var mosPaid     = (countToP.getFullYear()-feeStartP.getFullYear())*12 +
-                    (countToP.getMonth()-feeStartP.getMonth());
-  if (countToP.getDate() >= feeStartP.getDate()) mosPaid += 1;
-  mosPaid = Math.max(0, Math.min(mosPaid, totalCycMos));
-  var nsMonthsLeft = Math.max(0, totalCycMos - mosPaid);  // months NOT yet paid
-  var nsProj       = +(nsMonthsLeft * settings.nsFee).toFixed(2);
+  // Employee inputs
+  const empInputHtml=ACTIVE_EMPS.map(e=>{
+    const emp=employees[e]||EMP_DEFS[e];
+    const rate=getRate(e,todayStr());
+    const hrs=projInputs[e]||0;
+    const dailyCost=+(hrs*rate.reg*(1+taxRateForDate(todayStr()))).toFixed(2);
+    const useAdj=projInputs[e+'UseAdj'];
+    const adjRate=projInputs[e+'AdjRate'];
+    const adjDate=projInputs[e+'AdjDate'];
+    return `<div style="border-bottom:1px solid rgba(221,227,236,.5);padding-bottom:12px;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0 6px;">
+        <div class="emp-avatar" style="background:${emp.color||'#888'};">${emp.name?.[0]||'?'}</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">${emp.name}</div><div style="font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;">$${rate.reg}/hr REG · $${rate.ot}/hr OT · $${rate.ot2}/hr 2×</div></div>
+        <div><div class="tap-box" onclick="openProjHrsKp('${e}')">${hrs.toFixed(1)}</div><div style="font-size:9px;color:var(--text3);text-align:center;margin-top:3px;font-family:IBM Plex Mono,monospace;">hrs/day</div></div>
+        <div><span class="est-chip">~${fmt(dailyCost)}/day</span></div>
+      </div>
+      <div style="margin-left:46px;display:flex;flex-direction:column;gap:6px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;">
+          <input type="radio" name="${e}-rate" ${!useAdj?'checked':''} onchange="setProjRate('${e}',false)" style="accent-color:var(--blue);width:14px;height:14px;">
+          Use current rates ($${rate.reg}/hr)
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;">
+          <input type="radio" name="${e}-rate" ${useAdj?'checked':''} onchange="setProjRate('${e}',true)" style="accent-color:var(--blue);width:14px;height:14px;margin-top:2px;">
+          <div>
+            <div style="margin-bottom:5px;${useAdj?'font-weight:700;color:var(--text1);':''}">Use adjusted rate from:</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;${useAdj?'':'opacity:.4;pointer-events:none;'}">
+              <div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:90px;${useAdj?'border-color:var(--blue);background:#eff6ff;':''}" onclick="openProjDateKp('${e}')">${adjDate||'Pick date'}</div>
+              <span style="font-size:12px;color:var(--text3);">new base rate:</span>
+              <div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:70px;${useAdj?'border-color:var(--blue);background:#eff6ff;':''}" onclick="openProjRateKp('${e}')">${adjRate?'$'+adjRate:' Tap'}</div>
+              ${adjRate?`<span style="font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--green);font-weight:700;">OT: $${+(adjRate*1.5).toFixed(2)} · 2×: $${+(adjRate*2).toFixed(2)} ✓</span>`:''}
+            </div>
+          </div>
+        </label>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('proj-emp-inputs').innerHTML=empInputHtml;
 
-  // ── 3. Per-employee daily cost with correct OT pricing ───────────────────
-  // Daily hrs input → apply CA daily OT rules (>8h → 1.5×, >12h → 2×)
-  // We do NOT apply weekly OT here because the user sets average daily hours,
-  // not a full weekly schedule. A per-day OT model is the right approximation.
-  function empDailyCost(e) {
-    var hrs = projInputs[e] || 0;
-    if (hrs <= 0) return 0;
-    var useAdj  = projInputs[e + 'UseAdj'];
-    var adjRate = projInputs[e + 'AdjRate'];
-    var adjDate = projInputs[e + 'AdjDate'];
-    var rateObj;
-    if (useAdj && adjRate) {
-      // Blend: current rate until adjDate, adjusted rate after
-      var daysToAdj = adjDate ? Math.max(0, Math.round((new Date(adjDate) - TODAY) / 86400000)) : 0;
-      var daysAfter = Math.max(0, daysLeft - daysToAdj);
-      var curReg    = getRate(e, todayStr()).reg;
-      var blendedReg = (daysToAdj * curReg + daysAfter * adjRate) / Math.max(1, daysLeft);
-      rateObj = { reg: blendedReg, ot: blendedReg * 1.5, ot2: blendedReg * 2 };
+  // Days pills
+  document.getElementById('days-pills-wrap').innerHTML=[1,2,3,4,5,6,7].map(n=>
+    `<div class="day-pill${projInputs.daysPerWeek===n?' active':''}" onclick="setProjDays(${n})">${n}</div>`).join('');
+
+  // Split pills
+  const splits=[0,25,50,75,100];
+  document.getElementById('split-pills-wrap').innerHTML=splits.map(s=>
+    `<div class="split-pill${projInputs.splitPct310===s?(s===0?' active-320':' active-310'):' inactive'}" onclick="setProjSplit(${s})">${s}% 310</div>`).join('')+
+    `<div class="split-pill inactive" onclick="openCustomSplitKp()">Custom</div>`;
+
+  const pct310bar=projInputs.splitPct310, pct320bar=100-pct310bar;
+  document.getElementById('split-bar-wrap').innerHTML=`
+    <div style="height:10px;border-radius:100px;overflow:hidden;display:flex;">
+      <div style="width:${pct310bar}%;background:#3b82f6;transition:width .3s;"></div>
+      <div style="width:${pct320bar}%;background:#16a34a;transition:width .3s;"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;margin-top:3px;">
+      <span style="color:#1e40af;">310: ${pct310bar}%</span>
+      <span style="color:#065f46;">320: ${pct320bar}%</span>
+    </div>`;
+
+  // Projection calculations
+  const taxR=taxRateForDate(todayStr());
+  let dailyCostTotal=0;
+  ACTIVE_EMPS.forEach(e=>{
+    const hrs=projInputs[e]||0;
+    const useAdj=projInputs[e+'UseAdj'];
+    const adjRate=projInputs[e+'AdjRate'];
+    const adjDate=projInputs[e+'AdjDate'];
+    let rate;
+    if(useAdj&&adjRate){
+      // Simple avg: use current until adjDate, adjusted after
+      const daysToAdj=adjDate?Math.max(0,Math.round((new Date(adjDate)-TODAY)/86400000)):0;
+      const daysAfter=Math.max(0,daysLeft-daysToAdj);
+      const curRate=getRate(e,todayStr()).reg;
+      const blended=(daysToAdj*curRate+daysAfter*adjRate)/Math.max(1,daysLeft);
+      rate=blended;
     } else {
-      rateObj = getRate(e, todayStr());
+      rate=getRate(e,todayStr()).reg;
     }
-    // Apply daily OT rules
-    var reg  = Math.min(hrs, 8);
-    var ot15 = Math.max(0, Math.min(hrs, 12) - 8);
-    var ot2  = Math.max(0, hrs - 12);
-    var grossPerDay = reg * rateObj.reg + ot15 * rateObj.ot + ot2 * rateObj.ot2;
-    return +(grossPerDay * (1 + taxR)).toFixed(4);
-  }
+    dailyCostTotal+=hrs*rate*(1+taxR);
+  });
+  dailyCostTotal=+dailyCostTotal.toFixed(2);
+  const weeklyCost=+(dailyCostTotal*projInputs.daysPerWeek).toFixed(2);
+  const nsMonths=+(daysLeft/30.44).toFixed(1);
+  const projWageTotal=+(dailyCostTotal*projInputs.daysPerWeek*(weeksLeft)).toFixed(2);
+  const to310=+(projWageTotal*projInputs.splitPct310/100).toFixed(2);
+  const to320=+(projWageTotal*(100-projInputs.splitPct310)/100).toFixed(2);
+  const nsProj=+(nsMonths*settings.nsFee).toFixed(2);
+  const projTotal=+(projWageTotal+nsProj).toFixed(2);
+  const confirmedSpent=totalSpent();
+  const projGrandTotal=+(confirmedSpent+projTotal).toFixed(2);
+  const projBalance=+(totalBudget()-projGrandTotal).toFixed(2);
 
-  var dailyCostTotal = 0;
-  ACTIVE_EMPS.forEach(function(e){ dailyCostTotal += empDailyCost(e); });
-  dailyCostTotal = +dailyCostTotal.toFixed(2);
-  var weeklyCost    = +(dailyCostTotal * projInputs.daysPerWeek).toFixed(2);
-  var projWageTotal = +(dailyCostTotal * workDaysLeft).toFixed(2);
-  var to310 = +(projWageTotal * projInputs.splitPct310 / 100).toFixed(2);
-  var to320 = +(projWageTotal * (100 - projInputs.splitPct310) / 100).toFixed(2);
+  document.getElementById('proj-results').innerHTML=`
+    <div class="result-item"><div class="result-lbl">Daily labor cost (incl. tax)</div><div class="result-val big blue">${fmt(dailyCostTotal)}</div></div>
+    <div class="result-item"><div class="result-lbl">Weekly cost (${projInputs.daysPerWeek} days)</div><div class="result-val big">${fmt(weeklyCost)}</div></div>
+    <div class="result-item"><div class="result-lbl">NextStep <span style="font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--text3);">${nsMonths} mo × $${settings.nsFee}</span></div><div class="result-val orange">${fmt(nsProj)}</div></div>
+    <div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:3px;"></span> To Code 310 (${projInputs.splitPct310}%)</div><div class="result-val" style="color:${to310>0?'#1e40af':'var(--text3)'};">${fmt(to310)}</div></div>
+    <div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:3px;"></span> To Code 320 (${100-projInputs.splitPct310}%)</div><div class="result-val green">${fmt(to320)}</div></div>
+    <div class="result-item"><div class="result-lbl">Days remaining to Nov 30</div><div class="result-val">${daysLeft} days</div></div>
+    <div style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:IBM Plex Mono,monospace;"><span>Confirmed spent</span><span style="color:var(--blue);font-weight:700;">${fmt(confirmedSpent)}</span></div>
+      <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;"><div style="height:100%;border-radius:100px;background:var(--blue);width:${Math.min(100,(confirmedSpent/totalBudget()*100)).toFixed(1)}%;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin:6px 0 4px;font-family:IBM Plex Mono,monospace;"><span>Confirmed + projected</span><span style="color:var(--green);font-weight:700;">${fmt(projGrandTotal)}</span></div>
+      <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;display:flex;">
+        <div style="height:100%;background:var(--blue);width:${Math.min(100,(confirmedSpent/totalBudget()*100)).toFixed(1)}%;border-radius:100px 0 0 100px;"></div>
+        <div style="height:100%;background:var(--green);opacity:.65;width:${Math.min(100,(projTotal/totalBudget()*100)).toFixed(1)}%;border-radius:0 100px 100px 0;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;font-family:IBM Plex Mono,monospace;">
+        <span>■ Confirmed   ■ Projected</span>
+        <span>Balance at Nov 30: <strong style="color:${projBalance>=0?'var(--green)':'var(--red)'};">${fmt(projBalance)}</strong></span>
+      </div>
+    </div>`;
 
-  // ── 4. Grand total: confirmed spent (already includes NS paid) + future wages + future NS ──
-  var confirmedSpent  = totalSpent();   // already includes NS months paid to date
-  var projFutureTotal = +(projWageTotal + nsProj).toFixed(2);
-  var projGrandTotal  = +(confirmedSpent + projFutureTotal).toFixed(2);
-  var projBalance     = +(totalBudget() - projGrandTotal).toFixed(2);
-
-  // ── 5. Update hint line ──────────────────────────────────────────────────
-  var nsHint = document.getElementById('proj-ns-hint');
-  if (nsHint) nsHint.textContent = 'NextStep ' + fmt(settings.nsFee) + '/mo → Code 331 always. ITE billed separately.';
-
-  document.getElementById('proj-days-label').textContent =
-    daysLeft + ' calendar days · ~' + workDaysLeft + ' working days remaining · as of ' + fmtDateUS(todayStr());
-
-  // ── 6. Alert ────────────────────────────────────────────────────────────
-  var tb       = totalBudget();
-  var alertEl  = document.getElementById('proj-alert');
-  var pct310   = catBudget('310') > 0 ? catSpent('310') / catBudget('310') * 100 : 0;
-  var cycleEnd_label = cycleObjP ? fmtDateUS(cycleObjP.end) : 'Nov 30, 2026';
-  if (projBalance < 0)
-    alertEl.innerHTML = '<div class="alert danger"><span>⚠</span> At current schedule, projected total ' + fmt(projGrandTotal) + ' exceeds budget ' + fmt(tb) + ' by ' + fmt(Math.abs(projBalance)) + '.</div>';
-  else if (pct310 > 90)
-    alertEl.innerHTML = '<div class="alert warn"><span>⚠</span> Code 310 ' + pct310.toFixed(0) + '% used — ' + fmt(catBudget('310') - catSpent('310')) + ' remaining. Consider shifting future hours to Code 320.</div>';
-  else
-    alertEl.innerHTML = '<div class="alert good"><span>✓</span> Budget on track · ' + daysLeft + ' days remaining to ' + cycleEnd_label + ' · Projected balance: ' + fmt(projBalance) + '</div>';
-
-  // ── 7. Employee inputs panel ─────────────────────────────────────────────
-  var empInputHtml = ACTIVE_EMPS.map(function(e) {
-    var emp     = employees[e] || EMP_DEFS[e];
-    var rate    = getRate(e, todayStr());
-    var hrs     = projInputs[e] || 0;
-    var dc      = empDailyCost(e);
-    var useAdj  = projInputs[e + 'UseAdj'];
-    var adjRate = projInputs[e + 'AdjRate'];
-    var adjDate = projInputs[e + 'AdjDate'];
-    // Show OT breakdown hint if hrs > 8
-    var otNote = '';
-    if (hrs > 12) otNote = '<span style="font-size:9px;color:var(--red);font-family:IBM Plex Mono,monospace;"> · ' + (hrs-12).toFixed(1) + 'h @2×</span>';
-    else if (hrs > 8) otNote = '<span style="font-size:9px;color:var(--orange);font-family:IBM Plex Mono,monospace;"> · ' + (hrs-8).toFixed(1) + 'h @1.5×</span>';
-    return '<div style="border-bottom:1px solid rgba(221,227,236,.5);padding-bottom:12px;margin-bottom:4px;">' +
-      '<div style="display:flex;align-items:center;gap:12px;padding:10px 0 6px;">' +
-        '<div class="emp-avatar" style="background:' + (emp.color||'#888') + ';">' + ((emp.name||'?')[0]) + '</div>' +
-        '<div style="flex:1;"><div style="font-size:13px;font-weight:700;">' + emp.name + '</div>' +
-          '<div style="font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;">$' + rate.reg + '/hr REG · $' + rate.ot + '/hr OT · $' + rate.ot2 + '/hr 2×</div></div>' +
-        '<div><div class="tap-box" onclick="openProjHrsKp(\'' + e + '\')">' + hrs.toFixed(1) + '</div>' +
-          '<div style="font-size:9px;color:var(--text3);text-align:center;margin-top:3px;font-family:IBM Plex Mono,monospace;">hrs/day</div></div>' +
-        '<div><span class="est-chip">~' + fmt(dc) + '/day</span>' + otNote + '</div>' +
-      '</div>' +
-      '<div style="margin-left:46px;display:flex;flex-direction:column;gap:6px;">' +
-        '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;">' +
-          '<input type="radio" name="' + e + '-rate" ' + (!useAdj?'checked':'') + ' onchange="setProjRate(\'' + e + '\',false)" style="accent-color:var(--blue);width:14px;height:14px;">' +
-          'Use current rates ($' + rate.reg + '/hr)' +
-        '</label>' +
-        '<label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;">' +
-          '<input type="radio" name="' + e + '-rate" ' + (useAdj?'checked':'') + ' onchange="setProjRate(\'' + e + '\',true)" style="accent-color:var(--blue);width:14px;height:14px;margin-top:2px;">' +
-          '<div>' +
-            '<div style="margin-bottom:5px;' + (useAdj?'font-weight:700;color:var(--text1);':'') + '">Use adjusted rate from:</div>' +
-            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;' + (useAdj?'':'opacity:.4;pointer-events:none;') + '">' +
-              '<div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:90px;' + (useAdj?'border-color:var(--blue);background:#eff6ff;':'') + '" onclick="openProjDateKp(\'' + e + '\')">' + (adjDate||'Pick date') + '</div>' +
-              '<span style="font-size:12px;color:var(--text3);">new base rate:</span>' +
-              '<div class="tap-box" style="font-size:14px;padding:6px 10px;min-width:70px;' + (useAdj?'border-color:var(--blue);background:#eff6ff;':'') + '" onclick="openProjRateKp(\'' + e + '\')">' + (adjRate?'$'+adjRate:'Tap') + '</div>' +
-              (adjRate ? '<span style="font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--green);font-weight:700;">OT: $' + +(adjRate*1.5).toFixed(2) + ' · 2×: $' + +(adjRate*2).toFixed(2) + ' ✓</span>' : '') +
-            '</div>' +
-          '</div>' +
-        '</label>' +
-      '</div>' +
-    '</div>';
+  // Balance cards
+  const cats=cycleCats();
+  const balCards=Object.entries(cats).map(([code,cat])=>{
+    const bud=catBudget(code),spent=catSpent(code);
+    const projSpend=code==='310'?to310:code==='320'?to320:code==='331'?nsProj:0;
+    const projBal=+(bud-spent-projSpend).toFixed(2);
+    const pu=bud>0?Math.min(100,((spent+projSpend)/bud*100)):0;
+    const colors={'310':'#3b82f6','320':'#16a34a','331':'#f59e0b','ite':'#ef4444'};
+    return `<div class="bal-card">
+      <span class="badge b${code}" style="margin-bottom:8px;display:inline-block;">${code.toUpperCase()}</span>
+      <div style="font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;margin-bottom:6px;">Projected balance at Nov 30, 2026</div>
+      <div style="font-family:IBM Plex Mono,monospace;font-size:28px;font-weight:500;color:${projBal>=0?'var(--green)':'var(--red)'};margin-bottom:10px;">${fmt(projBal)}</div>
+      <div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;"><div style="width:${pu.toFixed(1)}%;height:100%;border-radius:100px;background:${colors[code]||'#888'};"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;font-family:IBM Plex Mono,monospace;">
+        <span>Budget: ${fmt(bud)}</span><span>${pu.toFixed(1)}% used (proj.)</span>
+      </div>
+    </div>`;
   }).join('');
-  document.getElementById('proj-emp-inputs').innerHTML = empInputHtml;
+  document.getElementById('proj-balance-cards').innerHTML=balCards;
 
-  // ── 8. Days pills ────────────────────────────────────────────────────────
-  document.getElementById('days-pills-wrap').innerHTML = [1,2,3,4,5,6,7].map(function(n) {
-    return '<div class="day-pill' + (projInputs.daysPerWeek===n?' active':'') + '" onclick="setProjDays(' + n + ')">' + n + '</div>';
-  }).join('');
-
-  // ── 9. Split pills ───────────────────────────────────────────────────────
-  var splits = [0,25,50,75,100];
-  document.getElementById('split-pills-wrap').innerHTML = splits.map(function(s) {
-    var cls = projInputs.splitPct310===s ? (s===0?' active-320':' active-310') : ' inactive';
-    return '<div class="split-pill' + cls + '" onclick="setProjSplit(' + s + ')">' + s + '% 310</div>';
-  }).join('') + '<div class="split-pill inactive" onclick="openCustomSplitKp()">Custom</div>';
-
-  var p310bar = projInputs.splitPct310, p320bar = 100 - p310bar;
-  document.getElementById('split-bar-wrap').innerHTML =
-    '<div style="height:10px;border-radius:100px;overflow:hidden;display:flex;">' +
-      '<div style="width:' + p310bar + '%;background:#3b82f6;transition:width .3s;"></div>' +
-      '<div style="width:' + p320bar + '%;background:#16a34a;transition:width .3s;"></div>' +
-    '</div>' +
-    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;margin-top:3px;">' +
-      '<span style="color:#1e40af;">310: ' + p310bar + '%</span>' +
-      '<span style="color:#065f46;">320: ' + p320bar + '%</span>' +
-    '</div>';
-
-  // ── 10. Results panel ────────────────────────────────────────────────────
-  var tb2 = totalBudget();
-  document.getElementById('proj-results').innerHTML =
-    '<div class="result-item"><div class="result-lbl">Daily labor cost (all employees, incl. tax + OT)</div><div class="result-val big blue">' + fmt(dailyCostTotal) + '</div></div>' +
-    '<div class="result-item"><div class="result-lbl">Weekly cost (' + projInputs.daysPerWeek + ' days/wk)</div><div class="result-val big">' + fmt(weeklyCost) + '</div></div>' +
-    '<div class="result-item"><div class="result-lbl">Projected wages · ' + workDaysLeft + ' working days</div><div class="result-val big">' + fmt(projWageTotal) + '</div></div>' +
-    '<div class="result-item"><div class="result-lbl">NextStep remaining <span style="font-size:10px;font-family:IBM Plex Mono,monospace;color:var(--text3);">' + nsMonthsLeft + ' mo × ' + fmt(settings.nsFee) + '</span></div><div class="result-val orange">' + fmt(nsProj) + '</div></div>' +
-    '<div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#3b82f6;border-radius:3px;"></span> Projected wages → Code 310 (' + projInputs.splitPct310 + '%)</div><div class="result-val" style="color:' + (to310>0?'#1e40af':'var(--text3)') + ';">' + fmt(to310) + '</div></div>' +
-    '<div class="result-item"><div class="result-lbl"><span style="display:inline-block;width:10px;height:10px;background:#16a34a;border-radius:3px;"></span> Projected wages → Code 320 (' + (100-projInputs.splitPct310) + '%)</div><div class="result-val green">' + fmt(to320) + '</div></div>' +
-    '<div style="height:1px;background:var(--gray-bdr);margin:10px 0;"></div>' +
-    '<div style="margin-top:8px;">' +
-      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px;font-family:IBM Plex Mono,monospace;">' +
-        '<span>Past spending (wages + NS fees paid)</span>' +
-        '<span style="color:var(--blue);font-weight:700;">' + fmt(confirmedSpent) + '</span>' +
-      '</div>' +
-      '<div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;">' +
-        '<div style="height:100%;border-radius:100px;background:var(--blue);width:' + Math.min(100, (confirmedSpent/tb2*100)).toFixed(1) + '%;"></div>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin:6px 0 4px;font-family:IBM Plex Mono,monospace;">' +
-        '<span>Past + projected future (' + fmt(projFutureTotal) + ' more)</span>' +
-        '<span style="color:' + (projGrandTotal>tb2?'var(--red)':'var(--green)') + ';font-weight:700;">' + fmt(projGrandTotal) + '</span>' +
-      '</div>' +
-      '<div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;display:flex;">' +
-        '<div style="height:100%;background:var(--blue);width:' + Math.min(100, (confirmedSpent/tb2*100)).toFixed(1) + '%;border-radius:100px 0 0 100px;"></div>' +
-        '<div style="height:100%;background:' + (projBalance<0?'var(--red)':'var(--green)') + ';opacity:.65;width:' + Math.min(100, (projFutureTotal/tb2*100)).toFixed(1) + '%;border-radius:0 100px 100px 0;"></div>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;font-family:IBM Plex Mono,monospace;">' +
-        '<span>■ Past actual &nbsp; ■ Projected future</span>' +
-        '<span>Balance at cycle end: <strong style="color:' + (projBalance>=0?'var(--green)':'var(--red)') + ';">' + fmt(projBalance) + '</strong></span>' +
-      '</div>' +
-    '</div>';
-
-  // ── 11. Per-code balance cards ────────────────────────────────────────────
-  var cats = cycleCats();
-  var colors = {'310':'#3b82f6','320':'#16a34a','331':'#f59e0b','ite':'#ef4444'};
-  var balCards = Object.entries(cats).map(function(entry) {
-    var code = entry[0], cat = entry[1];
-    var bud  = catBudget(code);
-    var alreadySpent = catSpent(code);   // past wages + NS paid + expense adjs for this code
-    // Future projected spend for this code
-    var futureSpend;
-    if      (code === '310') futureSpend = to310;
-    else if (code === '320') futureSpend = to320;
-    else if (code === '331') futureSpend = nsProj;  // only UNPAID months
-    else                     futureSpend = 0;
-    var projBal  = +(bud - alreadySpent - futureSpend).toFixed(2);
-    var pu       = bud > 0 ? Math.min(100, ((alreadySpent + futureSpend) / bud * 100)) : 0;
-    return '<div class="bal-card">' +
-      '<span class="badge b' + code + '" style="margin-bottom:8px;display:inline-block;">' + code.toUpperCase() + '</span>' +
-      '<div style="font-size:10px;color:var(--text3);font-family:IBM Plex Mono,monospace;margin-bottom:2px;">Projected balance at cycle end</div>' +
-      '<div style="font-size:9px;color:var(--text3);font-family:IBM Plex Mono,monospace;margin-bottom:6px;">Spent: ' + fmt(alreadySpent) + ' · Future: ' + fmt(futureSpend) + '</div>' +
-      '<div style="font-family:IBM Plex Mono,monospace;font-size:28px;font-weight:500;color:' + (projBal>=0?'var(--green)':'var(--red)') + ';margin-bottom:10px;">' + fmt(projBal) + '</div>' +
-      '<div style="background:#e4eaf2;border-radius:100px;height:8px;overflow:hidden;">' +
-        '<div style="width:' + pu.toFixed(1) + '%;height:100%;border-radius:100px;background:' + (colors[code]||'#888') + ';"></div>' +
-      '</div>' +
-      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;font-family:IBM Plex Mono,monospace;">' +
-        '<span>Budget: ' + fmt(bud) + '</span>' +
-        '<span>' + pu.toFixed(1) + '% used (proj.)</span>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-  document.getElementById('proj-balance-cards').innerHTML = balCards;
-
-  // ── 12. Chart ────────────────────────────────────────────────────────────
-  renderProjChart(confirmedSpent, dailyCostTotal, projInputs.daysPerWeek, projInputs.splitPct310, nsProj, nsMonthsLeft);
+  // Chart — monthly projection
+  renderProjChart(confirmedSpent, dailyCostTotal, projInputs.daysPerWeek, projInputs.splitPct310, nsProj, nsMonths);
 }
 
-function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsRemaining, nsMonthsLeft) {
+function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsTotal, nsMonths) {
   var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-  // Build month list from Dec 2025 through cycle end (Nov 2026)
-  var cycleObjC = cycles.find(function(c){ return c.id === currentCycle; });
-  var cycleStartC = cycleObjC ? new Date(cycleObjC.start) : new Date(2025, 11, 1);
-  var cycleEndC   = cycleObjC ? new Date(cycleObjC.end)   : new Date(2026, 10, 30);
+  var startMonth = TODAY.getMonth();
+  var startYear  = TODAY.getFullYear();
+  var endMonth   = 10; // Nov
+  var endYear    = 2026;
 
   var months = [];
-  var cy = cycleStartC.getFullYear(), cm = cycleStartC.getMonth();
-  var ey = cycleEndC.getFullYear(),   em = cycleEndC.getMonth();
-  while (cy < ey || (cy === ey && cm <= em)) {
-    months.push({ y: cy, m: cm, label: MONTH_NAMES[cm] + (cy !== TODAY.getFullYear() ? '\'' + String(cy).slice(2) : '') });
-    cm++; if (cm > 11) { cm = 0; cy++; }
+  var y = startYear, m = startMonth;
+  while (y < endYear || (y === endYear && m <= endMonth)) {
+    months.push({y:y, m:m, label: MONTH_NAMES[m] + (y !== startYear ? '\'' + String(y).slice(2) : '')});
+    m++; if (m > 11) { m = 0; y++; }
   }
 
   var monthlyWage = +(dailyCost * daysPerWk * 4.33).toFixed(2);
   var monthlyNS   = +settings.nsFee.toFixed(2);
   var projMonthly = +(monthlyWage + monthlyNS).toFixed(2);
 
-  // Actual spend by month from pay periods — use YYYY-M key derived from label
+  // Calculate actual monthly spend from confirmed periods
   var actualByMonth = {};
   periods.filter(function(p){ return (p.cycleId||'2025-26') === currentCycle; }).forEach(function(p) {
-    if (!p.label) return;
-    // Label format: "M/D/YY - M/D/YY"  e.g. "12/1/25 - 12/15/25"
-    var mMatch = p.label.match(/^(\d+)\/(\d+)\/(\d+)/);
-    if (!mMatch) return;
-    var mo = parseInt(mMatch[1]) - 1; // 0-indexed month
-    var yr = parseInt(mMatch[3]);
-    if (yr < 100) yr += 2000;
-    var mkey = yr + '-' + mo;
-    if (!actualByMonth[mkey]) actualByMonth[mkey] = 0;
-    actualByMonth[mkey] += (p.gross || 0) + (p.tax || 0);
-  });
-  // Also add NS fees to past months
-  var feeStartC = new Date(settings.nsFeeStart || '2025-12-01');
-  months.forEach(function(mo) {
-    var mkey = mo.y + '-' + mo.m;
-    var moDate = new Date(mo.y, mo.m, 1);
-    var isPast = (mo.y < TODAY.getFullYear()) || (mo.y === TODAY.getFullYear() && mo.m < TODAY.getMonth());
-    if (isPast && moDate >= feeStartC) {
+    var key = p.label ? p.label.slice(-5,-3) + '/20' + p.label.slice(-2) : '';
+    // Parse month from label e.g. "4/16–4/30/26" -> month 4
+    var mMatch = p.label ? p.label.match(/^(\d+)\//) : null;
+    if (mMatch) {
+      var mo = parseInt(mMatch[1]) - 1; // 0-indexed
+      var yr = 2025 + (mo < 11 ? 1 : 0); // rough year
+      var mkey = yr + '-' + mo;
       if (!actualByMonth[mkey]) actualByMonth[mkey] = 0;
-      actualByMonth[mkey] += settings.nsFee;
+      actualByMonth[mkey] += (p.gross||0) + (p.tax||0);
     }
   });
 
+  // Average actual monthly spend
   var actualVals = Object.values(actualByMonth).filter(function(v){ return v > 0; });
   var avgActual  = actualVals.length ? actualVals.reduce(function(s,v){ return s+v; },0) / actualVals.length : 0;
 
-  var barData = months.map(function(mo) {
+  var barData = months.map(function(mo, i) {
     var isPast = (mo.y < TODAY.getFullYear()) || (mo.y === TODAY.getFullYear() && mo.m < TODAY.getMonth());
     var isCurrentMonth = mo.m === TODAY.getMonth() && mo.y === TODAY.getFullYear();
-    var mkey   = mo.y + '-' + mo.m;
+    var mkey = mo.y + '-' + mo.m;
     var actual = actualByMonth[mkey] || 0;
     var wage310 = isPast ? 0 : +(monthlyWage * (split310/100)).toFixed(2);
     var wage320 = isPast ? 0 : +(monthlyWage * ((100-split310)/100)).toFixed(2);
-    var ns331   = isPast ? 0 : monthlyNS;
     var total   = isPast ? actual : projMonthly;
-    return { mo: mo, isPast: isPast, isCurrentMonth: isCurrentMonth, actual: actual, wage310: wage310, wage320: wage320, ns331: ns331, total: total };
+    return { mo:mo, isPast:isPast, isCurrentMonth:isCurrentMonth, actual:actual, wage310:wage310, wage320:wage320, ns331:monthlyNS, total:total };
   });
 
-  var maxVal = Math.max.apply(null, barData.map(function(b){ return b.total; }).concat([avgActual||0, projMonthly||0, 1]));
-  maxVal = maxVal * 1.15;
+  var maxVal = Math.max.apply(null, barData.map(function(b){ return b.total; }).concat([avgActual, projMonthly]));
+  maxVal = maxVal * 1.15; // 15% headroom for lines
 
+  // Y axis steps
   var step = maxVal > 16000 ? 4000 : maxVal > 8000 ? 2000 : 1000;
   var ySteps = [];
   for (var v = 0; v <= maxVal; v += step) ySteps.push(v);
 
+  // Line positions as % of chart height (180px)
   var chartH = 180;
-  var avgPct  = avgActual  > 0 ? Math.min(100, (avgActual  / maxVal) * 100) : 0;
-  var projPct = projMonthly > 0 ? Math.min(100, (projMonthly / maxVal) * 100) : 0;
-  var avgY    = chartH - (avgPct  / 100 * chartH);
-  var projY   = chartH - (projPct / 100 * chartH);
+  var avgPct    = avgActual  > 0 ? Math.min(100, (avgActual  / maxVal) * 100) : 0;
+  var projPct   = projMonthly > 0 ? Math.min(100, (projMonthly / maxVal) * 100) : 0;
+  var avgY      = chartH - (avgPct  / 100 * chartH);
+  var projY     = chartH - (projPct / 100 * chartH);
 
+  // Y axis
   document.getElementById('chart-y-axis').innerHTML = ySteps.slice().reverse().map(function(v) {
     return '<div style="font-size:9px;color:var(--text3);font-family:\'IBM Plex Mono\',monospace;text-align:right;">' +
       (v >= 1000 ? '$' + (v/1000).toFixed(0) + 'k' : '$' + v) + '</div>';
   }).join('');
 
+  // Build bars with SVG overlay for lines
   var barsHtml = barData.map(function(b) {
-    var h310  = b.isPast ? 0                                    : Math.round((b.wage310 / maxVal) * chartH);
-    var h320  = b.isPast ? Math.round((b.actual / maxVal) * chartH) : Math.round((b.wage320 / maxVal) * chartH);
-    var h331  = b.isPast ? 0                                    : Math.round((b.ns331   / maxVal) * chartH);
+    var h310 = b.isPast ? 0 : Math.round((b.wage310 / maxVal) * chartH);
+    var h320 = b.isPast ? Math.round((b.actual / maxVal) * chartH) : Math.round((b.wage320 / maxVal) * chartH);
+    var h331 = b.isPast ? 0 : Math.round((b.ns331 / maxVal) * chartH);
     var totalH = b.isPast ? h320 : h310 + h320 + h331;
     var opacity = b.isPast ? '1' : '0.65';
     var lbl = b.total >= 1000 ? '$' + (b.total/1000).toFixed(1) + 'k' : '$' + Math.round(b.total);
-    var monthLbl = b.mo.label + (b.isCurrentMonth ? '◆' : '');
     return '<div class="bar-group">' +
       '<div class="bar-amt" style="color:var(--text3);">' + lbl + '</div>' +
       '<div class="bar-stack" style="height:' + totalH + 'px;opacity:' + opacity + ';">' +
@@ -2209,7 +1916,7 @@ function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsRemai
         '<div class="bar-seg" style="height:' + h310 + 'px;background:var(--c310);"></div>' +
         '<div class="bar-seg" style="flex:1;background:var(--c320);"></div>' +
       '</div>' +
-      '<div class="bar-month" style="font-family:\'IBM Plex Mono\',monospace;">' + monthLbl + '</div>' +
+      '<div class="bar-month" style="font-family:\'IBM Plex Mono\',monospace;">' + b.mo.label + (b.isCurrentMonth ? '(r)' : '') + '</div>' +
     '</div>';
   }).join('');
 
@@ -2217,8 +1924,10 @@ function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsRemai
   chartEl.innerHTML = barsHtml;
   chartEl.style.position = 'relative';
 
+  // Add SVG lines overlay
   var svgW = chartEl.offsetWidth || 600;
   var svg = '<svg style="position:absolute;top:0;left:0;width:100%;height:' + chartH + 'px;pointer-events:none;overflow:visible;" viewBox="0 0 ' + svgW + ' ' + chartH + '" preserveAspectRatio="none">';
+
   if (avgActual > 0) {
     svg += '<line x1="0" y1="' + avgY + '" x2="' + svgW + '" y2="' + avgY + '" stroke="#0077b6" stroke-width="2" stroke-dasharray="6,4" opacity="0.8"/>';
     svg += '<text x="4" y="' + (avgY - 4) + '" font-size="9" fill="#0077b6" font-family="IBM Plex Mono, monospace" font-weight="600">Avg actual: $' + Math.round(avgActual/1000*10)/10 + 'k/mo</text>';
@@ -2229,6 +1938,17 @@ function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsRemai
   }
   svg += '</svg>';
   chartEl.innerHTML += svg;
+
+  // Update legend
+  var legendEl = chartEl.parentElement.querySelector('.chart-legend-extra');
+  if (!legendEl) {
+    var leg = chartEl.parentElement.querySelector('.chart-legend');
+    if (leg) {
+      leg.innerHTML = leg.innerHTML +
+        '<span style="display:inline-flex;align-items:center;gap:4px;"><svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#0077b6" stroke-width="2" stroke-dasharray="5,3"/></svg> Avg actual</span>' +
+        '<span style="display:inline-flex;align-items:center;gap:4px;"><svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#e07b00" stroke-width="2" stroke-dasharray="2,3"/></svg> Projected</span>';
+    }
+  }
 }
 
 // Projection input setters
@@ -2656,21 +2376,6 @@ function openR3Kp(field) {
 // ══════════════════════════════════════
 function renderSettings(){
   try {
-  // PIN status badge
-  var pinBadge = document.getElementById('pin-status-badge');
-  if (pinBadge) {
-    if (_pinCorrect) {
-      pinBadge.textContent = '🔒 PIN Active';
-      pinBadge.style.background = 'rgba(13,158,110,.15)';
-      pinBadge.style.color      = 'var(--green-dk)';
-      pinBadge.style.border     = '1px solid #6ee7b7';
-    } else {
-      pinBadge.textContent = '🔓 No PIN Set';
-      pinBadge.style.background = 'rgba(214,59,59,.08)';
-      pinBadge.style.color      = 'var(--red)';
-      pinBadge.style.border     = '1px solid rgba(214,59,59,.3)';
-    }
-  }
   // Employee list with rate history
   var empHtml = '';
   Object.entries(employees).forEach(function(entry) {
@@ -2733,15 +2438,10 @@ function renderSettings(){
   }).join('');
   document.getElementById('tax-rate-tbody').innerHTML = taxHtml;
 
-  // NS fee - show history of rates
-  var nsFeeHist = (settings.nsFeeHistory || []).slice().sort(function(a,b){ return b.date.localeCompare(a.date); });
-  var nsFeeRows = '<tr><td class="mono">' + fmtDateUS(settings.nsFeeStart||'2025-12-01') + '</td>' +
-    '<td class="mono" style="font-weight:700;">' + fmt(settings.nsFee) + '/mo</td><td><span style="font-size:10px;background:var(--green-lt);color:var(--green-dk);padding:2px 8px;border-radius:4px;font-weight:700;">CURRENT</span></td></tr>';
-  nsFeeHist.forEach(function(h){
-    nsFeeRows += '<tr><td class="mono" style="color:var(--text3);">' + fmtDateUS(h.date) + '</td>' +
-      '<td class="mono" style="color:var(--text3);">' + fmt(h.fee) + '/mo</td><td><span style="font-size:10px;color:var(--text3);">Historical</span></td></tr>';
-  });
-  document.getElementById('ns-fee-tbody').innerHTML = nsFeeRows;
+  // NS fee
+  document.getElementById('ns-fee-tbody').innerHTML =
+    '<tr><td class="mono">' + fmtDateUS(settings.nsFeeStart||'2025-12-01') + '</td>' +
+    '<td class="mono">' + fmt(settings.nsFee) + '/mo</td><td></td></tr>';
   } catch(e) { console.error('renderSettings error:', e); }
 }
 
@@ -3058,7 +2758,7 @@ function updateKpDisplay() {
   var raw = kpValue || '0';
   _text('kp-box-main-val', raw);
   var sub = '';
-  if      (kpMode === 'adj' || kpMode === 'adj-edit') sub = 'Code ' + kpCode + (kpSign === 1 ? ' · Credit (increases available balance)' : ' · Expense (reduces available balance)');
+  if      (kpMode === 'adj')     sub = 'Code ' + kpCode + (kpSign === 1 ? ' · Increase' : ' · Decrease');
   else if (kpMode === 'nsfee')   sub = '/month → Code 331';
   else if (kpMode === 'projhrs') sub = 'hours/day';
   else if (kpMode === 'projrate')sub = '$/hr base rate';
@@ -3125,12 +2825,8 @@ function kpConfirm() {
       bgSaveTs(kpDate, kpEmp, timesheet[kpDate][kpEmp].s1 || kpS1, rounded, timesheet[kpDate][kpEmp].s1code||kpCode, kpCode);
       closeKp();
       renderClockLog();
-      refreashPeriodWages();
       var total = +((timesheet[kpDate][kpEmp].s1 || kpS1) + rounded).toFixed(2);
       showToast('Day saved: ' + total.toFixed(2) + ' hrs for ' + (employees[kpEmp] || EMP_DEFS[kpEmp]).name + ' ✓');
-      // Refresh budget/periods if on those tabs (clock log changes affect displayed totals)
-      if (currentTab === 'budget') renderBudget();
-      if (currentTab === 'periods') renderPeriods();
     }
     return;
   }
@@ -3143,33 +2839,11 @@ function kpConfirm() {
     var note   = (_kpEl('kp-desc') && _kpEl('kp-desc').value) ? _kpEl('kp-desc').value.trim() : '';
     var newAdj = { id: 'adj' + (nextAdjId++), date: kpDate, code: kpCode, amt: +(val * kpSign).toFixed(2), note: note, cycleId: currentCycle };
     adjs.push(newAdj); saveS('sdp_adjs_v2', adjs); bgAddAdj(newAdj);
-    closeKp(); renderBudget(); showToast('Manual adjustment added ✓');
-
-  } else if (kpMode === 'adj-edit') {
-    var note   = (_kpEl('kp-desc') && _kpEl('kp-desc').value) ? _kpEl('kp-desc').value.trim() : '';
-    var idx    = adjs.findIndex(function(a){ return a.id === kpField; });
-    if (idx >= 0) {
-      adjs[idx].amt  = +(val * kpSign).toFixed(2);
-      adjs[idx].note = note;
-      adjs[idx].date = kpDate;
-      adjs[idx].code = kpCode;
-      saveS('sdp_adjs_v2', adjs);
-      if (syncReady) {
-        supaDelete('adjustments','id=eq.'+adjs[idx].id)
-          .then(function(){ return bgAddAdj(adjs[idx]); })
-          .catch(function(){});
-      }
-    }
-    closeKp(); renderBudget(); showToast('Adjustment updated ✓');
+    closeKp(); renderBudget(); showToast('Adjustment added ✓');
 
   } else if (kpMode === 'nsfee') {
-    // Save new fee rate with effective date
-    if (!settings.nsFeeHistory) settings.nsFeeHistory = [];
-    settings.nsFeeHistory.push({ date: settings.nsFeeStart||'2025-12-01', fee: settings.nsFee }); // log old rate
-    settings.nsFee = +val.toFixed(2);
-    settings.nsFeeStart = kpDate; // update effective date
-    saveS('sdp_settings_v2', settings); bgSaveSettings();
-    closeKp(); renderBudget(); renderSettings(); showToast('NextStep fee updated to ' + fmt(settings.nsFee) + '/mo effective ' + fmtDateUS(kpDate) + ' ✓');
+    settings.nsFee = +val.toFixed(2); saveS('sdp_settings_v2', settings); bgSaveSettings();
+    closeKp(); renderBudget(); showToast('NextStep fee updated to ' + fmt(settings.nsFee) + '/mo ✓');
 
   } else if (kpMode === 'ppamt') {
     if (kpField === 'gross') {
@@ -3237,35 +2911,12 @@ function setKpSign(s) {
 // ── Specific keypad openers ──
 function openNsFeeKp() {
   kpMode = 'nsfee';
-  openKp('Update NextStep Monthly Fee', { date: true, mainLbl: 'New Monthly Amount ($/mo)', confirmLabel: 'UPDATE FEE' });
-  // Set current date as default effective date
-  kpDate = todayStr();
-  _text('kp-date-lbl', 'Effective Date: ' + fmtDateUS(kpDate));
-  // Pre-fill current fee
-  kpValue = settings.nsFee.toFixed(2);
-  _text('kp-box-main-val', kpValue);
-  _text('kp-box-main-sub', 'Current: ' + fmt(settings.nsFee) + '/mo — enter new rate below');
+  openKp('Update NextStep Monthly Fee', { mainLbl: 'Amount ($/mo)', confirmLabel: 'UPDATE FEE' });
 }
 function openAdjKp() {
-  kpMode = 'adj'; kpCode = '320'; kpSign = -1; kpField = '';
+  kpMode = 'adj'; kpCode = '320'; kpSign = 1;
   if (_kpEl('kp-desc')) _kpEl('kp-desc').value = '';
-  openKp('Add Manual Adjustment', { desc: true, code: true, date: true, sign: true, mainLbl: 'Amount ($)', confirmLabel: 'ADD EXPENSE/ADJUSTMENT' });
-  // Default to Decrease (expense)
-  setKpSign(-1);
-}
-function openEditAdjKp(id) {
-  var adj = adjs.find(function(a){ return a.id === id; });
-  if (!adj) return;
-  kpMode = 'adj-edit'; kpCode = adj.code || '320'; kpSign = adj.amt < 0 ? -1 : 1; kpField = id;
-  if (_kpEl('kp-desc')) _kpEl('kp-desc').value = adj.note || '';
-  openKp('Edit Manual Adjustment', { desc: true, code: true, date: true, sign: true, mainLbl: 'Amount ($)', confirmLabel: 'UPDATE ADJUSTMENT' });
-  kpDate = adj.date || todayStr();
-  _text('kp-date-lbl', 'Date: ' + fmtDateUS(kpDate));
-  selectCode(kpCode);
-  setKpSign(kpSign);
-  kpValue = Math.abs(adj.amt).toFixed(2);
-  _text('kp-box-main-val', kpValue);
-  updateKpDisplay();
+  openKp('Add Budget Adjustment', { desc: true, code: true, date: true, sign: true, mainLbl: 'Amount ($)', confirmLabel: 'ADD ADJUSTMENT' });
 }
 function openPpAmtKp(field) {
   kpMode = 'ppamt'; kpField = field;
@@ -3448,22 +3099,6 @@ function savePeriod(){
   renderPeriods();
   if(currentTab==='budget')renderBudget();
   showToast('Pay period '+newPp.id+' added ✓');
-}
-function confirmPeriod(id) {
-  var p = periods.find(function(x){ return x.id === id; });
-  if (!p) return;
-  if (!confirm('Mark ' + p.id + ' (' + p.label + ') as Confirmed?\n\nThis freezes the gross and tax values so they will not be recalculated from the Clock Log.')) return;
-  refreshPeriodWages(); // store latest computed values first
-  p.confirmed = true;
-  saveS('sdp_periods_v2', periods);
-  if (syncReady) {
-    supaDelete('pay_periods', 'id=eq.' + p.id)
-      .then(function(){ return supaPost('pay_periods', periodToDb(p)); })
-      .catch(function(e){ console.warn('sync confirmPeriod:', e); });
-  }
-  renderPeriods();
-  renderBudget();
-  showToast(p.id + ' confirmed ✓  wages frozen at ' + fmt((p.gross||0)+(p.tax||0)));
 }
 function deletePeriod(id){
   if(!confirm('Delete this pay period?'))return;
@@ -3731,11 +3366,9 @@ async function removePIN() {
   renderSettings();
 }
 
-window.addEventListener('DOMContentLoaded', function() {
-  renderBudget();
-  initDB();
-  initPIN();
-});
+renderBudget();
+initDB();
+initPIN();
 
 </script>
 
