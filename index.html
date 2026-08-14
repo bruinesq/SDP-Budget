@@ -915,6 +915,7 @@ async function initDB() {
     }
     syncReady = true;
     setSyncLabel('✓ Live', true);
+    ensurePeriodsForClockLog(); // backfill any pay period the Clock Log needs that no one's created yet
     _flushTsQueue(); // flush any saves made before sync was ready
     // ONLY re-render if keypad is closed AND we are on a data tab
     var ov = document.getElementById('kp-overlay');
@@ -1165,7 +1166,7 @@ function catSpent(code){
 function totalBudget(){return Object.keys(cycleCats()).reduce((s,c)=>s+catBudget(c),0);}
 function totalSpent(){
   var ppTotal = periods.filter(p=>(p.cycleId||'2025-26')===currentCycle)
-    .reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);
+    .reduce((s,p)=>s+periodCost(p),0);
   // Add NextStep fees (Code 331) - paid monthly, not via pay periods
   var budgetStart = new Date(2025,11,1);
   var months = (TODAY.getFullYear()-budgetStart.getFullYear())*12 +
@@ -1298,6 +1299,7 @@ function renderBudget() {
 let selectedPpId = null;
 
 function renderPeriods() {
+  ensurePeriodsForClockLog();
   const BADGE={'310':'b310','320':'b320','331':'b331','ite':'bite'};
   const cyclPeriods=periods
     .filter(p=>(p.cycleId||'2025-26')===currentCycle)
@@ -1308,16 +1310,12 @@ function renderPeriods() {
       return nb-na;
     });
 
-  // Populate rec dropdown
-  const recSel=document.getElementById('rec-history-tbody');
-  if(recSel){
-    recSel.innerHTML=cyclPeriods.map(p=>{
-      const total=(p.gross||0)+(p.tax||0);
-      return `<tr><td class="mono">${p.id}</td><td>${p.label}</td>
-        <td>${p.reconciled?'<span class="rec-badge">✓ Reconciled</span>':'<span style="color:var(--text3);font-size:11px;">Pending</span>'}</td>
-        <td><button class="btn btn-blue btn-sm" onclick="startManualRec('${p.id}')">Reconcile</button></td></tr>`;
-    }).join('');
-  }
+  // NOTE: rec-history-tbody lives inside the Reconcile panel and is owned by
+  // renderRecHistory() (called from renderReconcile()) — it used to also be
+  // written here with a stale, unlinked "Reconcile" button (calling an
+  // undefined startManualRec()). Removed: it was always overwritten by
+  // renderReconcile() the moment that tab actually renders, so it never did
+  // anything except risk a console error.
 
   let runTotal=0;
   const rows=cyclPeriods.map(p=>{
@@ -1481,6 +1479,7 @@ var EMP_COL = {
 
 function renderClockLog() {
   if (!document.getElementById('cl-grid-wrap')) return;
+  ensurePeriodsForClockLog();
 
 
   var base = weekStart(new Date(TODAY.getTime()));
@@ -1872,7 +1871,7 @@ function renderProjChart(confirmedSpent, dailyCost, daysPerWk, split310, nsTotal
       var yr = 2025 + (mo < 11 ? 1 : 0); // rough year
       var mkey = yr + '-' + mo;
       if (!actualByMonth[mkey]) actualByMonth[mkey] = 0;
-      actualByMonth[mkey] += (p.gross||0) + (p.tax||0);
+      actualByMonth[mkey] += periodCost(p);
     }
   });
 
@@ -2096,6 +2095,70 @@ function calcPeriodLive(p) {
   return {hrs: hrsByEmp, gross: gross, tax: tax, total: +(gross + tax).toFixed(2), activeEmps: activeEmps};
 }
 
+function periodLabelForDate(d) {
+  // Standard semi-monthly pay-period window: 1st–15th, 16th–end of month.
+  var y = d.getFullYear(), m = d.getMonth();
+  var startD, endD;
+  if (d.getDate() <= 15) { startD = new Date(y, m, 1); endD = new Date(y, m, 15); }
+  else { startD = new Date(y, m, 16); endD = new Date(y, m + 1, 0); } // day 0 of next month = last day of this month
+  var f = function(dt) { return (dt.getMonth() + 1) + '/' + dt.getDate() + '/' + String(dt.getFullYear()).slice(-2); };
+  return f(startD) + ' - ' + f(endD);
+}
+
+function ensurePeriodsForClockLog() {
+  // The pay-period list is supposed to be grounded in the Clock Log, not in
+  // someone remembering to click "+ Add Manually" every two weeks. This
+  // scans the clock log for any semi-monthly window that has logged hours
+  // but no period record yet, and creates a bare stub for it (code carried
+  // over from the most recent period, $0 until locked — the live-calc rules
+  // above take it from there). Purely additive: never edits or removes an
+  // existing period.
+  var cyc = cycles.find(function(c) { return c.id === currentCycle; });
+  var parseISO = function(s) { var parts = s.split('-'); return new Date(+parts[0], +parts[1] - 1, +parts[2]); };
+  var cycStart = cyc ? parseISO(cyc.start) : null;
+  var cycEnd   = cyc ? parseISO(cyc.end)   : null;
+
+  var neededLabels = {};
+  Object.keys(timesheet).forEach(function(iso) {
+    var dayEntry = timesheet[iso];
+    if (!dayEntry) return;
+    var hasHrs = ALL_EMPS.some(function(e) {
+      var entry = dayEntry[e];
+      return entry && ((entry.s1 || 0) + (entry.s2 || 0)) > 0;
+    });
+    if (!hasHrs) return;
+    var d = parseISO(iso);
+    if (cycStart && d < cycStart) return;
+    if (cycEnd && d > cycEnd) return;
+    neededLabels[periodLabelForDate(d)] = true;
+  });
+
+  var existingLabels = {};
+  var cyclPeriods = periods.filter(function(p) { return (p.cycleId || '2025-26') === currentCycle; });
+  cyclPeriods.forEach(function(p) { existingLabels[p.label] = true; });
+
+  var lastCode = '320';
+  var sorted = cyclPeriods.slice().sort(function(a, b) {
+    return (parseInt((b.id || '').replace(/\D/g, '')) || 0) - (parseInt((a.id || '').replace(/\D/g, '')) || 0);
+  });
+  if (sorted.length) lastCode = sorted[0].code || '320';
+
+  var added = false;
+  Object.keys(neededLabels).forEach(function(label) {
+    if (existingLabels[label]) return;
+    var newPp = {
+      id: 'pp' + (nextPpId++), label: label, code: lastCode, gross: 0, tax: 0,
+      locked: false, reconciled: false, note: 'Auto-created from Clock Log',
+      cycleId: currentCycle, hrs: {cor: 0, mav: 0, raf: 0, nic: 0}
+    };
+    periods.push(newPp);
+    bgAddPeriod(newPp);
+    added = true;
+  });
+  if (added) saveS('sdp_periods_v2', periods);
+  return added;
+}
+
 function getLastCumTax(code) {
   // Get the most recent cumulative tax for this service code
   var hist = taxHistory.filter(function(h){ return h.code === code; })
@@ -2115,6 +2178,7 @@ function saveTaxHistory(entry) {
 // ── Phase III Reconcile State ──────────────────────────────
 
 function renderReconcile() {
+  ensurePeriodsForClockLog();
   var cyclPeriods = periods
     .filter(function(p){ return (p.cycleId||'2025-26') === currentCycle; })
     .slice()
@@ -2143,7 +2207,14 @@ function renderRecHistory(cyclPeriods) {
   var el = document.getElementById('rec-history-tbody');
   if (!el) return;
   el.innerHTML = cyclPeriods.map(function(p) {
-    var total = (p.gross||0)+(p.tax||0);
+    // Locked periods show their frozen reconciled figures; anything still
+    // pending shows a live estimate computed straight from the Clock Log,
+    // same as the Pay Periods tab, instead of a stale "—".
+    var live  = p.locked ? null : calcPeriodLive(p);
+    var gross = live ? live.gross : (p.gross||0);
+    var tax   = live ? live.tax   : (p.tax||0);
+    var total = live ? live.total : (gross+tax);
+    var estTag = live ? ' <span style="font-size:9px;color:var(--text3);font-weight:600;">EST</span>' : '';
     var badge = p.reconciled
       ? '<span class="rec-badge">✓ Reconciled</span>'
       : '<span class="badge" style="background:#e0f0ff;color:var(--blue);cursor:pointer;">▶ Reconcile</span>';
@@ -2151,8 +2222,8 @@ function renderRecHistory(cyclPeriods) {
       '<td class="mono" style="font-weight:700;">'+p.id+'</td>'+
       '<td style="font-size:12px;">'+p.label+'</td>'+
       '<td><span class="badge b'+p.code+'">'+p.code+'</span></td>'+
-      '<td class="mono right">'+(p.gross?fmt(p.gross):'—')+'</td>'+
-      '<td class="mono right">'+(p.tax?fmt(p.tax):'—')+'</td>'+
+      '<td class="mono right">'+(gross?fmt(gross)+estTag:'—')+'</td>'+
+      '<td class="mono right">'+(tax?fmt(tax):'—')+'</td>'+
       '<td class="mono right" style="font-weight:700;">'+(total>0?fmt(total):'—')+'</td>'+
       '<td>'+badge+'</td>'+
     '</tr>';
@@ -2348,7 +2419,7 @@ function renderRecStep3() {
   if (!el) return;
 
   var tax310 = recP3.cumTax310!==null ? Math.max(0,+(recP3.cumTax310-recP3.lastCumTax310).toFixed(2)) : 0;
-  var tax320 = recP3.cumTax320!==null ? Math.max(0,+(recP3.cumTax320-recP3.lastCumTax320).toFixed(2)) : (p.tax||0);
+  var tax320 = recP3.cumTax320!==null ? Math.max(0,+(recP3.cumTax320-recP3.lastCumTax320).toFixed(2)) : (p.locked ? (p.tax||0) : calcPeriodLive(p).tax);
   var totalTax = +(tax310+tax320).toFixed(2);
   var myGross  = calcPeriodGross(p);
 
