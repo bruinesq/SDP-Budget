@@ -1140,9 +1140,17 @@ function catBudget(code){
   adjs.filter(a=>a.code===code&&(a.cycleId||'2025-26')===currentCycle).forEach(a=>b+=a.amt);
   return b;
 }
+function periodCost(p){
+  // Locked (finalized/reconciled) periods use their frozen stored figures.
+  // Anything still pending is priced live off the clock log — otherwise a
+  // pay period sitting un-reconciled (e.g. because it's still in progress)
+  // silently drops out of the budget's "spent" total and overstates the
+  // remaining balance.
+  return p.locked ? (p.gross||0)+(p.tax||0) : calcPeriodLive(p).total;
+}
 function catSpent(code){
   var ppSpent = periods.filter(p=>(p.cycleId||'2025-26')===currentCycle&&p.code===code)
-    .reduce((s,p)=>s+(p.gross||0)+(p.tax||0),0);
+    .reduce((s,p)=>s+periodCost(p),0);
   if (code==='331') {
     // Add NextStep fees: count months from budget start through today
     var budgetStart = new Date(2025,11,1); // Dec 1 2025
@@ -1313,25 +1321,33 @@ function renderPeriods() {
 
   let runTotal=0;
   const rows=cyclPeriods.map(p=>{
-    const total=(p.gross||0)+(p.tax||0);
+    // Locked (finalized/reconciled) periods keep their frozen stored figures.
+    // Everything else is recomputed live from the clock log so the table
+    // never goes stale as hours get entered after the row was created.
+    const live = p.locked ? null : calcPeriodLive(p);
+    const hrs  = live ? live.hrs : (p.hrs||{});
+    const gross= live ? live.gross : (p.gross||0);
+    const tax  = live ? live.tax   : (p.tax||0);
+    const total= live ? live.total : (gross+tax);
     runTotal+=total;
     const isSel=p.id===selectedPpId;
+    const estTag = live ? '<span style="font-size:9px;color:var(--text3);font-weight:600;margin-left:4px;">EST</span>' : '';
     return `<tr onclick="selectPeriodRow('${p.id}')" class="${isSel?'selected':''}">
       <td><span class="chevron" id="chev-${p.id}" style="color:var(--blue);font-size:14px;font-weight:700;transition:transform .2s;${isSel?'display:inline-block;transform:rotate(90deg)':''}">›</span></td>
       <td class="mono">${p.id}</td><td>${p.label}</td>
       <td><span class="badge ${BADGE[p.code]||'b320'}">${(p.code||'').toUpperCase()}</span></td>
-      <td class="mono">${fmtH(p.hrs?.cor||0)}</td>
-      <td class="mono">${fmtH(p.hrs?.mav||0)}</td>
-      <td class="mono">${fmtH(p.hrs?.raf||0)}</td>
-      <td class="mono">${fmtH(p.hrs?.nic||0)}</td>
-      <td class="mono">${fmt(p.gross||0)}</td>
-      <td class="mono">${fmt(p.tax||0)}</td>
+      <td class="mono">${fmtH(hrs.cor||0)}</td>
+      <td class="mono">${fmtH(hrs.mav||0)}</td>
+      <td class="mono">${fmtH(hrs.raf||0)}</td>
+      <td class="mono">${fmtH(hrs.nic||0)}</td>
+      <td class="mono">${fmt(gross)}${estTag}</td>
+      <td class="mono">${fmt(tax)}</td>
       <td class="mono"><strong>${fmt(total)}</strong></td>
       <td>${p.locked?'<span class="locked">🔒 Locked</span>':p.reconciled?'<span class="rec-badge">✓ Rec</span>':'<button class="btn btn-red btn-sm" onclick="deletePeriod(\''+p.id+'\')">Del</button>'}</td>
     </tr>`;
   });
-  const totalGross=cyclPeriods.reduce((s,p)=>s+(p.gross||0),0);
-  const totalTax  =cyclPeriods.reduce((s,p)=>s+(p.tax||0),0);
+  const totalGross=cyclPeriods.reduce((s,p)=>s+(p.locked?(p.gross||0):calcPeriodLive(p).gross),0);
+  const totalTax  =cyclPeriods.reduce((s,p)=>s+(p.locked?(p.tax||0):calcPeriodLive(p).tax),0);
   rows.push(`<tr class="tot-row"><td colspan="8"><strong>TOTAL (${cyclPeriods.length} periods)</strong></td>
     <td class="mono">${fmt(totalGross)}</td><td class="mono">${fmt(totalTax)}</td>
     <td class="mono"><strong>${fmt(totalGross+totalTax)}</strong></td><td></td></tr>`);
@@ -1375,12 +1391,7 @@ function renderSidePanel(id) {
 
   var taxRate    = taxRateForDate(p.label ? p.label.slice(0,10) : todayStr());
   // Include employee if stored hrs > 0 OR has clock log entries for this period
-  var activeEmps = ALL_EMPS.filter(function(e) {
-    if (p.hrs && p.hrs[e] > 0) return true;
-    // Also check clock log directly
-    var daily = getPeriodDailyHrs(p, e);
-    return daily.some(function(h){ return h > 0; });
-  });
+  var activeEmps = getPeriodActiveEmps(p);
   var totalGross = 0, totalTax = 0;
   var html = '';
 
@@ -2043,16 +2054,46 @@ function calcEmpPeriodOT(p, emp) {
           gross:gross, estimated:false};
 }
 
+function getPeriodActiveEmps(p) {
+  // Same rule the side panel uses: an employee counts as "active" for this
+  // period if the stored hrs say so, OR if the live clock log has entries
+  // for them in this date range. Checking p.hrs alone misses anyone whose
+  // hours were logged/updated after the period row was first created.
+  return ALL_EMPS.filter(function(e) {
+    if (p.hrs && p.hrs[e] > 0) return true;
+    var daily = getPeriodDailyHrs(p, e);
+    return daily.some(function(h) { return h > 0; });
+  });
+}
+
 function calcPeriodGross(p) {
   // Sum gross for all active employees using CA OT from clock log
   var total = 0;
-  ALL_EMPS.forEach(function(e) {
-    var hrs = p.hrs ? (p.hrs[e] || 0) : 0;
-    if (hrs === 0) return;
+  getPeriodActiveEmps(p).forEach(function(e) {
     total += calcEmpPeriodOT(p, e).gross;
   });
   if (total === 0 && p.gross > 0) total = p.gross;
   return +total.toFixed(2);
+}
+
+function calcPeriodLive(p) {
+  // Live hrs/gross/tax computed straight from the clock log. Used for any
+  // period that hasn't been locked (finalized in Reconcile) yet, so the
+  // Pay Periods table always matches the per-employee breakdown shown in
+  // the side panel instead of showing stale/zero figures.
+  var taxRate = taxRateForDate(p.label ? p.label.slice(0, 10) : todayStr());
+  var activeEmps = getPeriodActiveEmps(p);
+  var hrsByEmp = {};
+  ALL_EMPS.forEach(function(e) { hrsByEmp[e] = 0; });
+  var gross = 0;
+  activeEmps.forEach(function(e) {
+    var ot = calcEmpPeriodOT(p, e);
+    hrsByEmp[e] = ot.total;
+    gross += ot.gross;
+  });
+  gross = +gross.toFixed(2);
+  var tax = +(gross * taxRate).toFixed(2);
+  return {hrs: hrsByEmp, gross: gross, tax: tax, total: +(gross + tax).toFixed(2), activeEmps: activeEmps};
 }
 
 function getLastCumTax(code) {
@@ -2274,7 +2315,7 @@ function renderRecStep2() {
 function catSpentReconciled(code) {
   var ppTotal = periods.filter(function(p){
     return (p.cycleId||'2025-26')===currentCycle && p.code===code;
-  }).reduce(function(s,p){return s+(p.gross||0)+(p.tax||0);},0);
+  }).reduce(function(s,p){return s+periodCost(p);},0);
   var adjTotal = adjs.filter(function(a){
     return (a.cycleId||'2025-26')===currentCycle && a.code===code;
   }).reduce(function(s,a){return s+a.amt;},0);
@@ -2337,11 +2378,21 @@ function renderRecStep3() {
 function finalizeRec(totalTax) {
   var p = periods.find(function(x){return x.id===recP3.periodId;});
   if (!p) return;
+  // Use the same "active employee" rule as the live table/side panel
+  // (stored hrs OR real clock-log entries), not just stored hrs — otherwise
+  // anyone whose hours were only ever in the clock log (never manually
+  // typed into p.hrs) gets silently dropped from the finalized totals.
+  var activeEmps = getPeriodActiveEmps(p);
+  var totalGross = activeEmps.reduce(function(s,e){return s+calcEmpPeriodOT(p,e).gross;},0);
+  var hrsSnapshot = {};
+  ALL_EMPS.forEach(function(e){ hrsSnapshot[e] = 0; });
+  activeEmps.forEach(function(e){ hrsSnapshot[e] = calcEmpPeriodOT(p,e).total; });
+
   p.reconciled = true;
   p.locked     = true;
+  p.gross      = +totalGross.toFixed(2);
+  p.hrs        = hrsSnapshot;
   if (totalTax>0) p.tax = totalTax;
-  var activeEmps = ALL_EMPS.filter(function(e){return (p.hrs||{})[e]>0;});
-  var totalGross = activeEmps.reduce(function(s,e){return s+calcEmpPeriodOT(p,e).gross;},0);
   p.empTax = {};
   activeEmps.forEach(function(e){
     p.empTax[e] = totalGross>0 ? +(totalTax*(calcEmpPeriodOT(p,e).gross)/totalGross).toFixed(2) : 0;
