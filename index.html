@@ -388,7 +388,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
       </div>
       <div class="card">
         <div class="t-wrap"><table>
-          <thead><tr><th></th><th>Period</th><th>Dates</th><th>Code</th><th>Cordelia</th><th>Maverick</th><th>Rafi</th><th>Nicholas</th><th>Gross Labor</th><th>Employer Tax</th><th>Total Usage</th><th>Status</th></tr></thead>
+          <thead><tr><th></th><th>Period</th><th>Dates</th><th>Code</th><th>Cordelia</th><th>Maverick</th><th>Rafi</th><th>Reymar</th><th>Nicholas</th><th>Gross Labor</th><th>Employer Tax</th><th>Total Usage</th><th>Status</th></tr></thead>
           <tbody id="periods-tbody"></tbody>
         </table></div>
       </div>
@@ -447,7 +447,7 @@ input[type=radio]{accent-color:var(--blue);width:14px;height:14px;cursor:pointer
     <div class="card">
       <div class="card-hdr"><div class="card-title">Confirmed Timesheet History (by Pay Period)</div></div>
       <div class="t-wrap"><table>
-        <thead><tr><th>Period</th><th>Dates</th><th>Code</th><th>Cordelia</th><th>Maverick</th><th>Rafi</th><th>Total Hrs</th><th>Reconciled</th></tr></thead>
+        <thead><tr><th>Period</th><th>Dates</th><th>Code</th><th>Cordelia</th><th>Maverick</th><th>Rafi</th><th>Reymar</th><th>Total Hrs</th><th>Reconciled</th></tr></thead>
         <tbody id="ts-tbody"></tbody>
       </table></div>
     </div>
@@ -1341,6 +1341,7 @@ function renderPeriods() {
       <td class="mono">${fmtH(hrs.cor||0)}</td>
       <td class="mono">${fmtH(hrs.mav||0)}</td>
       <td class="mono">${fmtH(hrs.raf||0)}</td>
+      <td class="mono">${fmtH(hrs.rey||0)}</td>
       <td class="mono">${fmtH(hrs.nic||0)}</td>
       <td class="mono">${fmt(gross)}${estTag}</td>
       <td class="mono">${fmt(tax)}</td>
@@ -1350,7 +1351,7 @@ function renderPeriods() {
   });
   const totalGross=cyclPeriods.reduce((s,p)=>s+(p.locked?(p.gross||0):calcPeriodLive(p).gross),0);
   const totalTax  =cyclPeriods.reduce((s,p)=>s+(p.locked?(p.tax||0):calcPeriodLive(p).tax),0);
-  rows.push(`<tr class="tot-row"><td colspan="8"><strong>TOTAL (${cyclPeriods.length} periods)</strong></td>
+  rows.push(`<tr class="tot-row"><td colspan="9"><strong>TOTAL (${cyclPeriods.length} periods)</strong></td>
     <td class="mono">${fmt(totalGross)}</td><td class="mono">${fmt(totalTax)}</td>
     <td class="mono"><strong>${fmt(totalGross+totalTax)}</strong></td><td></td></tr>`);
   document.getElementById('periods-tbody').innerHTML=rows.join('');
@@ -1687,11 +1688,12 @@ function renderTimesheet() {
       <td class="mono">${fmtH(p.hrs?.cor||0)}</td>
       <td class="mono">${fmtH(p.hrs?.mav||0)}</td>
       <td class="mono">${fmtH(p.hrs?.raf||0)}</td>
+      <td class="mono">${fmtH(p.hrs?.rey||0)}</td>
       <td class="mono">${fmtH(totalHrs)}</td>
       <td><span class="rec-badge">✓ Reconciled</span></td>
     </tr>`;
   }).join('');
-  document.getElementById('ts-tbody').innerHTML=rows||'<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;">No reconciled periods yet. Approve reconciliations to populate this tab.</td></tr>';
+  document.getElementById('ts-tbody').innerHTML=rows||'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px;">No reconciled periods yet. Approve reconciliations to populate this tab.</td></tr>';
 }
 
 // ══════════════════════════════════════
